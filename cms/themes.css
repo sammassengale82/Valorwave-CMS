@@ -47,19 +47,25 @@ body {
 #sidebar,
 #toolbar,
 #status-bar,
-.modal-content {
+.modal-content,
+#theme-panel {
   background: var(--panel);
   border-color: var(--border);
 }
 
 #toolbar button,
-.sidebar-header button {
+.sidebar-header button,
+#sidebar-toggle,
+#dark-mode-toggle {
   background: var(--panel);
   border-color: var(--border);
   color: var(--text);
 }
 
-#toolbar button:hover {
+#toolbar button:hover,
+.sidebar-header button:hover,
+#sidebar-toggle:hover,
+#dark-mode-toggle:hover {
   background: var(--border);
 }
 
