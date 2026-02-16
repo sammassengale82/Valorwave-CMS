@@ -398,7 +398,10 @@ async function loadFiles() {
 // =============== FILE OPERATIONS ===============
 
 async function openFile(path) {
-  const data = await api(`content?path=${encodeURIComponent(path)}`);
+  const data = await api("read-file", {
+  method: "POST",
+  body: JSON.stringify({ filePath: path })
+});
   if (!data || data.error) {
     showToast("Error loading file", "error");
     setStatus("Error loading file", true);
@@ -427,14 +430,15 @@ async function saveContent(isAutosave = false) {
   setStatus(isAutosave ? "Autosaving…" : "Saving…");
   setAutosaveStatus("saving…");
 
-  const res = await api(`content?path=${encodeURIComponent(currentPath)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      content,
-      message: `${isAutosave ? "Autosave" : "Update"} ${currentPath} via CMS`,
-    }),
-  });
+  const res = await api("write-file", {
+  method: "POST",
+  body: JSON.stringify({
+    filePath: currentPath,
+    content,
+    message: `${isAutosave ? "Autosave" : "Update"} ${currentPath} via CMS`
+  })
+});
+
 
   isSaving = false;
 
@@ -754,9 +758,10 @@ window.addEventListener("keydown", (e) => {
 
 // Auth
 if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
+  logoutBtn.addEventListener("click", async () => {
+    await api("logout");
     document.cookie = "session=; Path=/; Max-Age=0";
-    window.location.reload();
+    window.location.href = "/cms";
   });
 }
 
