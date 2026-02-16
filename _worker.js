@@ -618,6 +618,40 @@ a {
     // ============================================================
 
     // READ FILE
+if (path === "/api/me") {
+  const cookie = request.headers.get("Cookie") || "";
+  const token = cookie.match(/session=([^;]+)/)?.[1];
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
+  const ghUser = await fetch("https://api.github.com/user", {
+    headers: {
+      "User-Agent": "ValorWaveCMS",
+      "Authorization": `token ${token}`
+    }
+  });
+
+  if (!ghUser.ok) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
+  const user = await ghUser.json();
+
+  return new Response(JSON.stringify({
+    login: user.login,
+    avatar_url: user.avatar_url
+  }), {
+    headers: { "Content-Type": "application/json" }
+  });
+
     if (path === "/api/read-file" && request.method === "POST") {
       const { filePath } = await request.json();
 
