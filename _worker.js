@@ -651,6 +651,7 @@ if (path === "/api/me") {
   }), {
     headers: { "Content-Type": "application/json" }
   });
+}
 
     if (path === "/api/read-file" && request.method === "POST") {
       const { filePath } = await request.json();
