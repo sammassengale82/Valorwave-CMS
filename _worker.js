@@ -3,10 +3,8 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    console.log("CMS WORKER ACTIVE:", path);
-
     // ============================================================
-    // EMBEDDED CMS ASSETS (HTML + CSS)
+    // EMBEDDED CMS HTML
     // ============================================================
 
     const INDEX_HTML = `<!DOCTYPE html>
@@ -110,11 +108,15 @@ export default {
 </body>
 </html>`;
 
-    const ADMIN_CSS = `/* Admin CSS omitted for brevity */`;
-    const THEMES_CSS = `/* Themes CSS omitted for brevity */`;
+    // ============================================================
+    // EMBEDDED CSS
+    // ============================================================
+
+    const ADMIN_CSS = `/* your admin.css content here */`;
+    const THEMES_CSS = `/* your themes.css content here */`;
 
     // ============================================================
-    // HELPER: FETCH NON-HTML FILES FROM GITHUB RAW
+    // RAW GITHUB FETCH HELPER
     // ============================================================
 
     async function fetchFromGitHub(pathSuffix) {
@@ -123,9 +125,7 @@ export default {
         headers: { "User-Agent": "ValorWaveCMS" }
       });
 
-      if (!ghRes.ok) {
-        return new Response("Not found", { status: 404 });
-      }
+      if (!ghRes.ok) return new Response("Not found", { status: 404 });
 
       const headers = new Headers(ghRes.headers);
 
@@ -137,10 +137,7 @@ export default {
       if (pathSuffix.endsWith(".jpg") || pathSuffix.endsWith(".jpeg")) headers.set("Content-Type", "image/jpeg");
       if (pathSuffix.endsWith(".webp")) headers.set("Content-Type", "image/webp");
 
-      return new Response(await ghRes.arrayBuffer(), {
-        status: ghRes.status,
-        headers
-      });
+      return new Response(await ghRes.arrayBuffer(), { status: ghRes.status, headers });
     }
 
     // ============================================================
@@ -176,9 +173,7 @@ export default {
       });
 
       const tokenData = await tokenRes.json();
-      if (!tokenData.access_token) {
-        return new Response("OAuth failed", { status: 401 });
-      }
+      if (!tokenData.access_token) return new Response("OAuth failed", { status: 401 });
 
       const headers = new Headers({
         "Location": "/cms",
@@ -189,7 +184,7 @@ export default {
     }
 
     // ============================================================
-    // AUTH: /api/me
+    // AUTH CHECK
     // ============================================================
 
     if (path === "/api/me") {
@@ -278,128 +273,44 @@ export default {
     }
 
     // ============================================================
-    // API ROUTES — FILE OPERATIONS
+    // FILE LISTING — /api/files
+    // ============================================================
+
+    if (path === "/api/files") {
+      async function walk(dir) {
+        const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${dir}?ref=${env.GITHUB_BRANCH}`;
+        const res = await fetch(url, { headers: { "User-Agent": "ValorWaveCMS" } });
+
+        if (!res.ok) return [];
+
+        const items = await res.json();
+        let out = [];
+
+        for (const item of items) {
+          if (item.type === "file") {
+            out.push({ path: item.path });
+          } else if (item.type === "dir") {
+            const children = await walk(item.path);
+            out = out.concat(children);
+          }
+        }
+
+        return out;
+      }
+
+      const files = await walk("content");
+
+      return new Response(JSON.stringify(files), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // ============================================================
+    // FILE READ
     // ============================================================
 
     if (path === "/api/read-file" && request.method === "POST") {
       const { filePath } = await request.json();
 
       const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}?ref=${env.GITHUB_BRANCH}`;
-      const ghRes = await fetch(apiUrl, {
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Accept": "application/vnd.github.v3.raw"
-        }
-      });
-
-      if (!ghRes.ok) {
-        return new Response(JSON.stringify({ error: "Failed to read file" }), { status: 500 });
-      }
-
-      const content = await ghRes.text();
-      return new Response(JSON.stringify({ content }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    if (path === "/api/write-file" && request.method === "POST") {
-      const { filePath, content, message } = await request.json();
-
-      const getUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`;
-      const getRes = await fetch(getUrl, {
-        headers: { "User-Agent": "ValorWaveCMS" }
-      });
-
-      let sha = null;
-      if (getRes.ok) {
-        const data = await getRes.json();
-        sha = data.sha;
-      }
-
-      const putRes = await fetch(getUrl, {
-        method: "PUT",
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: message || `Update ${filePath}`,
-          content: btoa(unescape(encodeURIComponent(content))),
-          sha
-        })
-      });
-
-      if (!putRes.ok) {
-        return new Response(JSON.stringify({ error: "Failed to write file" }), { status: 500 });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    if (path === "/api/create-folder" && request.method === "POST") {
-      const { folderPath } = await request.json();
-
-      const placeholderFile = `${folderPath}/.keep`;
-      const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${placeholderFile}`;
-
-      const res = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: `Create folder ${folderPath}`,
-          content: btoa("placeholder")
-        })
-      });
-
-      if (!res.ok) {
-        return new Response(JSON.stringify({ error: "Failed to create folder" }), { status: 500 });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    if (path === "/api/upload-image" && request.method === "POST") {
-      const form = await request.formData();
-      const file = form.get("file");
-      const filePath = form.get("filePath");
-
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-      const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`;
-
-      const res = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: `Upload image ${filePath}`,
-          content: base64
-        })
-      });
-
-      if (!res.ok) {
-        return new Response(JSON.stringify({ error: "Failed to upload image" }), { status: 500 });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // ============================================================
-    // FALLBACK
-    // ============================================================
-
-    return new Response("Not found", { status: 404 });
-  }
-};
+      const ghRes = await fetch
