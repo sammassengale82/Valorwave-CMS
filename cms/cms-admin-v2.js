@@ -753,11 +753,6 @@ window.addEventListener("keydown", (e) => {
 // =============== EVENT WIRING ===============
 
 // Auth
-if (loginBtn) {
-  loginBtn.addEventListener("click", () => {
-    window.location.href = "/login";
-  });
-}
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
     document.cookie = "session=; Path=/; Max-Age=0";
@@ -825,26 +820,38 @@ if (searchInput && fileListEl) {
 
 // =============== INIT ===============
 async function init() {
-
-  // Wait for DOM to fully render at least one frame
   await new Promise(requestAnimationFrame);
 
-  // SHOW CMS UI BEFORE ANY EDITOR CODE RUNS 
-  document.getElementById("cms").style.display = "block";
-  
   setStatus("Loading…");
-
   initThemeFromStorage();
 
-  await loadUser();
-  await loadFiles();
+  const me = await api("me");
 
-  // Wait one frame so DOM nodes are created 
+  if (me && !me.error && me.login) {
+    // Logged in
+    document.body.classList.remove("logged-out");
+    document.body.classList.add("logged-in");
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("cms").style.display = "flex";
+
+    userDisplay.textContent = `Logged in as ${me.login}`;
+
+    await loadFiles();
+  } else {
+    // Not logged in
+    document.body.classList.add("logged-out");
+    document.body.classList.remove("logged-in");
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("cms").style.display = "none";
+
+    setStatus("Please log in");
+    setAutosaveStatus("idle");
+    return; // stop init here
+  }
+
   await new Promise(requestAnimationFrame);
 
-  // NOW the editor exists
   setMode(false);
-
   setStatus("Ready");
   setAutosaveStatus("idle");
 
