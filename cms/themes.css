@@ -1,0 +1,81 @@
+/* ---------------------------------------------------------
+   Valor Wave CMS 2.0 — Theme Variants
+   --------------------------------------------------------- */
+
+/* ORIGINAL THEME */
+body.theme-original {
+  --bg: #1a1a1a;
+  --panel: #222;
+  --border: #333;
+  --text: #eee;
+  --accent: #4da3ff;
+}
+
+/* ARMY MULTICAM */
+body.theme-multicam {
+  --bg: #2b2a27;
+  --panel: #3a392f;
+  --border: #4a493f;
+  --text: #e8e3d3;
+  --accent: #b5a76a;
+}
+
+/* PATRIOTIC */
+body.theme-patriotic {
+  --bg: #0b1a33;
+  --panel: #11284d;
+  --border: #1c3a66;
+  --text: #e6e9f2;
+  --accent: #d62828;
+}
+
+/* DARK MODE OVERRIDE */
+body.dark {
+  --bg: #000;
+  --panel: #111;
+  --border: #222;
+  --text: #ddd;
+  --accent: #4da3ff;
+}
+
+/* APPLY VARIABLES */
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+#sidebar,
+#toolbar,
+#status-bar,
+.modal-content {
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+#toolbar button,
+.sidebar-header button {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+#toolbar button:hover {
+  background: var(--border);
+}
+
+#drop-zone {
+  border-color: var(--border);
+}
+
+#drop-zone.dragover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#upload-progress-bar {
+  background: var(--accent);
+}
+
+a {
+  color: var(--accent);
+}

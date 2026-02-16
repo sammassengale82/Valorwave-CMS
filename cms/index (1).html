@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valor Wave CMS 2.0</title>
+
+  <link rel="stylesheet" href="/cms/admin.css" />
+  <link rel="stylesheet" href="/cms/themes.css" />
+</head>
+
+<body class="logged-out">
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <h1>Valor Wave CMS</h1>
+    <button id="login-btn">Login with GitHub</button>
+  </div>
+
+  <!-- MAIN CMS UI -->
+  <div id="cms" style="display:none;">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <h2>Files</h2>
+        <div id="user-display"></div>
+
+        <button id="new-file-btn">New File</button>
+        <button id="new-folder-btn">New Folder</button>
+      </div>
+
+      <!-- File tree container -->
+      <div id="file-list"></div>
+    </aside>
+
+    <!-- EDITOR AREA -->
+    <main id="editor-area">
+
+      <!-- TOOLBAR -->
+      <div id="toolbar">
+
+        <!-- Formatting -->
+        <button data-cmd="bold"><b>B</b></button>
+        <button data-cmd="italic"><i>I</i></button>
+        <button data-cmd="underline"><u>U</u></button>
+        <button data-cmd="strike">S</button>
+
+        <button data-cmd="h1">H1</button>
+        <button data-cmd="h2">H2</button>
+        <button data-cmd="h3">H3</button>
+
+        <button data-cmd="ul">• List</button>
+        <button data-cmd="ol">1. List</button>
+
+        <button data-cmd="quote">❝</button>
+        <button data-cmd="code">{ }</button>
+        <button data-cmd="hr">HR</button>
+
+        <!-- Alignment -->
+        <button data-cmd="align-left">Left</button>
+        <button data-cmd="align-center">Center</button>
+        <button data-cmd="align-right">Right</button>
+
+        <!-- Indent -->
+        <button data-cmd="indent">→</button>
+        <button data-cmd="outdent">←</button>
+
+        <!-- Clear formatting -->
+        <button data-cmd="remove-format">Clear</button>
+
+        <!-- Insert image -->
+        <button id="insert-image-btn">📷 Image</button>
+
+        <!-- Hidden upload input -->
+        <input 
+          type="file" 
+          id="upload-image-input"
+          accept="image/*"
+          multiple
+          style="display:none;"
+        />
+
+        <!-- More menu -->
+        <button id="toolbar-more-btn">⋮</button>
+        <div id="toolbar-more" class="hidden">
+          <button id="theme-btn">Theme</button>
+        </div>
+
+        <!-- Mode toggle -->
+        <button id="mode-toggle">WYSIWYG</button>
+
+      </div>
+
+      <!-- EDITOR + PREVIEW -->
+      <div id="editor-wrapper">
+        <textarea id="editor"></textarea>
+        <div id="wysiwyg" class="hidden" contenteditable="true"></div>
+        <div id="preview"></div>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div id="status-bar">
+        <span id="status-message">Ready</span>
+        <span id="status-autosave">Autosave: idle</span>
+      </div>
+
+      <!-- IMAGE URL MODAL -->
+      <div id="image-modal" class="modal hidden">
+        <div class="modal-content">
+          <h2>Insert Image by URL</h2>
+          <input id="image-url-input" type="text" placeholder="https://example.com/image.jpg" />
+          <button id="insert-image-confirm">Insert</button>
+          <button id="insert-image-cancel">Cancel</button>
+        </div>
+      </div>
+
+      <!-- UPLOAD GALLERY MODAL -->
+      <div id="upload-gallery-modal" class="modal hidden">
+        <div class="modal-content">
+          <h2>Uploaded Images</h2>
+          <div id="upload-gallery"></div>
+          <button id="insert-selected-btn" disabled>Insert Selected</button>
+          <button id="close-gallery-btn">Close</button>
+        </div>
+      </div>
+
+      <!-- UPLOAD PROGRESS -->
+      <div id="upload-progress" style="display:none;">
+        <div id="upload-progress-bar"></div>
+      </div>
+
+      <!-- DROP ZONE -->
+      <div id="drop-zone">Drop images here</div>
+
+    </main>
+  </div>
+
+  <script src="/cms/cms-admin-v2.js" defer></script>
+</body>
+</html>
