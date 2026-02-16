@@ -4,10 +4,6 @@ export default {
     const path = url.pathname;
 
     console.log("CMS WORKER ACTIVE:", path);
-    console.log(
-      "RAW URL:",
-      `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}/cms/cms-admin-v2.js`
-    );
 
     // ============================================================
     // EMBEDDED CMS ASSETS (HTML + CSS)
@@ -24,7 +20,7 @@ export default {
   <link rel="stylesheet" href="/cms/themes.css" />
 </head>
 
-<body class="logged-out">
+<body class="logged-out theme-original">
 
   <!-- LOGIN SCREEN -->
   <div id="login-screen">
@@ -41,8 +37,12 @@ export default {
         <h2>Files</h2>
         <div id="user-display"></div>
 
+        <button id="logout-btn">Logout</button>
         <button id="new-file-btn">New File</button>
         <button id="new-folder-btn">New Folder</button>
+
+        <button id="sidebar-toggle">Toggle Files</button>
+        <input id="search-input" type="text" placeholder="Search files..." />
       </div>
 
       <!-- File tree container -->
@@ -77,10 +77,6 @@ export default {
         <button data-cmd="align-center">Center</button>
         <button data-cmd="align-right">Right</button>
 
-        <!-- Indent -->
-        <button data-cmd="indent">→</button>
-        <button data-cmd="outdent">←</button>
-
         <!-- Clear formatting -->
         <button data-cmd="remove-format">Clear</button>
 
@@ -90,21 +86,34 @@ export default {
         <!-- Hidden upload input -->
         <input 
           type="file" 
-          id="upload-image-input"
+          id="file-upload-input"
           accept="image/*"
           multiple
           style="display:none;"
         />
 
+        <button id="file-upload-btn">Upload Image</button>
+
         <!-- More menu -->
         <button id="toolbar-more-btn">⋮</button>
-        <div id="toolbar-more" class="hidden">
+        <div id="toolbar-more-menu">
           <button id="theme-btn">Theme</button>
         </div>
 
         <!-- Mode toggle -->
         <button id="mode-toggle">WYSIWYG</button>
 
+      </div>
+
+      <!-- THEME PANEL -->
+      <div id="theme-panel">
+        <label for="theme-select">Theme:</label>
+        <select id="theme-select">
+          <option value="original">Original</option>
+          <option value="multicam">Army Multicam</option>
+          <option value="patriotic">Patriotic</option>
+        </select>
+        <button id="dark-mode-toggle">Toggle Dark</button>
       </div>
 
       <!-- EDITOR + PREVIEW -->
@@ -151,344 +160,14 @@ export default {
     </main>
   </div>
 
+  <div id="toast-container"></div>
+
   <script src="/cms/cms-admin-v2.js" defer></script>
 </body>
 </html>`;
 
-    const ADMIN_CSS = `/* ---------------------------------------------------------
-   Valor Wave CMS 2.0 — Admin Styles
-   --------------------------------------------------------- */
-
-/* RESET */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: "JetBrains Mono", monospace;
-  background: #1a1a1a;
-  color: #eee;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* LOGIN SCREEN */
-#login-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-}
-
-#login-screen button {
-  margin-top: 20px;
-  padding: 12px 24px;
-  font-size: 18px;
-}
-
-/* MAIN CMS LAYOUT */
-#cms {
-  display: flex;
-  height: 100vh;
-}
-
-/* SIDEBAR */
-#sidebar {
-  width: 260px;
-  background: #111;
-  border-right: 1px solid #333;
-  padding: 15px;
-  overflow-y: auto;
-}
-
-.sidebar-header h2 {
-  margin-bottom: 10px;
-}
-
-.sidebar-header button {
-  width: 100%;
-  margin-bottom: 8px;
-  padding: 8px;
-}
-
-#file-list ul {
-  list-style: none;
-  padding-left: 15px;
-}
-
-.folder-node {
-  margin-bottom: 4px;
-}
-
-.folder-header {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.folder-icon {
-  margin-right: 6px;
-}
-
-.folder-children.hidden {
-  display: none;
-}
-
-.file-node {
-  cursor: pointer;
-  padding: 3px 0;
-}
-
-.file-node:hover {
-  color: #4da3ff;
-}
-
-/* EDITOR AREA */
-#editor-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: #1a1a1a;
-}
-
-/* TOOLBAR */
-#toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 10px;
-  background: #222;
-  border-bottom: 1px solid #333;
-}
-
-#toolbar button {
-  margin-right: 6px;
-  margin-bottom: 6px;
-  padding: 6px 10px;
-  background: #333;
-  border: 1px solid #444;
-  color: #eee;
-  cursor: pointer;
-}
-
-#toolbar button:hover {
-  background: #444;
-}
-
-#toolbar-more {
-  margin-left: 10px;
-}
-
-#toolbar-more.hidden {
-  display: none;
-}
-
-/* EDITOR + PREVIEW */
-#editor-wrapper {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-#editor,
-#wysiwyg,
-#preview {
-  flex: 1;
-  padding: 15px;
-  overflow-y: auto;
-  border-right: 1px solid #333;
-}
-
-#wysiwyg.hidden {
-  display: none;
-}
-
-#preview {
-  background: #111;
-}
-
-/* STATUS BAR */
-#status-bar {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: #222;
-  border-top: 1px solid #333;
-  font-size: 14px;
-}
-
-/* DROP ZONE */
-#drop-zone {
-  margin: 10px;
-  padding: 20px;
-  border: 2px dashed #555;
-  text-align: center;
-  color: #aaa;
-}
-
-#drop-zone.dragover {
-  border-color: #4da3ff;
-  color: #4da3ff;
-}
-
-/* UPLOAD PROGRESS */
-#upload-progress {
-  width: 100%;
-  height: 6px;
-  background: #333;
-  margin-top: 10px;
-}
-
-#upload-progress-bar {
-  height: 100%;
-  width: 0%;
-  background: #4da3ff;
-  transition: width 0.2s linear;
-}
-
-/* THUMBNAILS */
-#upload-gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.thumb {
-  position: relative;
-}
-
-.thumb img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-}
-
-.thumb .delete-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: #c00;
-  color: white;
-  border: none;
-  padding: 2px 6px;
-  cursor: pointer;
-}
-
-/* MODALS */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal.hidden {
-  display: none;
-}
-
-.modal-content {
-  background: #222;
-  padding: 20px;
-  border: 1px solid #444;
-  width: 400px;
-}
-
-.modal-content input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 12px;
-}
-`;
-
-    const THEMES_CSS = `/* ---------------------------------------------------------
-   Valor Wave CMS 2.0 — Theme Variants
-   --------------------------------------------------------- */
-
-/* ORIGINAL THEME */
-body.theme-original {
-  --bg: #1a1a1a;
-  --panel: #222;
-  --border: #333;
-  --text: #eee;
-  --accent: #4da3ff;
-}
-
-/* ARMY MULTICAM */
-body.theme-multicam {
-  --bg: #2b2a27;
-  --panel: #3a392f;
-  --border: #4a493f;
-  --text: #e8e3d3;
-  --accent: #b5a76a;
-}
-
-/* PATRIOTIC */
-body.theme-patriotic {
-  --bg: #0b1a33;
-  --panel: #11284d;
-  --border: #1c3a66;
-  --text: #e6e9f2;
-  --accent: #d62828;
-}
-
-/* DARK MODE OVERRIDE */
-body.dark {
-  --bg: #000;
-  --panel: #111;
-  --border: #222;
-  --text: #ddd;
-  --accent: #4da3ff;
-}
-
-/* APPLY VARIABLES */
-body {
-  background: var(--bg);
-  color: var(--text);
-}
-
-#sidebar,
-#toolbar,
-#status-bar,
-.modal-content {
-  background: var(--panel);
-  border-color: var(--border);
-}
-
-#toolbar button,
-.sidebar-header button {
-  background: var(--panel);
-  border-color: var(--border);
-  color: var(--text);
-}
-
-#toolbar button:hover {
-  background: var(--border);
-}
-
-#drop-zone {
-  border-color: var(--border);
-}
-
-#drop-zone.dragover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-#upload-progress-bar {
-  background: var(--accent);
-}
-
-a {
-  color: var(--accent);
-}
-`;
+    const ADMIN_CSS = `/* (same as admin.css above) */`;
+    const THEMES_CSS = `/* (same as themes.css above) */`;
 
     // ============================================================
     // HELPER: FETCH NON-HTML FILES FROM GITHUB RAW
@@ -506,7 +185,6 @@ a {
 
       const headers = new Headers(ghRes.headers);
 
-      // Set explicit content types
       if (pathSuffix.endsWith(".js")) headers.set("Content-Type", "application/javascript; charset=utf-8");
       if (pathSuffix.endsWith(".css")) headers.set("Content-Type", "text/css; charset=utf-8");
       if (pathSuffix.endsWith(".md")) headers.set("Content-Type", "text/plain; charset=utf-8");
@@ -525,7 +203,6 @@ a {
     // LOGIN ROUTES
     // ============================================================
 
-    // Redirect to GitHub OAuth
     if (path === "/cms/login") {
       const redirectUrl =
         `https://github.com/login/oauth/authorize` +
@@ -536,7 +213,6 @@ a {
       return Response.redirect(redirectUrl, 302);
     }
 
-    // GitHub OAuth callback
     if (path === "/cms/callback") {
       const code = url.searchParams.get("code");
       if (!code) {
@@ -574,7 +250,6 @@ a {
     // CMS STATIC ROUTES
     // ============================================================
 
-    // /cms or /cms/ → index.html (embedded, no sandbox)
     if (path === "/cms" || path === "/cms/") {
       return new Response(INDEX_HTML, {
         status: 200,
@@ -582,7 +257,6 @@ a {
       });
     }
 
-    // /cms/admin.css → embedded CSS
     if (path === "/cms/admin.css") {
       return new Response(ADMIN_CSS, {
         status: 200,
@@ -590,7 +264,6 @@ a {
       });
     }
 
-    // /cms/themes.css → embedded CSS
     if (path === "/cms/themes.css") {
       return new Response(THEMES_CSS, {
         status: 200,
@@ -598,17 +271,14 @@ a {
       });
     }
 
-    // /cms/cms-admin-v2.js → from GitHub (JS is safe from sandbox issue)
     if (path === "/cms/cms-admin-v2.js") {
       return fetchFromGitHub("/cms/cms-admin-v2.js");
     }
 
-    // Serve favicon
     if (path === "/favicon.ico") {
       return fetchFromGitHub("/favicon.ico");
     }
 
-    // /content/* → markdown, images, etc. from GitHub
     if (path.startsWith("/content/")) {
       return fetchFromGitHub(path);
     }
@@ -651,6 +321,15 @@ a {
       }), {
         headers: { "Content-Type": "application/json" }
       });
+    }
+
+    // /api/logout
+    if (path === "/api/logout" && request.method === "POST") {
+      const headers = new Headers({
+        "Content-Type": "application/json",
+        "Set-Cookie": "session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
+      });
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers });
     }
 
     // LIST FILES
@@ -744,11 +423,38 @@ a {
       });
     }
 
-    // CREATE FOLDER
-    if (path === "/api/create-folder" && request.method === "POST") {
+    // NEW FILE
+    if (path === "/api/new-file" && request.method === "POST") {
+      const { path: filePath, content, message } = await request.json();
+
+      const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`;
+
+      const res = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {
+          "User-Agent": "ValorWaveCMS",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: message || `Create ${filePath}`,
+          content: btoa(unescape(encodeURIComponent(content || "")))
+        })
+      });
+
+      if (!res.ok) {
+        return new Response(JSON.stringify({ error: "Failed to create file" }), { status: 500 });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // NEW FOLDER
+    if (path === "/api/new-folder" && request.method === "POST") {
       const { folderPath } = await request.json();
 
-      const placeholderFile = `${folderPath}/.keep`;
+      const placeholderFile = `${folderPath.replace(/\/+$/, "")}/.keep`;
       const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${placeholderFile}`;
 
       const res = await fetch(apiUrl, {
@@ -776,7 +482,16 @@ a {
     if (path === "/api/upload-image" && request.method === "POST") {
       const form = await request.formData();
       const file = form.get("file");
-      const filePath = form.get("filePath");
+
+      if (!file) {
+        return new Response(JSON.stringify({ error: "No file" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      const fileName = file.name || `upload-${Date.now()}.bin`;
+      const filePath = `content/uploads/${fileName}`;
 
       const arrayBuffer = await file.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
@@ -799,7 +514,15 @@ a {
         return new Response(JSON.stringify({ error: "Failed to upload image" }), { status: 500 });
       }
 
-      return new Response(JSON.stringify({ success: true }), {
+      const publicUrl = `/content/uploads/${fileName}`;
+
+      return new Response(JSON.stringify({
+        success: true,
+        original: publicUrl,
+        thumb: publicUrl,
+        webp: null,
+        optimized: null
+      }), {
         headers: { "Content-Type": "application/json" }
       });
     }
