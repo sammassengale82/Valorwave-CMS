@@ -1,536 +1,582 @@
+// ============================================================
+// Valor Wave CMS 2.0 — Cloudflare Worker (FULL)
+// - Routing
+// - GitHub content backend
+// - Image upload to /images
+// - GitHub OAuth login
+// - Session cookies
+// - CMS API
+// ============================================================
+
+// Expected bindings in env:
+// GITHUB_OWNER
+// GITHUB_REPO
+// GITHUB_TOKEN
+// GITHUB_BRANCH (optional, defaults to main)
+// GITHUB_CLIENT_ID
+// GITHUB_CLIENT_SECRET
+// SESSION_SECRET
+// ASSETS (Cloudflare Pages / static assets)
+
+// OAuth config
+const OAUTH_REDIRECT = "https://valorwave-cms.sammassengale82.workers.dev/callback";
+const OAUTH_SCOPES = "read:user";
+
+// ------------------------------------------------------------
+// MAIN FETCH
+// ------------------------------------------------------------
+
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const path = url.pathname;
+    try {
+      const url = new URL(request.url);
+      const { pathname } = url;
 
-    console.log("CMS WORKER ACTIVE:", path);
+      // OAuth endpoints
+      if (pathname === "/cms/login") {
+        return handleLogin(request, env);
+      }
+      if (pathname === "/callback") {
+        return handleCallback(request, env);
+      }
 
-    // ============================================================
-    // EMBEDDED CMS ASSETS (HTML + CSS)
-    // ============================================================
+      // API routes
+      if (pathname.startsWith("/api/")) {
+        return handleApi(request, env, ctx);
+      }
 
-    const INDEX_HTML = `<!DOCTYPE html>
+      // CMS UI
+      if (pathname === "/cms" || pathname === "/cms/") {
+        return serveCmsHtml(env);
+      }
+
+      // Static assets (Pages)
+      return env.ASSETS.fetch(request);
+    } catch (err) {
+      return jsonError("Unhandled error", 500, err);
+    }
+  }
+};
+
+// ------------------------------------------------------------
+// JSON HELPERS
+// ------------------------------------------------------------
+
+function json(data, status = 200, headers = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...headers
+    }
+  });
+}
+
+function jsonError(message, status = 500, err = null) {
+  const body = { error: message };
+  if (err) body.details = String(err);
+  return json(body, status);
+}
+
+// ------------------------------------------------------------
+// GITHUB HELPERS
+// ------------------------------------------------------------
+
+function githubApiUrl(env, path) {
+  const owner = env.GITHUB_OWNER;
+  const repo = env.GITHUB_REPO;
+  return `https://api.github.com/repos/${owner}/${repo}/${path}`;
+}
+
+async function githubRequest(env, path, init = {}) {
+  const token = env.GITHUB_TOKEN;
+  const headers = {
+    "Authorization": `Bearer ${token}`,
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "valorwave-cms-worker",
+    ...init.headers
+  };
+
+  const res = await fetch(githubApiUrl(env, path), {
+    ...init,
+    headers
+  });
+
+  if (!res.ok) {
+    let err;
+    try {
+      err = await res.json();
+    } catch {
+      err = { message: `GitHub HTTP ${res.status}` };
+    }
+    throw new Error(`GitHub error: ${err.message || res.statusText}`);
+  }
+
+  const text = await res.text();
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+function getBranch(env) {
+  return env.GITHUB_BRANCH || "main";
+}
+
+// ------------------------------------------------------------
+// GITHUB: LIST FILES UNDER content/
+// ------------------------------------------------------------
+
+async function listContentFiles(env) {
+  const branch = getBranch(env);
+  const tree = await githubRequest(
+    env,
+    `git/trees/${branch}?recursive=1`
+  );
+
+  if (!tree || !tree.tree) return [];
+
+  return tree.tree
+    .filter((item) => item.type === "blob" && item.path.startsWith("content/"))
+    .map((item) => ({ path: item.path }));
+}
+
+// ------------------------------------------------------------
+// GITHUB: READ FILE
+// ------------------------------------------------------------
+
+async function readContentFile(env, filePath) {
+  const branch = getBranch(env);
+  const data = await githubRequest(
+    env,
+    `contents/${encodeURIComponent(filePath)}?ref=${branch}`
+  );
+
+  if (!data || !data.content) {
+    throw new Error("File not found or invalid content");
+  }
+
+  const buff = Uint8Array.from(atob(data.content), (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(buff);
+}
+
+// ------------------------------------------------------------
+// GITHUB: WRITE FILE (create or update)
+// ------------------------------------------------------------
+
+async function writeContentFile(env, filePath, content, message) {
+  const branch = getBranch(env);
+
+  let sha = undefined;
+  try {
+    const existing = await githubRequest(
+      env,
+      `contents/${encodeURIComponent(filePath)}?ref=${branch}`
+    );
+    sha = existing.sha;
+  } catch {
+    // new file
+  }
+
+  const body = {
+    message: message || `Update ${filePath} via CMS`,
+    content: btoa(unescape(encodeURIComponent(content))),
+    branch
+  };
+
+  if (sha) body.sha = sha;
+
+  const res = await githubRequest(
+    env,
+    `contents/${encodeURIComponent(filePath)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }
+  );
+
+  return res;
+}
+
+// ------------------------------------------------------------
+// GITHUB: CREATE FOLDER (via .gitkeep)
+// ------------------------------------------------------------
+
+async function createFolder(env, folderPath) {
+  const normalized = folderPath.replace(/\/+$/, "");
+  const gitkeepPath = `${normalized}/.gitkeep`;
+  return writeContentFile(env, gitkeepPath, "", `Create folder ${normalized} via CMS`);
+}
+
+// ------------------------------------------------------------
+// CMS HTML SHELL (fallback)
+// ------------------------------------------------------------
+
+async function serveCmsHtml(env) {
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Valor Wave CMS 2.0</title>
-
+  <title>Valor Wave CMS</title>
   <link rel="stylesheet" href="/cms/admin.css" />
   <link rel="stylesheet" href="/cms/themes.css" />
 </head>
-
 <body class="logged-out theme-original">
-
-  <!-- LOGIN SCREEN -->
   <div id="login-screen">
+    <img id="login-logo" src="/logo.png" alt="Valor Wave Logo" />
     <h1>Valor Wave CMS</h1>
     <a id="login-btn" href="/cms/login">Login with GitHub</a>
   </div>
-
-  <!-- MAIN CMS UI -->
   <div id="cms" style="display:none;">
-
-    <!-- SIDEBAR -->
-    <aside id="sidebar">
-      <div class="sidebar-header">
-        <h2>Files</h2>
-        <div id="user-display"></div>
-
-        <button id="logout-btn">Logout</button>
-        <button id="new-file-btn">New File</button>
-        <button id="new-folder-btn">New Folder</button>
-
-        <button id="sidebar-toggle">Toggle Files</button>
-        <input id="search-input" type="text" placeholder="Search files..." />
-      </div>
-
-      <!-- File tree container -->
-      <div id="file-list"></div>
-    </aside>
-
-    <!-- EDITOR AREA -->
-    <main id="editor-area">
-
-      <!-- TOOLBAR -->
-      <div id="toolbar">
-
-        <!-- Formatting -->
-        <button data-cmd="bold"><b>B</b></button>
-        <button data-cmd="italic"><i>I</i></button>
-        <button data-cmd="underline"><u>U</u></button>
-        <button data-cmd="strike">S</button>
-
-        <button data-cmd="h1">H1</button>
-        <button data-cmd="h2">H2</button>
-        <button data-cmd="h3">H3</button>
-
-        <button data-cmd="ul">• List</button>
-        <button data-cmd="ol">1. List</button>
-
-        <button data-cmd="quote">❝</button>
-        <button data-cmd="code">{ }</button>
-        <button data-cmd="hr">HR</button>
-
-        <!-- Alignment -->
-        <button data-cmd="align-left">Left</button>
-        <button data-cmd="align-center">Center</button>
-        <button data-cmd="align-right">Right</button>
-
-        <!-- Clear formatting -->
-        <button data-cmd="remove-format">Clear</button>
-
-        <!-- Insert image -->
-        <button id="insert-image-btn">📷 Image</button>
-
-        <!-- Hidden upload input -->
-        <input 
-          type="file" 
-          id="file-upload-input"
-          accept="image/*"
-          multiple
-          style="display:none;"
-        />
-
-        <button id="file-upload-btn">Upload Image</button>
-
-        <!-- More menu -->
-        <button id="toolbar-more-btn">⋮</button>
-        <div id="toolbar-more-menu">
-          <button id="theme-btn">Theme</button>
-        </div>
-
-        <!-- Mode toggle -->
-        <button id="mode-toggle">WYSIWYG</button>
-
-      </div>
-
-      <!-- THEME PANEL -->
-      <div id="theme-panel">
-        <label for="theme-select">Theme:</label>
-        <select id="theme-select">
-          <option value="original">Original</option>
-          <option value="multicam">Army Multicam</option>
-          <option value="patriotic">Patriotic</option>
-        </select>
-        <button id="dark-mode-toggle">Toggle Dark</button>
-      </div>
-
-      <!-- EDITOR + PREVIEW -->
-      <div id="editor-wrapper">
-        <textarea id="editor"></textarea>
-        <div id="wysiwyg" class="hidden" contenteditable="true"></div>
-        <div id="preview"></div>
-      </div>
-
-      <!-- STATUS BAR -->
-      <div id="status-bar">
-        <span id="status-message">Ready</span>
-        <span id="status-autosave">Autosave: idle</span>
-      </div>
-
-      <!-- IMAGE URL MODAL -->
-      <div id="image-modal" class="modal hidden">
-        <div class="modal-content">
-          <h2>Insert Image by URL</h2>
-          <input id="image-url-input" type="text" placeholder="https://example.com/image.jpg" />
-          <button id="insert-image-confirm">Insert</button>
-          <button id="insert-image-cancel">Cancel</button>
-        </div>
-      </div>
-
-      <!-- UPLOAD GALLERY MODAL -->
-      <div id="upload-gallery-modal" class="modal hidden">
-        <div class="modal-content">
-          <h2>Uploaded Images</h2>
-          <div id="upload-gallery"></div>
-          <button id="insert-selected-btn" disabled>Insert Selected</button>
-          <button id="close-gallery-btn">Close</button>
-        </div>
-      </div>
-
-      <!-- UPLOAD PROGRESS -->
-      <div id="upload-progress" style="display:none;">
-        <div id="upload-progress-bar"></div>
-      </div>
-
-      <!-- DROP ZONE -->
-      <div id="drop-zone">Drop images here</div>
-
-    </main>
+    <!-- Full CMS HTML is served by /cms/index.html via ASSETS -->
   </div>
-
   <div id="toast-container"></div>
-
   <script src="/cms/cms-admin-v2.js" defer></script>
 </body>
 </html>`;
 
-    const ADMIN_CSS = `/* (same as admin.css above) */`;
-    const THEMES_CSS = `/* (same as themes.css above) */`;
-
-    // ============================================================
-    // HELPER: FETCH NON-HTML FILES FROM GITHUB RAW
-    // ============================================================
-
-    async function fetchFromGitHub(pathSuffix) {
-      const rawUrl = `https://raw.githubusercontent.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/${env.GITHUB_BRANCH}${pathSuffix}`;
-      const ghRes = await fetch(rawUrl, {
-        headers: { "User-Agent": "ValorWaveCMS" }
-      });
-
-      if (!ghRes.ok) {
-        return new Response("Not found", { status: 404 });
-      }
-
-      const headers = new Headers(ghRes.headers);
-
-      if (pathSuffix.endsWith(".js")) headers.set("Content-Type", "application/javascript; charset=utf-8");
-      if (pathSuffix.endsWith(".css")) headers.set("Content-Type", "text/css; charset=utf-8");
-      if (pathSuffix.endsWith(".md")) headers.set("Content-Type", "text/plain; charset=utf-8");
-      if (pathSuffix.endsWith(".json")) headers.set("Content-Type", "application/json; charset=utf-8");
-      if (pathSuffix.endsWith(".png")) headers.set("Content-Type", "image/png");
-      if (pathSuffix.endsWith(".jpg") || pathSuffix.endsWith(".jpeg")) headers.set("Content-Type", "image/jpeg");
-      if (pathSuffix.endsWith(".webp")) headers.set("Content-Type", "image/webp");
-
-      return new Response(await ghRes.arrayBuffer(), {
-        status: ghRes.status,
-        headers
-      });
-    }
-
-    // ============================================================
-    // LOGIN ROUTES
-    // ============================================================
-
-    if (path === "/cms/login") {
-      const redirectUrl =
-        `https://github.com/login/oauth/authorize` +
-        `?client_id=${env.GITHUB_CLIENT_ID}` +
-        `&redirect_uri=${encodeURIComponent(env.CALLBACK_URL)}` +
-        `&scope=repo`;
-
-      return Response.redirect(redirectUrl, 302);
-    }
-
-    if (path === "/cms/callback") {
-      const code = url.searchParams.get("code");
-      if (!code) {
-        return new Response("Missing ?code", { status: 400 });
-      }
-
-      const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          client_id: env.GITHUB_CLIENT_ID,
-          client_secret: env.GITHUB_CLIENT_SECRET,
-          code,
-          redirect_uri: env.CALLBACK_URL
-        })
-      });
-
-      const tokenData = await tokenRes.json();
-      if (!tokenData.access_token) {
-        return new Response("OAuth failed", { status: 401 });
-      }
-
-      const headers = new Headers({
-        "Location": "/cms",
-        "Set-Cookie": `session=${tokenData.access_token}; Path=/; HttpOnly; Secure; SameSite=Lax`
-      });
-
-      return new Response(null, { status: 302, headers });
-    }
-
-    // ============================================================
-    // CMS STATIC ROUTES
-    // ============================================================
-
-    if (path === "/cms" || path === "/cms/") {
-      return new Response(INDEX_HTML, {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8" }
-      });
-    }
-
-    if (path === "/cms/admin.css") {
-      return new Response(ADMIN_CSS, {
-        status: 200,
-        headers: { "Content-Type": "text/css; charset=utf-8" }
-      });
-    }
-
-    if (path === "/cms/themes.css") {
-      return new Response(THEMES_CSS, {
-        status: 200,
-        headers: { "Content-Type": "text/css; charset=utf-8" }
-      });
-    }
-
-    if (path === "/cms/cms-admin-v2.js") {
-      return fetchFromGitHub("/cms/cms-admin-v2.js");
-    }
-
-    if (path === "/favicon.ico") {
-      return fetchFromGitHub("/favicon.ico");
-    }
-
-    if (path.startsWith("/content/")) {
-      return fetchFromGitHub(path);
-    }
-
-    // ============================================================
-    // API ROUTES — AUTH + FILE OPERATIONS
-    // ============================================================
-
-    // /api/me
-    if (path === "/api/me") {
-      const cookie = request.headers.get("Cookie") || "";
-      const token = cookie.match(/session=([^;]+)/)?.[1];
-
-      if (!token) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      const ghUser = await fetch("https://api.github.com/user", {
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Authorization": `token ${token}`
-        }
-      });
-
-      if (!ghUser.ok) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      const user = await ghUser.json();
-
-      return new Response(JSON.stringify({
-        login: user.login,
-        avatar_url: user.avatar_url
-      }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // /api/logout
-    if (path === "/api/logout" && request.method === "POST") {
-      const headers = new Headers({
-        "Content-Type": "application/json",
-        "Set-Cookie": "session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
-      });
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers });
-    }
-
-    // LIST FILES
-    if (path === "/api/files") {
-      async function walk(dir) {
-        const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${dir}?ref=${env.GITHUB_BRANCH}`;
-        const res = await fetch(apiUrl, {
-          headers: { "User-Agent": "ValorWaveCMS" }
-        });
-
-        if (!res.ok) return [];
-
-        const items = await res.json();
-        let out = [];
-
-        for (const item of items) {
-          if (item.type === "file") {
-            out.push({ path: item.path });
-          } else if (item.type === "dir") {
-            const children = await walk(item.path);
-            out = out.concat(children);
-          }
-        }
-
-        return out;
-      }
-
-      const files = await walk("content");
-
-      return new Response(JSON.stringify(files), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // READ FILE
-    if (path === "/api/read-file" && request.method === "POST") {
-      const { filePath } = await request.json();
-
-      const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}?ref=${env.GITHUB_BRANCH}`;
-      const ghRes = await fetch(apiUrl, {
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Accept": "application/vnd.github.v3.raw"
-        }
-      });
-
-      if (!ghRes.ok) {
-        return new Response(JSON.stringify({ error: "Failed to read file" }), { status: 500 });
-      }
-
-      const content = await ghRes.text();
-      return new Response(JSON.stringify({ content }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // WRITE FILE
-    if (path === "/api/write-file" && request.method === "POST") {
-      const { filePath, content, message } = await request.json();
-
-      const getUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`;
-      const getRes = await fetch(getUrl, {
-        headers: { "User-Agent": "ValorWaveCMS" }
-      });
-
-      let sha = null;
-      if (getRes.ok) {
-        const data = await getRes.json();
-        sha = data.sha;
-      }
-
-      const putRes = await fetch(getUrl, {
-        method: "PUT",
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: message || `Update ${filePath}`,
-          content: btoa(unescape(encodeURIComponent(content))),
-          sha
-        })
-      });
-
-      if (!putRes.ok) {
-        return new Response(JSON.stringify({ error: "Failed to write file" }), { status: 500 });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // NEW FILE
-    if (path === "/api/new-file" && request.method === "POST") {
-      const { path: filePath, content, message } = await request.json();
-
-      const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`;
-
-      const res = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: message || `Create ${filePath}`,
-          content: btoa(unescape(encodeURIComponent(content || "")))
-        })
-      });
-
-      if (!res.ok) {
-        return new Response(JSON.stringify({ error: "Failed to create file" }), { status: 500 });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // NEW FOLDER
-    if (path === "/api/new-folder" && request.method === "POST") {
-      const { folderPath } = await request.json();
-
-      const placeholderFile = `${folderPath.replace(/\/+$/, "")}/.keep`;
-      const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${placeholderFile}`;
-
-      const res = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: `Create folder ${folderPath}`,
-          content: btoa("placeholder")
-        })
-      });
-
-      if (!res.ok) {
-        return new Response(JSON.stringify({ error: "Failed to create folder" }), { status: 500 });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // UPLOAD IMAGE
-    if (path === "/api/upload-image" && request.method === "POST") {
-      const form = await request.formData();
-      const file = form.get("file");
-
-      if (!file) {
-        return new Response(JSON.stringify({ error: "No file" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" }
-        });
-      }
-
-      const fileName = file.name || `upload-${Date.now()}.bin`;
-      const filePath = `content/uploads/${fileName}`;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-      const apiUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`;
-
-      const res = await fetch(apiUrl, {
-        method: "PUT",
-        headers: {
-          "User-Agent": "ValorWaveCMS",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: `Upload image ${filePath}`,
-          content: base64
-        })
-      });
-
-      if (!res.ok) {
-        return new Response(JSON.stringify({ error: "Failed to upload image" }), { status: 500 });
-      }
-
-      const publicUrl = `/content/uploads/${fileName}`;
-
-      return new Response(JSON.stringify({
-        success: true,
-        original: publicUrl,
-        thumb: publicUrl,
-        webp: null,
-        optimized: null
-      }), {
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // ============================================================
-    // FALLBACK
-    // ============================================================
-
-    return new Response("Not found", { status: 404 });
+  return new Response(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" }
+  });
+}
+
+// ============================================================
+// AUTH / SESSION HELPERS (GitHub OAuth)
+// ============================================================
+
+function sign(value, secret) {
+  const encoder = new TextEncoder();
+  const key = encoder.encode(secret);
+  const data = encoder.encode(value);
+
+  return crypto.subtle
+    .importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"])
+    .then((cryptoKey) => crypto.subtle.sign("HMAC", cryptoKey, data))
+    .then((sig) => {
+      const b = new Uint8Array(sig);
+      return btoa(String.fromCharCode(...b));
+    });
+}
+
+async function createSessionCookie(env, username) {
+  const value = `user=${username}`;
+  const signature = await sign(value, env.SESSION_SECRET);
+  const cookie = `${value};sig=${signature}`;
+
+  return `cms_session=${cookie}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`;
+}
+
+async function readSessionCookie(request, env) {
+  const cookie = request.headers.get("Cookie") || "";
+  const match = cookie.match(/cms_session=([^;]+)/);
+  if (!match) return null;
+
+  const raw = match[1];
+  const parts = raw.split(";sig=");
+  if (parts.length !== 2) return null;
+
+  const value = parts[0];
+  const signature = parts[1];
+
+  const expected = await sign(value, env.SESSION_SECRET);
+  if (signature !== expected) return null;
+
+  const username = value.replace("user=", "");
+  return { login: username };
+}
+
+// ============================================================
+// GITHUB OAUTH FLOW
+// ============================================================
+
+async function handleLogin(request, env) {
+  const state = crypto.randomUUID();
+
+  const url =
+    `https://github.com/login/oauth/authorize` +
+    `?client_id=${env.GITHUB_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(OAUTH_REDIRECT)}` +
+    `&scope=${encodeURIComponent(OAUTH_SCOPES)}` +
+    `&state=${state}`;
+
+  return Response.redirect(url, 302);
+}
+
+async function handleCallback(request, env) {
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+
+  if (!code) return jsonError("Missing OAuth code", 400);
+
+  const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      client_id: env.GITHUB_CLIENT_ID,
+      client_secret: env.GITHUB_CLIENT_SECRET,
+      code,
+      redirect_uri: OAUTH_REDIRECT
+    })
+  });
+
+  const tokenJson = await tokenRes.json();
+  if (!tokenJson.access_token) {
+    return jsonError("OAuth token exchange failed", 500);
   }
-};
+
+  const accessToken = tokenJson.access_token;
+
+  const userRes = await fetch("https://api.github.com/user", {
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "User-Agent": "valorwave-cms"
+    }
+  });
+
+  const userJson = await userRes.json();
+  if (!userJson.login) {
+    return jsonError("Failed to fetch GitHub user", 500);
+  }
+
+  const cookie = await createSessionCookie(env, userJson.login);
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      "Location": "/cms",
+      "Set-Cookie": cookie
+    }
+  });
+}
+
+// ============================================================
+// API ROUTER
+// ============================================================
+
+async function handleApi(request, env, ctx) {
+  const url = new URL(request.url);
+  const { pathname } = url;
+  const method = request.method.toUpperCase();
+
+  try {
+    if (pathname === "/api/files" && method === "GET") {
+      return handleListFiles(env);
+    }
+
+    if (pathname === "/api/read-file" && method === "POST") {
+      return handleReadFile(request, env);
+    }
+
+    if (pathname === "/api/write-file" && method === "POST") {
+      return handleWriteFile(request, env);
+    }
+
+    if (pathname === "/api/new-file" && method === "POST") {
+      return handleNewFile(request, env);
+    }
+
+    if (pathname === "/api/new-folder" && method === "POST") {
+      return handleNewFolder(request, env);
+    }
+
+    if (pathname === "/api/upload-image" && method === "POST") {
+      return handleUploadImage(request, env);
+    }
+
+    if (pathname === "/api/me" && method === "GET") {
+      return handleMe(request, env);
+    }
+
+    if (pathname === "/api/logout" && method === "POST") {
+      return handleLogout(request, env);
+    }
+
+    return jsonError("Not found", 404);
+  } catch (err) {
+    return jsonError("API error", 500, err);
+  }
+}
+
+// ============================================================
+// /api/files
+// ============================================================
+
+async function handleListFiles(env) {
+  const files = await listContentFiles(env);
+  return json(files);
+}
+
+// ============================================================
+// /api/read-file
+// ============================================================
+
+async function handleReadFile(request, env) {
+  const body = await request.json();
+  const filePath = body.filePath;
+
+  if (!filePath) {
+    return jsonError("filePath required", 400);
+  }
+
+  try {
+    const content = await readContentFile(env, filePath);
+    return json({ content });
+  } catch (err) {
+    return jsonError("Failed to read file", 500, err);
+  }
+}
+
+// ============================================================
+// /api/write-file
+// ============================================================
+
+async function handleWriteFile(request, env) {
+  const body = await request.json();
+  const { filePath, content, message } = body;
+
+  if (!filePath) return jsonError("filePath required", 400);
+
+  try {
+    const res = await writeContentFile(env, filePath, content || "", message);
+    return json({ ok: true, commit: res.commit && res.commit.sha });
+  } catch (err) {
+    return jsonError("Failed to write file", 500, err);
+  }
+}
+
+// ============================================================
+// /api/new-file
+// ============================================================
+
+async function handleNewFile(request, env) {
+  const body = await request.json();
+  const { path, content, message } = body;
+
+  if (!path) return jsonError("path required", 400);
+
+  try {
+    const res = await writeContentFile(env, path, content || "", message);
+    return json({ ok: true, path, commit: res.commit && res.commit.sha });
+  } catch (err) {
+    return jsonError("Failed to create file", 500, err);
+  }
+}
+
+// ============================================================
+// /api/new-folder
+// ============================================================
+
+async function handleNewFolder(request, env) {
+  const body = await request.json();
+  const { folderPath } = body;
+
+  if (!folderPath) return jsonError("folderPath required", 400);
+
+  try {
+    const res = await createFolder(env, folderPath);
+    return json({ ok: true, folderPath, commit: res.commit && res.commit.sha });
+  } catch (err) {
+    return jsonError("Failed to create folder", 500, err);
+  }
+}
+
+// ============================================================
+// /api/me  (real session-based)
+// ============================================================
+
+async function handleMe(request, env) {
+  const session = await readSessionCookie(request, env);
+  if (!session) return json({ login: null });
+  return json({ login: session.login });
+}
+
+// ============================================================
+// /api/logout
+// ============================================================
+
+async function handleLogout(request, env) {
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      "Set-Cookie": "cms_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax"
+    }
+  });
+}
+
+// ============================================================
+// /api/upload-image  (repo root /images)
+// ============================================================
+
+async function handleUploadImage(request, env) {
+  const contentType = request.headers.get("Content-Type") || "";
+  if (!contentType.startsWith("multipart/form-data")) {
+    return jsonError("multipart/form-data required", 400);
+  }
+
+  const formData = await request.formData();
+  const file = formData.get("file");
+
+  if (!file || typeof file === "string") {
+    return jsonError("file field required", 400);
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const ts = Date.now();
+  const repoPath = `images/${ts}-${safeName}`;
+
+  const base64Content = btoa(String.fromCharCode(...bytes));
+
+  const branch = getBranch(env);
+  let sha = undefined;
+
+  try {
+    const existing = await githubRequest(
+      env,
+      `contents/${encodeURIComponent(repoPath)}?ref=${branch}`
+    );
+    sha = existing.sha;
+  } catch {
+    // new file
+  }
+
+  const body = {
+    message: `Upload image ${repoPath} via CMS`,
+    content: base64Content,
+    branch
+  };
+  if (sha) body.sha = sha;
+
+  const res = await githubRequest(
+    env,
+    `contents/${encodeURIComponent(repoPath)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }
+  );
+
+  const publicUrl = `/images/${ts}-${safeName}`;
+
+  return json({
+    ok: true,
+    original: publicUrl,
+    thumb: publicUrl,
+    webp: publicUrl,
+    optimized: publicUrl,
+    commit: res.commit && res.commit.sha
+  });
+}
