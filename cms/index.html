@@ -9,18 +9,190 @@
   <link rel="stylesheet" href="/cms/themes.css" />
 </head>
 
-<body class="logged-out">
+<body class="logged-out theme-original">
 
-  <!-- LOGIN SCREEN -->
+  <!-- ============================================================
+       LOGIN SCREEN
+  ============================================================ -->
   <div id="login-screen">
+    <img id="login-logo" src="/logo.png" alt="Valor Wave Logo" />
     <h1>Valor Wave CMS</h1>
     <a id="login-btn" href="/cms/login">Login with GitHub</a>
   </div>
 
-  <!-- MAIN CMS UI -->
+  <!-- ============================================================
+       MAIN CMS UI
+  ============================================================ -->
   <div id="cms" style="display:none;">
-    <!-- (unchanged CMS UI) -->
+
+    <!-- ============================================================
+         SIDEBAR
+    ============================================================ -->
+    <aside id="sidebar">
+
+      <div class="sidebar-header">
+
+        <!-- Small logo -->
+        <div id="cms-logo-container">
+          <img id="cms-logo" src="/logo.png" alt="Logo" />
+        </div>
+
+        <h2>Files</h2>
+        <div id="user-display"></div>
+
+        <button id="logout-btn">Logout</button>
+        <button id="new-file-btn">New File</button>
+        <button id="new-folder-btn">New Folder</button>
+
+        <button id="sidebar-toggle">Toggle Files</button>
+
+        <input id="search-input" type="text" placeholder="Search files..." />
+      </div>
+
+      <!-- File tree container -->
+      <div id="file-list"></div>
+    </aside>
+
+    <!-- ============================================================
+         EDITOR AREA
+    ============================================================ -->
+    <main id="editor-area">
+
+      <!-- ============================================================
+           TOOLBAR
+      ============================================================ -->
+      <div id="toolbar">
+
+        <!-- Formatting -->
+        <button data-cmd="bold"><b>B</b></button>
+        <button data-cmd="italic"><i>I</i></button>
+        <button data-cmd="underline"><u>U</u></button>
+        <button data-cmd="strike">S</button>
+
+        <button data-cmd="h1">H1</button>
+        <button data-cmd="h2">H2</button>
+        <button data-cmd="h3">H3</button>
+
+        <button data-cmd="ul">• List</button>
+        <button data-cmd="ol">1. List</button>
+
+        <button data-cmd="quote">❝</button>
+        <button data-cmd="code">{ }</button>
+        <button data-cmd="hr">HR</button>
+
+        <!-- Alignment -->
+        <button data-cmd="align-left">Left</button>
+        <button data-cmd="align-center">Center</button>
+        <button data-cmd="align-right">Right</button>
+
+        <!-- Clear formatting -->
+        <button data-cmd="remove-format">Clear</button>
+
+        <!-- Insert image -->
+        <button id="insert-image-btn">📷 Image</button>
+
+        <!-- Hidden upload input -->
+        <input 
+          type="file" 
+          id="file-upload-input"
+          accept="image/*"
+          multiple
+          style="display:none;"
+        />
+
+        <button id="file-upload-btn">Upload Image</button>
+
+        <!-- More menu -->
+        <button id="toolbar-more-btn">⋮</button>
+        <div id="toolbar-more-menu">
+          <button id="theme-btn">Theme</button>
+        </div>
+
+        <!-- Mode toggle -->
+        <button id="mode-toggle">WYSIWYG</button>
+
+      </div>
+
+      <!-- ============================================================
+           THEME PANEL
+      ============================================================ -->
+      <div id="theme-panel">
+        <label for="theme-select">Theme:</label>
+        <select id="theme-select">
+          <option value="original">Original</option>
+          <option value="multicam">Army Multicam</option>
+          <option value="patriotic">Patriotic</option>
+        </select>
+        <button id="dark-mode-toggle">Toggle Dark</button>
+      </div>
+
+      <!-- ============================================================
+           EDITOR + PREVIEW + RESIZE HANDLE
+      ============================================================ -->
+      <div id="editor-wrapper">
+
+        <!-- Editor -->
+        <textarea id="editor"></textarea>
+
+        <!-- WYSIWYG -->
+        <div id="wysiwyg" class="hidden" contenteditable="true"></div>
+
+        <!-- Resizable divider -->
+        <div id="resize-handle"></div>
+
+        <!-- Preview -->
+        <div id="preview"></div>
+      </div>
+
+      <!-- ============================================================
+           STATUS BAR
+      ============================================================ -->
+      <div id="status-bar">
+        <span id="status-message">Ready</span>
+        <span id="status-autosave">Autosave: idle</span>
+      </div>
+
+      <!-- ============================================================
+           IMAGE URL MODAL
+      ============================================================ -->
+      <div id="image-modal" class="modal hidden">
+        <div class="modal-content">
+          <h2>Insert Image by URL</h2>
+          <input id="image-url-input" type="text" placeholder="https://example.com/image.jpg" />
+          <button id="insert-image-confirm">Insert</button>
+          <button id="insert-image-cancel">Cancel</button>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           UPLOAD GALLERY MODAL
+      ============================================================ -->
+      <div id="upload-gallery-modal" class="modal hidden">
+        <div class="modal-content">
+          <h2>Uploaded Images</h2>
+          <div id="upload-gallery"></div>
+          <button id="insert-selected-btn" disabled>Insert Selected</button>
+          <button id="close-gallery-btn">Close</button>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           UPLOAD PROGRESS
+      ============================================================ -->
+      <div id="upload-progress" style="display:none;">
+        <div id="upload-progress-bar"></div>
+      </div>
+
+      <!-- ============================================================
+           DROP ZONE
+      ============================================================ -->
+      <div id="drop-zone">Drop images here</div>
+
+    </main>
   </div>
+
+  <!-- Toasts -->
+  <div id="toast-container"></div>
 
   <script src="/cms/cms-admin-v2.js" defer></script>
 </body>
