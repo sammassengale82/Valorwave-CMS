@@ -1,6 +1,7 @@
 /* ---------------------------------------------------------
    Valor Wave CMS 2.0 — Admin Styles
-   --------------------------------------------------------- */
+   Complete, expanded, aligned with full HTML + JS
+--------------------------------------------------------- */
 
 /* RESET */
 * {
@@ -9,51 +10,68 @@
   padding: 0;
 }
 
-html,
-body {
+html, body {
   height: 100%;
 }
 
 body {
   font-family: "JetBrains Mono", monospace;
-  background: #1a1a1a;
-  color: #eee;
+  background: var(--bg, #1a1a1a);
+  color: var(--text, #eee);
   overflow: hidden;
 }
 
-/* LOGIN SCREEN */
+/* ---------------------------------------------------------
+   LOGIN SCREEN
+--------------------------------------------------------- */
+
 #login-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100vh;
+  text-align: center;
+}
+
+#login-logo {
+  width: 160px;
+  height: auto;
+  margin-bottom: 20px;
 }
 
 #login-screen h1 {
   margin-bottom: 20px;
+  font-size: 28px;
 }
 
 #login-screen a {
   padding: 12px 24px;
   font-size: 18px;
-  background: #4da3ff;
+  background: var(--accent, #4da3ff);
   color: #000;
   text-decoration: none;
   border-radius: 4px;
+  font-weight: bold;
 }
 
-/* MAIN CMS LAYOUT */
+/* ---------------------------------------------------------
+   MAIN CMS LAYOUT
+--------------------------------------------------------- */
+
 #cms {
   display: flex;
   height: 100vh;
 }
 
-/* SIDEBAR */
+/* ---------------------------------------------------------
+   SIDEBAR
+--------------------------------------------------------- */
+
 #sidebar {
   width: 260px;
-  background: #111;
-  border-right: 1px solid #333;
+  background: var(--panel, #111);
+  border-right: 1px solid var(--border, #333);
   padding: 15px;
   overflow-y: auto;
   display: flex;
@@ -64,6 +82,18 @@ body {
   margin-bottom: 10px;
 }
 
+#cms-logo-container {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#cms-logo {
+  width: 60px;
+  height: auto;
+  opacity: 0.9;
+}
+
 .sidebar-header h2 {
   margin-bottom: 6px;
 }
@@ -71,48 +101,51 @@ body {
 #user-display {
   font-size: 13px;
   margin-bottom: 8px;
+  opacity: 0.8;
 }
 
 .sidebar-header button {
   width: 100%;
   margin-bottom: 6px;
   padding: 8px;
-  background: #222;
-  border: 1px solid #333;
-  color: #eee;
+  background: var(--panel, #222);
+  border: 1px solid var(--border, #333);
+  color: var(--text, #eee);
   cursor: pointer;
+  border-radius: 4px;
 }
 
 .sidebar-header button:hover {
-  background: #333;
-}
-
-#sidebar-controls {
-  margin-bottom: 10px;
+  background: var(--border, #333);
 }
 
 #search-input {
   width: 100%;
   padding: 6px;
-  margin-bottom: 8px;
-  border: 1px solid #333;
+  margin-top: 6px;
+  border: 1px solid var(--border, #333);
   background: #000;
-  color: #eee;
+  color: var(--text, #eee);
+  border-radius: 4px;
 }
 
-/* Sidebar toggle for mobile */
+/* Mobile sidebar toggle */
 #sidebar-toggle {
   display: none;
   width: 100%;
   padding: 8px;
   margin-bottom: 8px;
-  background: #222;
-  border: 1px solid #333;
-  color: #eee;
+  background: var(--panel, #222);
+  border: 1px solid var(--border, #333);
+  color: var(--text, #eee);
   cursor: pointer;
+  border-radius: 4px;
 }
 
-/* FILE TREE */
+/* ---------------------------------------------------------
+   FILE TREE
+--------------------------------------------------------- */
+
 #file-list ul {
   list-style: none;
   padding-left: 15px;
@@ -147,24 +180,30 @@ body {
 }
 
 .file-node:hover {
-  color: #4da3ff;
+  color: var(--accent, #4da3ff);
 }
 
-/* EDITOR AREA */
+/* ---------------------------------------------------------
+   EDITOR AREA
+--------------------------------------------------------- */
+
 #editor-area {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #1a1a1a;
+  background: var(--bg, #1a1a1a);
 }
 
-/* TOOLBAR */
+/* ---------------------------------------------------------
+   TOOLBAR
+--------------------------------------------------------- */
+
 #toolbar {
   display: flex;
   flex-wrap: wrap;
   padding: 8px;
-  background: #222;
-  border-bottom: 1px solid #333;
+  background: var(--panel, #222);
+  border-bottom: 1px solid var(--border, #333);
   align-items: center;
 }
 
@@ -172,30 +211,29 @@ body {
   margin-right: 6px;
   margin-bottom: 6px;
   padding: 6px 10px;
-  background: #333;
-  border: 1px solid #444;
-  color: #eee;
+  background: var(--panel, #333);
+  border: 1px solid var(--border, #444);
+  color: var(--text, #eee);
   cursor: pointer;
   font-size: 13px;
+  border-radius: 4px;
 }
 
 #toolbar button:hover {
-  background: #444;
+  background: var(--border, #444);
 }
 
-#toolbar-more {
-  position: relative;
-}
-
+/* More menu */
 #toolbar-more-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  background: #222;
-  border: 1px solid #333;
+  background: var(--panel, #222);
+  border: 1px solid var(--border, #333);
   padding: 6px;
   display: none;
   z-index: 10;
+  border-radius: 4px;
 }
 
 #toolbar-more-menu.visible {
@@ -207,12 +245,15 @@ body {
   margin: 2px 0;
 }
 
-/* THEME PANEL */
+/* ---------------------------------------------------------
+   THEME PANEL
+--------------------------------------------------------- */
+
 #theme-panel {
   display: none;
   padding: 8px;
-  background: #111;
-  border-bottom: 1px solid #333;
+  background: var(--panel, #111);
+  border-bottom: 1px solid var(--border, #333);
 }
 
 #theme-panel.visible {
@@ -225,105 +266,133 @@ body {
 #theme-select {
   padding: 4px 6px;
   background: #000;
-  color: #eee;
-  border: 1px solid #333;
+  color: var(--text, #eee);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
 }
 
 #dark-mode-toggle {
   padding: 4px 8px;
-  background: #333;
-  border: 1px solid #444;
-  color: #eee;
+  background: var(--panel, #333);
+  border: 1px solid var(--border, #444);
+  color: var(--text, #eee);
   cursor: pointer;
+  border-radius: 4px;
 }
 
-/* EDITOR + PREVIEW */
+/* ---------------------------------------------------------
+   EDITOR + PREVIEW + RESIZE HANDLE
+--------------------------------------------------------- */
+
 #editor-wrapper {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
-#editor,
-#wysiwyg,
-#preview {
+/* Editor */
+#editor {
   flex: 1;
   padding: 12px;
   overflow-y: auto;
-  border-right: 1px solid #333;
+  background: #000;
+  color: var(--text, #eee);
+  border: none;
+  resize: none;
   font-size: 14px;
 }
 
-#editor {
-  background: #000;
-  color: #eee;
-  border: none;
-  resize: none;
-}
-
+/* WYSIWYG */
 #wysiwyg {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
   background: #111;
-  color: #eee;
+  color: var(--text, #eee);
 }
 
 #wysiwyg.hidden {
   display: none;
 }
 
+/* Preview */
 #preview {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
   background: #111;
+  color: var(--text, #eee);
+  border-left: 1px solid var(--border, #333);
 }
 
-#preview h1,
-#preview h2,
-#preview h3 {
-  margin: 10px 0 6px;
+/* Resizable divider (Option B: thick handle) */
+#resize-handle {
+  width: 12px;
+  background: var(--border, #333);
+  cursor: col-resize;
+  flex-shrink: 0;
 }
 
-#preview p {
-  margin: 6px 0;
+#resize-handle:hover {
+  background: var(--accent, #4da3ff);
 }
 
-/* STATUS BAR */
+/* ---------------------------------------------------------
+   STATUS BAR
+--------------------------------------------------------- */
+
 #status-bar {
   display: flex;
   justify-content: space-between;
   padding: 6px 12px;
-  background: #222;
-  border-top: 1px solid #333;
+  background: var(--panel, #222);
+  border-top: 1px solid var(--border, #333);
   font-size: 13px;
 }
 
-/* DROP ZONE */
+/* ---------------------------------------------------------
+   DROP ZONE
+--------------------------------------------------------- */
+
 #drop-zone {
   margin: 10px;
   padding: 20px;
-  border: 2px dashed #555;
+  border: 2px dashed var(--border, #555);
   text-align: center;
   color: #aaa;
+  border-radius: 6px;
 }
 
 #drop-zone.dragover {
-  border-color: #4da3ff;
-  color: #4da3ff;
+  border-color: var(--accent, #4da3ff);
+  color: var(--accent, #4da3ff);
 }
 
-/* UPLOAD PROGRESS */
+/* ---------------------------------------------------------
+   UPLOAD PROGRESS
+--------------------------------------------------------- */
+
 #upload-progress {
   width: 100%;
   height: 6px;
-  background: #333;
+  background: var(--border, #333);
   margin-top: 4px;
+  border-radius: 4px;
 }
 
 #upload-progress-bar {
   height: 100%;
   width: 0%;
-  background: #4da3ff;
+  background: var(--accent, #4da3ff);
   transition: width 0.2s linear;
+  border-radius: 4px;
 }
 
-/* THUMBNAILS */
+/* ---------------------------------------------------------
+   THUMBNAILS
+--------------------------------------------------------- */
+
 #upload-gallery {
   display: flex;
   flex-wrap: wrap;
@@ -338,6 +407,7 @@ body {
   width: 100px;
   height: 100px;
   object-fit: cover;
+  border-radius: 4px;
 }
 
 .thumb .delete-btn {
@@ -349,9 +419,13 @@ body {
   border: none;
   padding: 2px 6px;
   cursor: pointer;
+  border-radius: 4px;
 }
 
-/* MODALS */
+/* ---------------------------------------------------------
+   MODALS
+--------------------------------------------------------- */
+
 .modal {
   position: fixed;
   top: 0;
@@ -370,11 +444,12 @@ body {
 }
 
 .modal-content {
-  background: #222;
+  background: var(--panel, #222);
   padding: 20px;
-  border: 1px solid #444;
+  border: 1px solid var(--border, #444);
   width: 400px;
   max-width: 90%;
+  border-radius: 6px;
 }
 
 .modal-content h2 {
@@ -385,12 +460,16 @@ body {
   width: 100%;
   padding: 8px;
   margin-bottom: 12px;
-  border: 1px solid #333;
+  border: 1px solid var(--border, #333);
   background: #000;
-  color: #eee;
+  color: var(--text, #eee);
+  border-radius: 4px;
 }
 
-/* TOASTS */
+/* ---------------------------------------------------------
+   TOASTS
+--------------------------------------------------------- */
+
 #toast-container {
   position: fixed;
   bottom: 10px;
@@ -399,24 +478,25 @@ body {
 }
 
 .toast {
-  background: #333;
-  color: #eee;
+  background: var(--panel, #333);
+  color: var(--text, #eee);
   padding: 8px 12px;
   margin-top: 6px;
   border-radius: 4px;
   font-size: 13px;
-}
-
-.toast.success {
-  border-left: 4px solid #4da3ff;
+  border-left: 4px solid var(--accent, #4da3ff);
 }
 
 .toast.error {
-  border-left: 4px solid #c00;
+  border-left-color: #c00;
 }
 
-/* MOBILE LAYOUT (Option A desktop, Option 2 mobile) */
+/* ---------------------------------------------------------
+   MOBILE LAYOUT (Option 2)
+--------------------------------------------------------- */
+
 @media (max-width: 900px) {
+
   #cms {
     flex-direction: column;
   }
@@ -425,7 +505,7 @@ body {
     width: 100%;
     height: auto;
     border-right: none;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border, #333);
   }
 
   #sidebar-toggle {
@@ -443,6 +523,7 @@ body {
     display: block;
   }
 
+  /* Editor + Preview stacked */
   #editor-wrapper {
     flex-direction: column;
   }
@@ -451,8 +532,15 @@ body {
   #wysiwyg,
   #preview {
     border-right: none;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border, #333);
     height: 35vh;
+  }
+
+  /* Horizontal resize handle */
+  #resize-handle {
+    width: 100%;
+    height: 12px;
+    cursor: row-resize;
   }
 
   #drop-zone {
