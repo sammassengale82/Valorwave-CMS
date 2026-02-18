@@ -578,7 +578,7 @@ function wireEvents() {
   if (loginBtn) {
     loginBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "/cms/login";
+      window.location.href = "https://valorwaveentertainment.com/cms/login";
     });
   }
 
