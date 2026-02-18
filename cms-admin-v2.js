@@ -9,7 +9,7 @@
 // DOM HOOKS
 // ------------------------------------------------------------
 
-const loginBtn = document.getElementById("login-btn");
+const loginBtn = document.getElementById("login");
 const userDisplay = document.getElementById("user-display");
 
 const editorTextarea = document.getElementById("editor");
