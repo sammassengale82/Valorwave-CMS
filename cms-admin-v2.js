@@ -72,7 +72,7 @@ let editorStartHeight = 0;
 // API HELPER
 // ------------------------------------------------------------
 
-const API_BASE = "/api/";
+const API_BASE = "/cms/api/";
 
 async function api(endpoint, options = {}) {
   const url = API_BASE + endpoint;
@@ -325,7 +325,7 @@ async function uploadFile(file, progressBar, progressContainer) {
   formData.append("file", file);
 
   const xhr = new XMLHttpRequest();
-  xhr.open("POST", "/api/upload-image");
+  xhr.open("POST", "/cms/api/upload-image");
 
   xhr.upload.onprogress = (e) => {
     if (e.lengthComputable) {
