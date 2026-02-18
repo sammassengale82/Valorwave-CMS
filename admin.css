@@ -548,3 +548,15 @@ body {
     padding: 12px;
   }
 }
+#toast-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+#toast-container .toast {
+  pointer-events: auto;
+}
