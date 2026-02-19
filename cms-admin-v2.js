@@ -72,7 +72,7 @@ let editorStartHeight = 0;
 // API HELPER
 // ------------------------------------------------------------
 
-const API_BASE = "/cms/api/";
+const API_BASE = "/api/";
 
 async function api(endpoint, options = {}) {
   const url = API_BASE + endpoint;
@@ -325,7 +325,7 @@ async function uploadFile(file, progressBar, progressContainer) {
   formData.append("file", file);
 
   const xhr = new XMLHttpRequest();
-  xhr.open("POST", "/cms/api/upload-image");
+  xhr.open("POST", "/api/upload-image");
 
   xhr.upload.onprogress = (e) => {
     if (e.lengthComputable) {
@@ -578,14 +578,14 @@ function wireEvents() {
   if (loginBtn) {
     loginBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      window.location.href = "https://valorwaveentertainment.com/cms/login";
+      window.location.href = "https://cms.valorwaveentertainment.com/login";
     });
   }
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await api("logout", { method: "POST" });
-      window.location.href = "https://valorwaveentertainment.com/cms/login";
+      window.location.href = "https://cms.valorwaveentertainment.com/login";
     });
   }
 
