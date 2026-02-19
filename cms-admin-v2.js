@@ -585,7 +585,7 @@ function wireEvents() {
   if (logoutBtn) {
     logoutBtn.addEventListener("click", async () => {
       await api("logout", { method: "POST" });
-      window.location.href = "/cms";
+      window.location.href = "https://valorwaveentertainment.com/cms/login";
     });
   }
 
