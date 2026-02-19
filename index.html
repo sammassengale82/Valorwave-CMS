@@ -2,152 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Valor Wave CMS</title>
+  <title>Valor Wave Visual CMS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/admin.css" />
-  <link rel="stylesheet" href="/themes.css" />
+  <link rel="stylesheet" href="/cms/cms-admin-v2.css" />
 </head>
 
-<body class="logged-out">
+<body>
 
   <!-- ============================================================
-       LOGIN SCREEN
+       TOP BAR
   ============================================================ -->
-  <div id="login-screen">
-    <img id="login-logo" src="/logo.png" alt="Valor Wave Logo" />
-    <h1>Valor Wave CMS</h1>
-    <a id="login-btn" href="https://cms.valorwaveentertainment.com/login">
-      Login with GitHub
-    </a>
+  <header id="cms-topbar">
+    <div class="left">
+      <span id="cms-logo">Valor Wave CMS</span>
+      <span id="cms-status">Ready</span>
+    </div>
+
+    <div class="right">
+      <button id="btn-save-draft" class="btn">Save Draft</button>
+      <button id="btn-publish" class="btn primary">Publish</button>
+      <button id="btn-logout" class="btn danger">Logout</button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN LAYOUT
+  ============================================================ -->
+  <main id="cms-main">
+    <iframe id="preview-frame" title="Site Preview"></iframe>
+  </main>
+
+  <!-- ============================================================
+       POPUP EDITOR
+  ============================================================ -->
+  <div id="editor-overlay" class="hidden">
+    <div id="editor-modal">
+      <div class="editor-header">
+        <h2 id="editor-title">Edit Content</h2>
+        <button id="editor-close" class="icon-btn">&times;</button>
+      </div>
+
+      <div class="editor-body">
+        <!-- TEXT EDITOR -->
+        <div id="editor-text-block">
+          <label class="field-label">Content</label>
+          <textarea id="editor-textarea"></textarea>
+        </div>
+
+        <!-- IMAGE EDITOR -->
+        <div id="editor-image-block" class="hidden">
+          <label class="field-label">Image URL</label>
+          <input type="text" id="editor-image-url" />
+
+          <label class="field-label">Upload New Image</label>
+          <input type="file" id="editor-image-file" accept="image/*" />
+        </div>
+      </div>
+
+      <div class="editor-footer">
+        <button id="editor-save" class="btn primary">Apply Changes</button>
+        <button id="editor-cancel" class="btn">Cancel</button>
+      </div>
+    </div>
   </div>
-
-  <!-- ============================================================
-       MAIN CMS UI
-  ============================================================ -->
-  <div id="cms" style="display:none; flex-direction:column; height:100vh;">
-
-    <!-- ------------------------------------------------------------
-         TOP BAR
-    ------------------------------------------------------------ -->
-    <div id="top-bar">
-      <span id="user-display"></span>
-
-      <div id="status-area">
-        <span id="status-message">Ready</span>
-        <span id="status-autosave">Autosave: idle</span>
-      </div>
-
-      <button id="theme-btn">Themes</button>
-      <button id="logout-btn">Logout</button>
-    </div>
-
-    <!-- ------------------------------------------------------------
-         THEME PANEL
-    ------------------------------------------------------------ -->
-    <div id="theme-panel" class="hidden">
-      <h3>CMS Theme</h3>
-      <select id="theme-select">
-        <option value="original">Original</option>
-        <option value="multicam">Multicam</option>
-        <option value="patriotic">Patriotic</option>
-      </select>
-
-      <h3>Dark Mode</h3>
-      <button id="dark-mode-toggle">Toggle Dark Mode</button>
-    </div>
-
-    <!-- ------------------------------------------------------------
-         TOOLBAR
-    ------------------------------------------------------------ -->
-    <div id="toolbar">
-      <button data-cmd="bold">Bold</button>
-      <button data-cmd="italic">Italic</button>
-      <button data-cmd="underline">Underline</button>
-      <button data-cmd="strike">Strike</button>
-      <button data-cmd="h1">H1</button>
-      <button data-cmd="h2">H2</button>
-      <button data-cmd="h3">H3</button>
-      <button data-cmd="ul">UL</button>
-      <button data-cmd="ol">OL</button>
-      <button data-cmd="quote">Quote</button>
-      <button data-cmd="code">Code</button>
-      <button data-cmd="hr">HR</button>
-
-      <button id="insert-image-btn">Insert Image</button>
-
-      <button id="toolbar-more-btn">More</button>
-      <div id="toolbar-more-menu" class="hidden">
-        <!-- future items -->
-      </div>
-    </div>
-
-    <!-- ------------------------------------------------------------
-         EDITOR + PREVIEW SPLIT VIEW
-    ------------------------------------------------------------ -->
-    <div id="editor-preview-container">
-
-      <textarea id="editor"></textarea>
-
-      <div id="resize-handle"></div>
-
-      <div id="preview"></div>
-
-    </div>
-
-    <!-- ------------------------------------------------------------
-         IMAGE URL INSERT MODAL
-    ------------------------------------------------------------ -->
-    <div id="image-modal" class="modal hidden">
-      <div class="modal-content">
-        <h3>Insert Image</h3>
-        <input id="image-url-input" type="text" placeholder="Image URL" />
-        <div class="modal-actions">
-          <button id="insert-image-confirm">Insert</button>
-          <button id="insert-image-cancel">Cancel</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ------------------------------------------------------------
-         UPLOAD GALLERY MODAL
-    ------------------------------------------------------------ -->
-    <div id="upload-gallery-modal" class="modal hidden">
-      <div class="modal-content large">
-        <h3>Uploaded Images</h3>
-        <div id="upload-gallery"></div>
-
-        <div class="modal-actions">
-          <button id="insert-selected-btn" disabled>Insert Selected</button>
-          <button id="close-gallery-btn">Close</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ------------------------------------------------------------
-         UPLOAD AREA
-    ------------------------------------------------------------ -->
-    <div id="upload-area">
-      <button id="file-upload-btn">Upload Images</button>
-      <input id="file-upload-input" type="file" accept="image/*" multiple hidden />
-
-      <div id="drop-zone">Drop images here</div>
-
-      <div id="upload-progress" class="progress-container">
-        <div id="upload-progress-bar" class="progress-bar"></div>
-      </div>
-    </div>
-
-    <!-- ------------------------------------------------------------
-         TOASTS
-    ------------------------------------------------------------ -->
-    <div id="toast-container"></div>
-
-  </div> <!-- end #cms -->
 
   <!-- ============================================================
        SCRIPT
   ============================================================ -->
-  <script src="/cms-admin-v2.js"></script>
+  <script src="/cms/cms-admin-v2.js"></script>
 
 </body>
 </html>
