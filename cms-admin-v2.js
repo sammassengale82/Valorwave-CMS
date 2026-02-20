@@ -249,6 +249,87 @@ function initEditorShortcuts() {
         }
     });
 }
+// ============================
+// PHASE 5 — IMAGE UPLOAD SYSTEM
+// ============================
+
+// Upload image to GitHub (Valorwave-CMS/uploads/)
+async function uploadImageToGitHub(file) {
+    if (!githubToken) {
+        alert("You must log in with GitHub before uploading images.");
+        return null;
+    }
+
+    const repoOwner = "SamMassengale"; // CHANGE IF NEEDED
+    const repoName = "Valorwave-CMS";
+    const path = `uploads/${Date.now()}-${file.name}`;
+
+    const reader = new FileReader();
+
+    return new Promise((resolve, reject) => {
+        reader.onload = async () => {
+            const base64Content = reader.result.split(",")[1];
+
+            try {
+                const response = await githubApiRequest(
+                    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+                    "PUT",
+                    {
+                        message: `Upload image ${file.name}`,
+                        content: base64Content
+                    }
+                );
+
+                if (response && response.content && response.content.download_url) {
+                    resolve(response.content.download_url);
+                } else {
+                    reject("Invalid GitHub response");
+                }
+            } catch (err) {
+                console.error("Image upload failed:", err);
+                reject(err);
+            }
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
+
+// Handle file input upload
+editorImageUpload.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const url = await uploadImageToGitHub(file);
+    if (url) {
+        editorImageURL.value = url;
+    }
+});
+
+// Drag & Drop
+const dropZone = document.getElementById("image-drop-zone");
+
+dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+    dropZone.classList.remove("dragover");
+});
+
+dropZone.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    dropZone.classList.remove("dragover");
+
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+
+    const url = await uploadImageToGitHub(file);
+    if (url) {
+        editorImageURL.value = url;
+    }
+});
 
 // -------------------------------
 // THEME SYSTEM (CMS + SITE)
@@ -518,6 +599,7 @@ logoutBtn.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", () => {
     initWysiwygToolbar();
     initEditorShortcuts();
+    // Phase 5 has no init function — drag/drop binds automatically
 });
 
 // -------------------------------
