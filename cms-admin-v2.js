@@ -1,9 +1,9 @@
 // -------------------------------
 // GitHub OAuth (Device Flow)
 // -------------------------------
-const GITHUB_CLIENT_ID = "0v23lioJaq0Kfz4sXFss"; // from your GitHub OAuth App
+const GITHUB_CLIENT_ID = "0v23lioJaq0Kfz4sXFss";
 const GITHUB_SCOPES = "repo";
-let githubToken = null; // in-memory only
+let githubToken = null;
 
 // -------------------------------
 // DOM references
@@ -37,7 +37,6 @@ const logoutBtn = document.getElementById("logout");
 const githubLoginBtn = document.getElementById("github-login");
 const authStatus = document.getElementById("auth-status");
 
-// Track current edit target
 let currentEditTarget = null;
 let currentEditType = "text";
 
@@ -127,18 +126,18 @@ applyChangesBtn.addEventListener("click", () => {
     try {
         editableFrame.contentWindow.postMessage(payload, "*");
     } catch (e) {
-        console.error("Failed to send apply-edit to editable frame:", e);
+        console.error("Failed to send apply-edit:", e);
     }
 
     editorOverlay.classList.add("hidden");
     currentEditTarget = null;
 });
+
 // ============================
 // PHASE 4 — WYSIWYG TOOLBAR
 // ============================
-
 function applyFormatting(type) {
-    const textarea = document.getElementById("editor-content");
+    const textarea = editorContent;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
@@ -149,70 +148,39 @@ function applyFormatting(type) {
     let replacement = selected;
 
     switch (type) {
-        case "bold":
-            replacement = `**${selected || "bold text"}**`;
-            break;
-
-        case "italic":
-            replacement = `*${selected || "italic text"}*`;
-            break;
-
-        case "underline":
-            replacement = `<u>${selected || "underlined text"}</u>`;
-            break;
-
-        case "h1":
-            replacement = `# ${selected || "Heading 1"}`;
-            break;
-
-        case "h2":
-            replacement = `## ${selected || "Heading 2"}`;
-            break;
-
-        case "h3":
-            replacement = `### ${selected || "Heading 3"}`;
-            break;
-
+        case "bold": replacement = `**${selected || "bold text"}**`; break;
+        case "italic": replacement = `*${selected || "italic text"}*`; break;
+        case "underline": replacement = `<u>${selected || "underlined text"}</u>`; break;
+        case "h1": replacement = `# ${selected || "Heading 1"}`; break;
+        case "h2": replacement = `## ${selected || "Heading 2"}`; break;
+        case "h3": replacement = `### ${selected || "Heading 3"}`; break;
         case "ul":
             replacement = (selected || "List item")
                 .split("\n")
                 .map(line => `- ${line}`)
                 .join("\n");
             break;
-
         case "ol":
             replacement = (selected || "List item")
                 .split("\n")
                 .map((line, i) => `${i + 1}. ${line}`)
                 .join("\n");
             break;
-
         case "left":
             replacement = `<div style="text-align:left">\n${selected || "Left aligned text"}\n</div>`;
             break;
-
         case "center":
             replacement = `<div style="text-align:center">\n${selected || "Centered text"}\n</div>`;
             break;
-
         case "right":
             replacement = `<div style="text-align:right">\n${selected || "Right aligned text"}\n</div>`;
             break;
     }
 
-    textarea.value =
-        value.substring(0, start) +
-        replacement +
-        value.substring(end);
-
+    textarea.value = value.substring(0, start) + replacement + value.substring(end);
     textarea.focus();
     textarea.selectionStart = start;
     textarea.selectionEnd = start + replacement.length;
-
-    // Refresh preview
-    if (typeof updatePreview === "function") {
-        updatePreview();
-    }
 }
 
 function initWysiwygToolbar() {
@@ -223,47 +191,35 @@ function initWysiwygToolbar() {
         const button = e.target.closest("button");
         if (!button) return;
         const action = button.dataset.action;
-        if (!action) return;
-        applyFormatting(action);
+        if (action) applyFormatting(action);
     });
 }
 
 function initEditorShortcuts() {
-    const textarea = document.getElementById("editor-content");
+    const textarea = editorContent;
     if (!textarea) return;
 
     textarea.addEventListener("keydown", (e) => {
         if (!e.ctrlKey && !e.metaKey) return;
 
-        if (e.key.toLowerCase() === "b") {
-            e.preventDefault();
-            applyFormatting("bold");
-        }
-        if (e.key.toLowerCase() === "i") {
-            e.preventDefault();
-            applyFormatting("italic");
-        }
-        if (e.key.toLowerCase() === "u") {
-            e.preventDefault();
-            applyFormatting("underline");
-        }
+        const key = e.key.toLowerCase();
+        if (key === "b") { e.preventDefault(); applyFormatting("bold"); }
+        if (key === "i") { e.preventDefault(); applyFormatting("italic"); }
+        if (key === "u") { e.preventDefault(); applyFormatting("underline"); }
     });
 }
+
 // ============================
 // PHASE 5 — IMAGE UPLOAD SYSTEM
 // ============================
-
-// Upload image to GitHub (Valorwave-CMS/uploads/)
 async function uploadImageToGitHub(file) {
     if (!githubToken) {
         alert("You must log in with GitHub before uploading images.");
         return null;
     }
 
-    const repoOwner = "SamMassengale"; // CHANGE IF NEEDED
-    const repoName = "Valorwave-CMS";
+    const repo = "Valorwave-CMS";
     const path = `uploads/${Date.now()}-${file.name}`;
-
     const reader = new FileReader();
 
     return new Promise((resolve, reject) => {
@@ -272,18 +228,19 @@ async function uploadImageToGitHub(file) {
 
             try {
                 const response = await githubApiRequest(
-                    `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`,
+                    path,
                     "PUT",
                     {
                         message: `Upload image ${file.name}`,
                         content: base64Content
-                    }
+                    },
+                    repo
                 );
 
-                if (response && response.content && response.content.download_url) {
+                if (response?.content?.download_url) {
                     resolve(response.content.download_url);
                 } else {
-                    reject("Invalid GitHub response");
+                    resolve(`https://raw.githubusercontent.com/sammassengale82/${repo}/main/${path}`);
                 }
             } catch (err) {
                 console.error("Image upload failed:", err);
@@ -295,18 +252,14 @@ async function uploadImageToGitHub(file) {
     });
 }
 
-// Handle file input upload
 editorImageUpload.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const url = await uploadImageToGitHub(file);
-    if (url) {
-        editorImageURL.value = url;
-    }
+    if (url) editorImageURL.value = url;
 });
 
-// Drag & Drop
 const dropZone = document.getElementById("image-drop-zone");
 
 dropZone.addEventListener("dragover", (e) => {
@@ -326,13 +279,56 @@ dropZone.addEventListener("drop", async (e) => {
     if (!file) return;
 
     const url = await uploadImageToGitHub(file);
-    if (url) {
-        editorImageURL.value = url;
-    }
+    if (url) editorImageURL.value = url;
 });
 
+// ============================
+// PHASE 6 — DRAFT HISTORY
+// ============================
+async function fetchDraftList() {
+    return githubApiRequest("drafts", "GET", null, "Valorwave-CMS");
+}
+
+async function fetchDraft(path) {
+    const response = await githubApiRequest(path, "GET", null, "Valorwave-CMS");
+    if (!response?.content) return null;
+    return JSON.parse(atob(response.content));
+}
+
+async function openDraftHistoryModal() {
+    const overlay = document.getElementById("draft-history-overlay");
+    const list = document.getElementById("draft-list");
+
+    list.innerHTML = "Loading...";
+
+    const drafts = await fetchDraftList();
+    list.innerHTML = "";
+
+    drafts.forEach(d => {
+        const item = document.createElement("div");
+        item.className = "draft-item";
+        item.textContent = d.name;
+        item.dataset.path = d.path;
+
+        item.addEventListener("click", async () => {
+            const draft = await fetchDraft(d.path);
+            if (!draft) return;
+
+            editorContent.value = draft.content || "";
+            editorImageURL.value = draft.imageUrl || "";
+
+            overlay.classList.add("hidden");
+            editorOverlay.classList.remove("hidden");
+        });
+
+        list.appendChild(item);
+    });
+
+    overlay.classList.remove("hidden");
+}
+
 // -------------------------------
-// THEME SYSTEM (CMS + SITE)
+// THEME SYSTEM
 // -------------------------------
 function applyCmsTheme(theme) {
     document.body.className = `theme-${theme}`;
@@ -340,73 +336,23 @@ function applyCmsTheme(theme) {
 
 function sendThemeToFrames(theme) {
     const msg = { type: "set-theme", theme };
-    try { editableFrame.contentWindow.postMessage(msg, "*"); } catch (e) {}
-    try { liveFrame.contentWindow.postMessage(msg, "*"); } catch (e) {}
+    try { editableFrame.contentWindow.postMessage(msg, "*"); } catch {}
+    try { liveFrame.contentWindow.postMessage(msg, "*"); } catch {}
 }
 
 async function loadSavedThemes() {
-    try {
-        const cmsTheme = localStorage.getItem("cms-theme") || "original";
-        const siteTheme = localStorage.getItem("site-theme") || "original";
+    const cmsTheme = localStorage.getItem("cms-theme") || "original";
+    const siteTheme = localStorage.getItem("site-theme") || "original";
 
-        cmsThemeSelect.value = cmsTheme;
-        siteThemeSelect.value = siteTheme;
+    cmsThemeSelect.value = cmsTheme;
+    siteThemeSelect.value = siteTheme;
 
-        applyCmsTheme(cmsTheme);
-        sendThemeToFrames(siteTheme);
-    } catch (e) {
-        console.warn("Theme load failed:", e);
-    }
+    applyCmsTheme(cmsTheme);
+    sendThemeToFrames(siteTheme);
 }
 
-// Save CMS theme → Valorwave-CMS
-saveCmsThemeBtn.addEventListener("click", async () => {
-    const theme = cmsThemeSelect.value;
-    localStorage.setItem("cms-theme", theme);
-
-    try {
-        await commitFile(
-            "cms-theme.txt",
-            theme,
-            "Save CMS theme from CMS",
-            "Valorwave-CMS"
-        );
-    } catch (e) {
-        console.warn("Failed to save CMS theme to GitHub:", e);
-    }
-
-    cmsThemeSavedMsg.style.opacity = 1;
-    setTimeout(() => cmsThemeSavedMsg.style.opacity = 0, 1500);
-});
-
-// Save Site theme → valorwaveentertainment
-saveSiteThemeBtn.addEventListener("click", async () => {
-    const theme = siteThemeSelect.value;
-    localStorage.setItem("site-theme", theme);
-
-    try {
-        await commitFile(
-            "site-theme.txt",
-            theme,
-            "Save site theme from CMS",
-            "valorwaveentertainment"
-        );
-    } catch (e) {
-        console.warn("Failed to save site theme to GitHub:", e);
-    }
-
-    siteThemeSavedMsg.style.opacity = 1;
-    setTimeout(() => siteThemeSavedMsg.style.opacity = 0, 1500);
-});
-
-// Instant preview on dropdown change
-cmsThemeSelect.addEventListener("change", e => {
-    applyCmsTheme(e.target.value);
-});
-
-siteThemeSelect.addEventListener("change", e => {
-    sendThemeToFrames(e.target.value);
-});
+cmsThemeSelect.addEventListener("change", e => applyCmsTheme(e.target.value));
+siteThemeSelect.addEventListener("change", e => sendThemeToFrames(e.target.value));
 
 // -------------------------------
 // GitHub OAuth Device Flow
@@ -428,12 +374,10 @@ async function startGitHubDeviceFlow() {
     const data = await res.json();
     if (!data.device_code) {
         authStatus.textContent = "Failed to start GitHub login.";
-        console.error(data);
         return;
     }
 
-    const msg = `Go to ${data.verification_uri} and enter code: ${data.user_code}`;
-    alert(msg);
+    alert(`Go to ${data.verification_uri} and enter code: ${data.user_code}`);
     authStatus.textContent = "Waiting for GitHub authorization...";
 
     await pollForGitHubToken(data.device_code, data.interval);
@@ -458,12 +402,8 @@ async function pollForGitHubToken(deviceCode, interval) {
 
         const data = await res.json();
 
-        if (data.error === "authorization_pending") {
-            continue;
-        }
-
+        if (data.error === "authorization_pending") continue;
         if (data.error) {
-            console.error("OAuth error:", data);
             authStatus.textContent = "GitHub auth failed.";
             return;
         }
@@ -475,24 +415,15 @@ async function pollForGitHubToken(deviceCode, interval) {
 }
 
 githubLoginBtn.addEventListener("click", () => {
-    if (githubToken) {
-        alert("Already authenticated with GitHub.");
-        return;
-    }
-    startGitHubDeviceFlow().catch(err => {
-        console.error(err);
-        authStatus.textContent = "GitHub auth error.";
-    });
+    if (githubToken) return alert("Already authenticated.");
+    startGitHubDeviceFlow();
 });
 
 // -------------------------------
-// GitHub API helpers (using OAuth token)
+// GitHub API helpers
 // -------------------------------
 async function githubApiRequest(path, method = "GET", body = null, repo, owner = "sammassengale82") {
-    if (!githubToken) {
-        alert("You must login with GitHub first.");
-        throw new Error("No GitHub token");
-    }
+    if (!githubToken) throw new Error("Not authenticated");
 
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
@@ -504,15 +435,10 @@ async function githubApiRequest(path, method = "GET", body = null, repo, owner =
         }
     };
 
-    if (body) {
-        options.body = JSON.stringify(body);
-    }
+    if (body) options.body = JSON.stringify(body);
 
     const res = await fetch(url, options);
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`GitHub ${method} ${path} failed: ${res.status} ${text}`);
-    }
+    if (!res.ok) throw new Error(`GitHub ${method} failed: ${res.status}`);
     return res.json();
 }
 
@@ -520,7 +446,7 @@ async function getFileSha(path, repo) {
     try {
         const data = await githubApiRequest(path, "GET", null, repo);
         return data.sha;
-    } catch (e) {
+    } catch {
         return null;
     }
 }
@@ -529,14 +455,8 @@ async function commitFile(path, content, message, repo) {
     const sha = await getFileSha(path, repo);
     const encoded = btoa(unescape(encodeURIComponent(content)));
 
-    const body = {
-        message,
-        content: encoded
-    };
-
-    if (sha) {
-        body.sha = sha;
-    }
+    const body = { message, content: encoded };
+    if (sha) body.sha = sha;
 
     return githubApiRequest(path, "PUT", body, repo);
 }
@@ -546,20 +466,26 @@ async function commitFile(path, content, message, repo) {
 // -------------------------------
 saveDraftBtn.addEventListener("click", async () => {
     try {
-        const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
-        const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const path = `drafts/${timestamp}.json`;
+
+        const draftData = {
+            content: editorContent.value,
+            imageUrl: editorImageURL.value,
+            timestamp
+        };
 
         await commitFile(
-            "drafts/index.html",
-            html,
-            "Save draft from CMS",
+            path,
+            JSON.stringify(draftData, null, 2),
+            `Save draft ${timestamp}`,
             "Valorwave-CMS"
         );
 
-        alert("Draft saved to Valorwave-CMS/drafts/index.html");
+        alert("Draft saved!");
     } catch (e) {
         console.error(e);
-        alert("Failed to save draft. Check console for details.");
+        alert("Failed to save draft.");
     }
 });
 
@@ -577,35 +503,42 @@ publishBtn.addEventListener("click", async () => {
             "valorwaveentertainment"
         );
 
-        alert("Site published to valorwaveentertainment/index.html");
+        alert("Site published!");
     } catch (e) {
         console.error(e);
-        alert("Failed to publish. Check console for details.");
+        alert("Failed to publish.");
     }
 });
 
 // -------------------------------
-// Logout (just clears token in this setup)
+// Logout
 // -------------------------------
 logoutBtn.addEventListener("click", () => {
     githubToken = null;
     authStatus.textContent = "Not authenticated";
-    alert("Logged out of GitHub in this session.");
+    alert("Logged out.");
 });
 
 // ============================
-// PHASE 4 — INITIALIZATION
+// INITIALIZATION
 // ============================
 document.addEventListener("DOMContentLoaded", () => {
     initWysiwygToolbar();
     initEditorShortcuts();
-    // Phase 5 has no init function — drag/drop binds automatically
+
+    const draftHistoryBtn = document.getElementById("draft-history");
+    const draftHistoryOverlay = document.getElementById("draft-history-overlay");
+    const closeDraftHistoryBtn = document.getElementById("close-draft-history");
+
+    if (draftHistoryBtn && draftHistoryOverlay && closeDraftHistoryBtn) {
+        draftHistoryBtn.addEventListener("click", openDraftHistoryModal);
+        closeDraftHistoryBtn.addEventListener("click", () => {
+            draftHistoryOverlay.classList.add("hidden");
+        });
+    }
 });
 
 // -------------------------------
-// Init
+// Load Themes
 // -------------------------------
 loadSavedThemes();
-
-
-
