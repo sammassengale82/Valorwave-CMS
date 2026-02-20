@@ -1,278 +1,269 @@
-/* ============================================================
-   Valor Wave Visual CMS — Stylesheet
-   Clean, modern, theme-ready, visual-editor compatible
-============================================================ */
-
-/* RESET */
-*,
-*::before,
-*::after {
+/* Base */
+* {
   box-sizing: border-box;
 }
 
-html, body {
+body {
   margin: 0;
-  padding: 0;
-  height: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #0b0f19;
-  color: #e5e7eb;
+  background: #05070a;
+  color: #f5f5f5;
 }
 
-/* ============================================================
-   THEME SUPPORT
-============================================================ */
-
-body.theme-original {
-  --accent: #2563eb;
-  --panel: #111827;
-  --border: #1f2937;
-  --bg: #0b0f19;
-  --text: #e5e7eb;
-}
-
-body.theme-multicam {
-  --accent: #8fa37b;
-  --panel: #1a1f14;
-  --border: #2a3320;
-  --bg: #0d1009;
-  --text: #e5e7eb;
-}
-
-body.theme-patriotic {
-  --accent: #b91c1c;
-  --panel: #111827;
-  --border: #1f2937;
-  --bg: #0b0f19;
-  --text: #e5e7eb;
-}
-
-body.dark {
-  --bg: #05070d;
-  --panel: #0d1117;
-  --border: #1f2937;
-  --text: #f3f4f6;
-}
-
-/* ============================================================
-   TOP BAR
-============================================================ */
-
-#cms-topbar {
+/* Header */
+.cms-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
+  padding: 12px 16px;
+  background: #111827;
+  border-bottom: 1px solid #1f2937;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-#cms-topbar .left {
+.cms-header h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.cms-actions {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-#cms-logo {
-  font-weight: 600;
-  font-size: 1.1rem;
-  letter-spacing: 0.03em;
-}
-
-#cms-status {
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
-
-#cms-topbar .right {
-  display: flex;
-  gap: 10px;
-}
-
-/* ============================================================
-   BUTTONS
-============================================================ */
-
-.btn {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 0.85rem;
-  transition: background 0.15s ease;
-}
-
-.btn:hover {
-  background: var(--border);
-}
-
-.btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.btn.primary:hover {
-  background: #1d4ed8;
-}
-
-.btn.danger {
-  background: #b91c1c;
-  border-color: #991b1b;
-  color: #fff;
-}
-
-.btn.danger:hover {
-  background: #7f1d1d;
-}
-
-/* ============================================================
-   MAIN LAYOUT
-============================================================ */
-
-#cms-main {
-  height: calc(100vh - 52px);
-  background: var(--bg);
-  display: flex;
-  overflow: hidden;
-}
-
-#preview-frame {
-  width: 100%;
-  height: 100%;
+.cms-actions button {
+  padding: 6px 12px;
+  border-radius: 4px;
   border: none;
-  background: #000;
+  cursor: pointer;
+  font-size: 13px;
 }
 
-/* ============================================================
-   POPUP EDITOR OVERLAY
-============================================================ */
+.cms-actions #saveDraftBtn {
+  background: #374151;
+  color: #e5e7eb;
+}
 
-#editor-overlay {
+.cms-actions #publishBtn {
+  background: #10b981;
+  color: #022c22;
+  font-weight: 600;
+}
+
+.cms-actions #logoutBtn {
+  background: #b91c1c;
+  color: #fee2e2;
+}
+
+/* Layout */
+.cms-main {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* Editor Panel */
+.editor-panel {
+  flex: 0 0 320px;
+  background: #111827;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #1f2937;
+}
+
+.editor-panel h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.editor-panel p {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* Theme selectors */
+.theme-selectors {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.theme-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.theme-group label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.theme-group select {
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.editor-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Preview Panel */
+.preview-panel {
+  flex: 1 1 auto;
+  background: #020617;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #1f2937;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-panel h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.preview-panel iframe {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 650px;
+  border-radius: 6px;
+  border: 1px solid #374151;
+  background: #ffffff;
+}
+
+/* Modal */
+.modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(15, 23, 42, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
 }
 
-#editor-overlay.hidden {
+.modal.hidden {
   display: none;
 }
 
-/* ============================================================
-   POPUP EDITOR MODAL
-============================================================ */
-
-#editor-modal {
-  width: min(700px, 95vw);
-  max-height: 90vh;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-}
-
-.editor-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.editor-header h2 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  color: var(--text);
-  font-size: 1.6rem;
-  cursor: pointer;
-}
-
-.editor-body {
+.modal-content {
+  background: #020617;
+  border-radius: 8px;
   padding: 16px;
-  overflow-y: auto;
-  flex: 1;
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid #1f2937;
 }
 
-.field-label {
+.modal-content h3 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.modal-content label {
   display: block;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.8;
-  margin-bottom: 6px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-#editor-textarea {
+.modal-content textarea {
   width: 100%;
-  min-height: 200px;
-  background: #000;
+  min-height: 120px;
+  border-radius: 4px;
+  border: 1px solid #374151;
+  background: #020617;
   color: #e5e7eb;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px;
-  resize: vertical;
-  font-size: 0.9rem;
-}
-
-#editor-image-url,
-#editor-image-file {
-  width: 100%;
-  margin-bottom: 12px;
   padding: 8px;
-  background: #000;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  font-size: 13px;
+  resize: vertical;
 }
 
-.editor-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
+.modal-content input[type="text"],
+.modal-content input[type="file"] {
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #374151;
+  background: #020617;
+  color: #e5e7eb;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-/* ============================================================
-   IFRAME EDITABLE HIGHLIGHT (injected)
-============================================================ */
-
-.editable-highlight {
-  outline: 2px solid var(--accent) !important;
-  outline-offset: 2px;
+.modal-buttons .apply {
+  background: #10b981;
+  color: #022c22;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 13px;
 }
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
+.modal-buttons .cancel {
+  background: #374151;
+  color: #e5e7eb;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
 
-@media (max-width: 700px) {
-  #editor-modal {
-    width: 95vw;
-  }
+.close {
+  float: right;
+  cursor: pointer;
+  font-size: 18px;
+}
 
-  #cms-topbar {
+/* Mobile */
+@media (max-width: 900px) {
+  .cms-main {
     flex-direction: column;
-    gap: 10px;
   }
 
-  #cms-topbar .right {
+  .editor-panel {
+    flex: 1 1 auto;
+  }
+
+  .preview-panel iframe {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 600px) {
+  .cms-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .cms-actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .theme-selectors {
+    flex-direction: column;
   }
 }
