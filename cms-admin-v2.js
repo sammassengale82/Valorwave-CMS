@@ -102,7 +102,35 @@ cancelEditorBtn.addEventListener("click", () => {
     currentEditTarget = null;
 });
 
-applyChangesBtn.addEventListener("click", () => {
+applyChangesBtn.addEventListener("click", async () => {
+    // Phase 8: if we're editing a repo file, save to GitHub
+    const repoName = editorModal.dataset.repoName;
+    const filePath = editorModal.dataset.filePath;
+
+    if (repoName && filePath) {
+        try {
+            await commitFile(
+                filePath,
+                editorContent.value,
+                `Edit ${filePath} from CMS`,
+                repoName
+            );
+
+            alert(`File saved to ${repoName}/${filePath}`);
+
+            // Clear context and close modal
+            delete editorModal.dataset.repoName;
+            delete editorModal.dataset.filePath;
+            editorOverlay.classList.add("hidden");
+            currentEditTarget = null;
+        } catch (e) {
+            console.error("Failed to save file:", e);
+            alert("Failed to save file. Check console for details.");
+        }
+        return;
+    }
+
+    // Original behavior: DOM-based editing via postMessage
     if (!currentEditTarget) {
         editorOverlay.classList.add("hidden");
         return;
@@ -132,6 +160,7 @@ applyChangesBtn.addEventListener("click", () => {
     editorOverlay.classList.add("hidden");
     currentEditTarget = null;
 });
+
 
 // ============================
 // PHASE 4 — WYSIWYG TOOLBAR
@@ -375,6 +404,111 @@ async function openPublishLogsModal() {
 
     overlay.classList.remove("hidden");
 }
+// ============================
+// PHASE 8 — MULTI-FILE SIDEBAR
+// ============================
+
+const LIVE_REPO = "valorwaveentertainment";
+const CMS_REPO = "Valorwave-CMS";
+
+function isTextFile(name) {
+    const lower = name.toLowerCase();
+    return (
+        lower.endsWith(".html") ||
+        lower.endsWith(".css") ||
+        lower.endsWith(".js") ||
+        lower.endsWith(".txt") ||
+        lower.endsWith(".md") ||
+        lower.endsWith(".xml") ||
+        lower.endsWith(".json")
+    );
+}
+
+async function fetchRepoRoot(repoName) {
+    // root path is "" → /contents/
+    return githubApiRequest("", "GET", null, repoName);
+}
+
+function renderFileList(container, repoName, entries) {
+    container.innerHTML = "";
+
+    entries.forEach(entry => {
+        const item = document.createElement("div");
+        item.className = "file-item";
+
+        if (entry.type === "dir") {
+            item.classList.add("file-item-folder");
+            item.textContent = `/${entry.name}`;
+            // Phase 9: expand into full explorer
+        } else {
+            item.classList.add("file-item-file");
+            item.textContent = entry.name;
+
+            if (isTextFile(entry.name)) {
+                item.addEventListener("click", () => {
+                    openFileFromRepo(repoName, entry.path);
+                });
+            } else {
+                item.addEventListener("click", () => {
+                    alert(`File type not yet editable in Phase 8: ${entry.name}`);
+                });
+            }
+        }
+
+        container.appendChild(item);
+    });
+}
+
+async function loadSidebarFileLists() {
+    const liveContainer = document.getElementById("repo-live-files");
+    const cmsContainer = document.getElementById("repo-cms-files");
+    if (!liveContainer || !cmsContainer) return;
+
+    liveContainer.textContent = "Loading...";
+    cmsContainer.textContent = "Loading...";
+
+    try {
+        const [liveEntries, cmsEntries] = await Promise.all([
+            fetchRepoRoot(LIVE_REPO),
+            fetchRepoRoot(CMS_REPO)
+        ]);
+
+        renderFileList(liveContainer, LIVE_REPO, liveEntries);
+        renderFileList(cmsContainer, CMS_REPO, cmsEntries);
+    } catch (e) {
+        console.error("Failed to load file lists:", e);
+        liveContainer.textContent = "Error loading files.";
+        cmsContainer.textContent = "Error loading files.";
+    }
+}
+
+async function openFileFromRepo(repoName, path) {
+    try {
+        const file = await githubApiRequest(path, "GET", null, repoName);
+        if (!file?.content) {
+            alert("Unable to load file content.");
+            return;
+        }
+
+        const decoded = atob(file.content);
+
+        // Load into existing editor modal
+        currentEditType = "text";
+        currentEditTarget = null; // we're editing a repo file, not DOM selector
+        editorContent.value = decoded;
+        editorImageURL.value = "";
+        editorImageUpload.value = "";
+
+        // Store context on the modal element so we know what to save later
+        editorModal.dataset.repoName = repoName;
+        editorModal.dataset.filePath = path;
+
+        editorOverlay.classList.remove("hidden");
+    } catch (e) {
+        console.error("Failed to open file:", e);
+        alert("Failed to open file. Check console for details.");
+    }
+}
 
 // -------------------------------
 // THEME SYSTEM
@@ -614,9 +748,10 @@ document.addEventListener("DOMContentLoaded", () => {
         publishLogsBtn.addEventListener("click", openPublishLogsModal);
         closePublishLogsBtn.addEventListener("click", () => {
             publishLogsOverlay.classList.add("hidden");
-    });
+          });
 }
-
+// Phase 8 — load file sidebar
+    loadSidebarFileLists();
 });
 
 // -------------------------------
