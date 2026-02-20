@@ -252,3 +252,38 @@ body {
         flex-wrap: wrap;
     }
 }
+/* ============================
+   PHASE 4 — WYSIWYG TOOLBAR
+   ============================ */
+
+#wysiwyg-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+    background: var(--panel-bg, #111827);
+    border-bottom: 1px solid var(--border, #374151);
+    margin-bottom: 8px;
+}
+
+#wysiwyg-toolbar button {
+    padding: 4px 8px;
+    font-size: 13px;
+    background: var(--button-bg, #1f2937);
+    color: var(--text, #e5e7eb);
+    border: 1px solid var(--border, #374151);
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+#wysiwyg-toolbar button:hover {
+    background: var(--button-hover, #4b5563);
+}
+
+#wysiwyg-toolbar .toolbar-divider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--border, #374151);
+    margin: 0 4px;
+}
