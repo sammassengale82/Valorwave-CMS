@@ -28,9 +28,34 @@
   </header>
 
   <main class="cms-main">
+    <!-- LEFT: EDITOR PANEL -->
     <section class="editor-panel">
       <h2>Page Editor</h2>
-      <p>Edit your website visually. Click any editable section in the preview.</p>
+      <p>Click any editable section in the preview to modify content. Use the theme selectors below.</p>
+
+      <div class="theme-selectors">
+        <div class="theme-group">
+          <label for="cmsThemeSelect">CMS Theme:</label>
+          <select id="cmsThemeSelect">
+            <option value="original">Original</option>
+            <option value="multicam">Multicam</option>
+            <option value="patriotic">Patriotic</option>
+          </select>
+        </div>
+
+        <div class="theme-group">
+          <label for="siteThemeSelect">Website Theme:</label>
+          <select id="siteThemeSelect">
+            <option value="original">Original</option>
+            <option value="multicam">Multicam</option>
+            <option value="patriotic">Patriotic</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="editor-hint">
+        <p>Tip: On mobile, scroll down to see the preview below the editor.</p>
+      </div>
 
       <!-- EDIT MODAL -->
       <div id="editModal" class="modal hidden">
@@ -39,13 +64,13 @@
 
           <h3>Edit Content</h3>
 
-          <label>Content</label>
+          <label for="editContent">Content</label>
           <textarea id="editContent"></textarea>
 
-          <label>Image URL</label>
+          <label for="editImageUrl">Image URL</label>
           <input type="text" id="editImageUrl" />
 
-          <label>Upload New Image</label>
+          <label for="imageUpload">Upload New Image</label>
           <input type="file" id="imageUpload" />
 
           <div class="modal-buttons">
@@ -56,7 +81,7 @@
       </div>
     </section>
 
-    <!-- LIVE PREVIEW -->
+    <!-- RIGHT: LIVE PREVIEW -->
     <section class="preview-panel">
       <h2>Live Preview</h2>
       <iframe id="previewFrame" src="https://valorwaveentertainment.com" loading="lazy"></iframe>
