@@ -127,6 +127,58 @@ siteThemeSelect.addEventListener("change", e => {
     sendThemeToFrames(e.target.value);
 });
 
+// -------------------------------
+// GitHub API helpers
+// -------------------------------
+async function githubRequest(path, method = "GET", body = null, repo = CMS_REPO) {
+    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${repo}/contents/${path}`;
+
+    const options = {
+        method,
+        headers: {
+            "Authorization": `Bearer ${GITHUB_TOKEN}`,
+            "Accept": "application/vnd.github+json"
+        }
+    };
+
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(url, options);
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`GitHub ${method} ${path} failed: ${res.status} ${text}`);
+    }
+    return res.json();
+}
+
+async function getFileSha(path, repo = CMS_REPO) {
+    try {
+        const data = await githubRequest(path, "GET", null, repo);
+        return data.sha;
+    } catch (e) {
+        // If file doesn't exist yet, return null
+        return null;
+    }
+}
+
+async function commitFile(path, content, message, repo = CMS_REPO) {
+    const sha = await getFileSha(path, repo);
+    const encoded = btoa(unescape(encodeURIComponent(content)));
+
+    const body = {
+        message,
+        content: encoded
+    };
+
+    if (sha) {
+        body.sha = sha;
+    }
+
+    return githubRequest(path, "PUT", body, repo);
+}
+
 // Initialize
 loadSavedThemes();
 
