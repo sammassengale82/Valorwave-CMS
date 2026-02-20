@@ -467,3 +467,37 @@ body {
 .file-item-file {
     font-weight: 400;
 }
+/* ============================
+   PHASE 9 — FILE EXPLORER
+   ============================ */
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    color: #e5e7eb;
+}
+
+.file-item:hover {
+    background: var(--button-hover, #4b5563);
+}
+
+.file-indent {
+    display: inline-block;
+    width: var(--indent, 0px);
+}
+
+.folder-label {
+    font-weight: 600;
+}
+
+.folder-expanded::before {
+    content: "▾ ";
+}
+
+.folder-collapsed::before {
+    content: "▸ ";
+}
