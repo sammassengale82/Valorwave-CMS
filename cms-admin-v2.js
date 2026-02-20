@@ -305,7 +305,7 @@ btnEditorSave.addEventListener("click", applyEditorChanges);
 (async function init() {
   applyCmsTheme();
 
-  frame.src = "https://valorwaveentertainment.com";
+  frame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
 
   const hadDraft = loadDraftFromLocal();
   if (!hadDraft) {
