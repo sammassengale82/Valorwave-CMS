@@ -350,3 +350,45 @@ body {
 .draft-item:hover {
     background: var(--button-hover, #4b5563);
 }
+/* ============================
+   PHASE 7 — PUBLISH LOGS
+   ============================ */
+
+#publish-logs-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2100;
+}
+
+#publish-logs-modal {
+    background: var(--panel-bg, #111827);
+    padding: 20px;
+    border-radius: 8px;
+    width: 480px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid var(--border, #374151);
+}
+
+#publish-log-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.publish-log-item {
+    padding: 10px;
+    border: 1px solid var(--border, #374151);
+    border-radius: 6px;
+    background: var(--button-bg, #1f2937);
+    cursor: pointer;
+}
+
+.publish-log-item:hover {
+    background: var(--button-hover, #4b5563);
+}
