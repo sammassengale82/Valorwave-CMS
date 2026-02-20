@@ -58,28 +58,78 @@ editorOverlay.style.display = "none";
     });
 })();
 
-// --- Theme switching ---
+/* -------------------------------
+   THEME SYSTEM (CMS + SITE)
+--------------------------------*/
+
+// DOM refs
+const cmsThemeSelect = document.getElementById("cms-theme");
+const siteThemeSelect = document.getElementById("site-theme");
+
+const saveCmsThemeBtn = document.getElementById("save-cms-theme");
+const saveSiteThemeBtn = document.getElementById("save-site-theme");
+
+const cmsThemeSavedMsg = document.getElementById("cms-theme-saved");
+const siteThemeSavedMsg = document.getElementById("site-theme-saved");
+
+// Apply CMS theme instantly
 function applyCmsTheme(theme) {
     document.body.className = `theme-${theme}`;
 }
 
+// Send theme to iframes instantly
 function sendThemeToFrames(theme) {
-    const message = { type: "set-theme", theme };
-    try { editableFrame.contentWindow.postMessage(message, "*"); } catch (e) {}
-    try { liveFrame.contentWindow.postMessage(message, "*"); } catch (e) {}
+    const msg = { type: "set-theme", theme };
+    try { editableFrame.contentWindow.postMessage(msg, "*"); } catch (e) {}
+    try { liveFrame.contentWindow.postMessage(msg, "*"); } catch (e) {}
 }
 
-cmsThemeSelect.addEventListener("change", (e) => {
+// Load saved themes on startup
+async function loadSavedThemes() {
+    try {
+        const cmsTheme = localStorage.getItem("cms-theme") || "original";
+        const siteTheme = localStorage.getItem("site-theme") || "original";
+
+        cmsThemeSelect.value = cmsTheme;
+        siteThemeSelect.value = siteTheme;
+
+        applyCmsTheme(cmsTheme);
+        sendThemeToFrames(siteTheme);
+    } catch (e) {
+        console.warn("Theme load failed:", e);
+    }
+}
+
+// Save CMS theme
+saveCmsThemeBtn.addEventListener("click", () => {
+    const theme = cmsThemeSelect.value;
+    localStorage.setItem("cms-theme", theme);
+
+    cmsThemeSavedMsg.style.opacity = 1;
+    setTimeout(() => cmsThemeSavedMsg.style.opacity = 0, 1500);
+});
+
+// Save Site theme
+saveSiteThemeBtn.addEventListener("click", () => {
+    const theme = siteThemeSelect.value;
+    localStorage.setItem("site-theme", theme);
+
+    siteThemeSavedMsg.style.opacity = 1;
+    setTimeout(() => siteThemeSavedMsg.style.opacity = 0, 1500);
+});
+
+// Instant preview on dropdown change
+cmsThemeSelect.addEventListener("change", e => {
     applyCmsTheme(e.target.value);
 });
 
-siteThemeSelect.addEventListener("change", (e) => {
+siteThemeSelect.addEventListener("change", e => {
     sendThemeToFrames(e.target.value);
 });
 
-// Initialize defaults
-applyCmsTheme(cmsThemeSelect.value);
-sendThemeToFrames(siteThemeSelect.value);
+// Initialize
+loadSavedThemes();
+
 
 // --- Editor modal wiring ---
 closeEditorBtn.addEventListener("click", () => {
