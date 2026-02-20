@@ -39,6 +39,7 @@
 
             <!-- Actions -->
             <button id="save-draft">Save Draft</button>
+            <button id="draft-history">Draft History</button>
             <button id="publish">Publish</button>
             <button id="logout">Logout</button>
 
@@ -71,6 +72,15 @@
             </div>
         </div>
     </main>
+    <!-- Draft History Modal -->
+        <div id="draft-history-overlay" class="hidden">
+            <div id="draft-history-modal">
+            <button class="close-btn" id="close-draft-history">&times;</button>
+            <h2>Draft History</h2>
+
+            <div id="draft-list"></div>
+        </div>
+    </div>
 
     <!-- Editor overlay / modal -->
     <div id="editor-overlay" class="hidden">
