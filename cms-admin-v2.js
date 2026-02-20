@@ -512,11 +512,6 @@ logoutBtn.addEventListener("click", () => {
     alert("Logged out of GitHub in this session.");
 });
 
-// -------------------------------
-// Init
-// -------------------------------
-loadSavedThemes();
-
 // ============================
 // PHASE 4 — INITIALIZATION
 // ============================
@@ -524,4 +519,11 @@ document.addEventListener("DOMContentLoaded", () => {
     initWysiwygToolbar();
     initEditorShortcuts();
 });
+
+// -------------------------------
+// Init
+// -------------------------------
+loadSavedThemes();
+
+
 
