@@ -509,6 +509,142 @@ async function openFileFromRepo(repoName, path) {
         alert("Failed to open file. Check console for details.");
     }
 }
+// ============================
+// PHASE 9 — EXPANDABLE FOLDER TREE
+// ============================
+
+// Cache folder states so expanded folders stay open
+const folderState = {}; // key: "repo/path", value: true/false
+
+function sortEntriesFoldersFirst(entries) {
+    return entries.sort((a, b) => {
+        if (a.type === "dir" && b.type !== "dir") return -1;
+        if (a.type !== "dir" && b.type === "dir") return 1;
+        return a.name.localeCompare(b.name);
+    });
+}
+
+async function loadFolder(repoName, path) {
+    // path "" means repo root
+    return githubApiRequest(path, "GET", null, repoName);
+}
+
+function createFileItem(entry, repoName, depth) {
+    const item = document.createElement("div");
+    item.className = "file-item";
+
+    // Indentation
+    const indent = document.createElement("span");
+    indent.className = "file-indent";
+    indent.style.setProperty("--indent", `${depth * 16}px`);
+    item.appendChild(indent);
+
+    // Label
+    const label = document.createElement("span");
+
+    if (entry.type === "dir") {
+        label.textContent = entry.name;
+        label.classList.add("folder-label");
+
+        const key = `${repoName}/${entry.path}`;
+        const expanded = folderState[key] === true;
+
+        label.classList.add(expanded ? "folder-expanded" : "folder-collapsed");
+
+        label.addEventListener("click", async () => {
+            const expandedNow = folderState[key] === true;
+            folderState[key] = !expandedNow;
+
+            renderFolder(repoName, entry.path, item.parentElement, depth);
+        });
+    } else {
+        label.textContent = entry.name;
+        label.classList.add("file-item-file");
+
+        if (isTextFile(entry.name)) {
+            label.addEventListener("click", () => {
+                openFileFromRepo(repoName, entry.path);
+            });
+        } else {
+            label.addEventListener("click", () => {
+                alert(`File type not editable yet: ${entry.name}`);
+            });
+        }
+    }
+
+    item.appendChild(label);
+    return item;
+}
+
+async function renderFolder(repoName, path, container, depth) {
+    // Clear existing children under this folder
+    const children = Array.from(container.children).filter(
+        el => el.dataset?.parent === `${repoName}/${path}`
+    );
+    children.forEach(el => el.remove());
+
+    const key = `${repoName}/${path}`;
+    const expanded = folderState[key] === true;
+
+    // Update folder arrow
+    const folderLabel = container.querySelector(
+        `.folder-label`
+    );
+    if (folderLabel) {
+        folderLabel.classList.remove("folder-expanded", "folder-collapsed");
+        folderLabel.classList.add(expanded ? "folder-expanded" : "folder-collapsed");
+    }
+
+    if (!expanded) return;
+
+    // Load folder contents
+    const entries = await loadFolder(repoName, path);
+    const sorted = sortEntriesFoldersFirst(entries);
+
+    sorted.forEach(entry => {
+        const item = createFileItem(entry, repoName, depth + 1);
+        item.dataset.parent = `${repoName}/${path}`;
+        container.insertAdjacentElement("afterend", item);
+
+        // If folder is already expanded, recursively render children
+        if (entry.type === "dir") {
+            const childKey = `${repoName}/${entry.path}`;
+            if (folderState[childKey]) {
+                renderFolder(repoName, entry.path, item, depth + 1);
+            }
+        }
+    });
+}
+
+async function renderRepoRoot(repoName, container) {
+    container.innerHTML = "";
+
+    const entries = await loadFolder(repoName, "");
+    const sorted = sortEntriesFoldersFirst(entries);
+
+    sorted.forEach(entry => {
+        const item = createFileItem(entry, repoName, 0);
+        container.appendChild(item);
+
+        // Auto-expand if previously expanded
+        const key = `${repoName}/${entry.path}`;
+        if (entry.type === "dir" && folderState[key]) {
+            renderFolder(repoName, entry.path, item, 0);
+        }
+    });
+}
+
+// Override Phase 8 sidebar loader
+async function loadSidebarFileLists() {
+    const liveContainer = document.getElementById("repo-live-files");
+    const cmsContainer = document.getElementById("repo-cms-files");
+
+    liveContainer.textContent = "Loading...";
+    cmsContainer.textContent = "Loading...";
+
+    await renderRepoRoot("valorwaveentertainment", liveContainer);
+    await renderRepoRoot("Valorwave-CMS", cmsContainer);
+}
 
 // -------------------------------
 // THEME SYSTEM
