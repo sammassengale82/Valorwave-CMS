@@ -133,6 +133,122 @@ applyChangesBtn.addEventListener("click", () => {
     editorOverlay.classList.add("hidden");
     currentEditTarget = null;
 });
+// ============================
+// PHASE 4 — WYSIWYG TOOLBAR
+// ============================
+
+function applyFormatting(type) {
+    const textarea = document.getElementById("editor-content");
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    const selected = value.substring(start, end);
+
+    let replacement = selected;
+
+    switch (type) {
+        case "bold":
+            replacement = `**${selected || "bold text"}**`;
+            break;
+
+        case "italic":
+            replacement = `*${selected || "italic text"}*`;
+            break;
+
+        case "underline":
+            replacement = `<u>${selected || "underlined text"}</u>`;
+            break;
+
+        case "h1":
+            replacement = `# ${selected || "Heading 1"}`;
+            break;
+
+        case "h2":
+            replacement = `## ${selected || "Heading 2"}`;
+            break;
+
+        case "h3":
+            replacement = `### ${selected || "Heading 3"}`;
+            break;
+
+        case "ul":
+            replacement = (selected || "List item")
+                .split("\n")
+                .map(line => `- ${line}`)
+                .join("\n");
+            break;
+
+        case "ol":
+            replacement = (selected || "List item")
+                .split("\n")
+                .map((line, i) => `${i + 1}. ${line}`)
+                .join("\n");
+            break;
+
+        case "left":
+            replacement = `<div style="text-align:left">\n${selected || "Left aligned text"}\n</div>`;
+            break;
+
+        case "center":
+            replacement = `<div style="text-align:center">\n${selected || "Centered text"}\n</div>`;
+            break;
+
+        case "right":
+            replacement = `<div style="text-align:right">\n${selected || "Right aligned text"}\n</div>`;
+            break;
+    }
+
+    textarea.value =
+        value.substring(0, start) +
+        replacement +
+        value.substring(end);
+
+    textarea.focus();
+    textarea.selectionStart = start;
+    textarea.selectionEnd = start + replacement.length;
+
+    // Refresh preview
+    if (typeof updatePreview === "function") {
+        updatePreview();
+    }
+}
+
+function initWysiwygToolbar() {
+    const toolbar = document.getElementById("wysiwyg-toolbar");
+    if (!toolbar) return;
+
+    toolbar.addEventListener("click", (e) => {
+        const button = e.target.closest("button");
+        if (!button) return;
+        const action = button.dataset.action;
+        if (!action) return;
+        applyFormatting(action);
+    });
+}
+
+function initEditorShortcuts() {
+    const textarea = document.getElementById("editor-content");
+    if (!textarea) return;
+
+    textarea.addEventListener("keydown", (e) => {
+        if (!e.ctrlKey && !e.metaKey) return;
+
+        if (e.key.toLowerCase() === "b") {
+            e.preventDefault();
+            applyFormatting("bold");
+        }
+        if (e.key.toLowerCase() === "i") {
+            e.preventDefault();
+            applyFormatting("italic");
+        }
+        if (e.key.toLowerCase() === "u") {
+            e.preventDefault();
+            applyFormatting("underline");
+        }
+    });
+}
 
 // -------------------------------
 // THEME SYSTEM (CMS + SITE)
@@ -400,3 +516,12 @@ logoutBtn.addEventListener("click", () => {
 // Init
 // -------------------------------
 loadSavedThemes();
+
+// ============================
+// PHASE 4 — INITIALIZATION
+// ============================
+document.addEventListener("DOMContentLoaded", () => {
+    initWysiwygToolbar();
+    initEditorShortcuts();
+});
+
