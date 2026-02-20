@@ -16,6 +16,9 @@ const closeEditorBtn = document.getElementById("close-editor");
 const cancelEditorBtn = document.getElementById("cancel-editor");
 const applyChangesBtn = document.getElementById("apply-changes");
 
+// --- Force overlay hidden on load ---
+editorOverlay.style.display = "none";
+
 // --- Resizable vertical split ---
 (function setupVerticalSplit() {
     let isDragging = false;
@@ -55,70 +58,63 @@ const applyChangesBtn = document.getElementById("apply-changes");
     });
 })();
 
-// --- Theme switching (CMS + site previews) ---
+// --- Theme switching ---
 function applyCmsTheme(theme) {
     document.body.className = `theme-${theme}`;
 }
 
 function sendThemeToFrames(theme) {
     const message = { type: "set-theme", theme };
-    try {
-        editableFrame.contentWindow.postMessage(message, "*");
-    } catch (e) {}
-    try {
-        liveFrame.contentWindow.postMessage(message, "*");
-    } catch (e) {}
+    try { editableFrame.contentWindow.postMessage(message, "*"); } catch (e) {}
+    try { liveFrame.contentWindow.postMessage(message, "*"); } catch (e) {}
 }
 
 cmsThemeSelect.addEventListener("change", (e) => {
-    const theme = e.target.value;
-    applyCmsTheme(theme);
+    applyCmsTheme(e.target.value);
 });
 
 siteThemeSelect.addEventListener("change", (e) => {
-    const theme = e.target.value;
-    sendThemeToFrames(theme);
+    sendThemeToFrames(e.target.value);
 });
 
 // Initialize defaults
 applyCmsTheme(cmsThemeSelect.value);
 sendThemeToFrames(siteThemeSelect.value);
 
-// --- Editor modal wiring (UI only for now) ---
+// --- Editor modal wiring ---
 closeEditorBtn.addEventListener("click", () => {
-    editorOverlay.classList.add("hidden");
+    editorOverlay.style.display = "none";
 });
 
 cancelEditorBtn.addEventListener("click", () => {
-    editorOverlay.classList.add("hidden");
+    editorOverlay.style.display = "none";
 });
 
 applyChangesBtn.addEventListener("click", () => {
-    // Placeholder: this is where content injection / GitHub API update would go
     alert("Apply Changes clicked (content wiring to be added).");
-    editorOverlay.classList.add("hidden");
+    editorOverlay.style.display = "none";
 });
 
-// Listen for messages from the editable iframe (when we wire it later)
+// --- Listen for future editable events ---
 window.addEventListener("message", (event) => {
     if (!event.data || typeof event.data !== "object") return;
 
     if (event.data.type === "open-editor") {
         editorContent.value = event.data.content || "";
         editorImageURL.value = event.data.imageUrl || "";
-        editorOverlay.classList.remove("hidden");
+        editorOverlay.style.display = "flex";
     }
 });
 
-// --- Buttons (placeholders for now) ---
+// --- Placeholder buttons ---
 document.getElementById("save-draft").addEventListener("click", () => {
-    alert("Save Draft clicked (GitHub API wiring can be added here).");
+    alert("Save Draft clicked.");
 });
 
 document.getElementById("publish").addEventListener("click", () => {
-    alert("Publish clicked (GitHub API wiring can be added here).");
+    alert("Publish clicked.");
 });
 
 document.getElementById("logout").addEventListener("click", () => {
-    alert("Logout clicked (session handling can be added here).");
+    alert("Logout clicked.");
 });
