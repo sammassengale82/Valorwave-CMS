@@ -1,7 +1,7 @@
 // -------------------------------
 // GitHub OAuth (Device Flow)
 // -------------------------------
-const GITHUB_CLIENT_ID = "YOUR_CLIENT_ID_HERE"; // from your GitHub OAuth App
+const GITHUB_CLIENT_ID = "0v23lioJaq0Kfz4sXFss"; // from your GitHub OAuth App
 const GITHUB_SCOPES = "repo";
 let githubToken = null; // in-memory only
 
