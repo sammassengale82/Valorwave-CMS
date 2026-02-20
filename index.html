@@ -2,95 +2,102 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Valor Wave CMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- CMS styles -->
     <link rel="stylesheet" href="cms-admin-v2.css">
+    <!-- Your theme variables file (if separate) -->
     <link rel="stylesheet" href="themes.css">
 </head>
 <body class="theme-original">
     <header id="cms-header">
-        <h1>Valor Wave CMS System</h1>
+        <h1>Valor Wave CMS Ready</h1>
 
         <div class="cms-controls">
+            <!-- CMS THEME -->
+            <label>CMS Theme:</label>
+            <select id="cms-theme">
+                <option value="original">Original</option>
+                <option value="multicam">Multicam</option>
+                <option value="patriotic">Patriotic</option>
+                <option value="dark">Dark</option>
+            </select>
+            <button id="save-cms-theme">Save</button>
+            <span id="cms-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
 
-    <!-- CMS THEME -->
-    <label>CMS Theme:</label>
-    <select id="cms-theme">
-        <option value="original">Original</option>
-        <option value="multicam">Multicam</option>
-        <option value="patriotic">Patriotic</option>
-        <option value="dark">Dark</option>
-    </select>
-    <button id="save-cms-theme">Save</button>
-    <span id="cms-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
+            <!-- SITE THEME -->
+            <label>Site Theme:</label>
+            <select id="site-theme">
+                <option value="original">Original</option>
+                <option value="multicam">Multicam</option>
+                <option value="patriotic">Patriotic</option>
+                <option value="dark">Dark</option>
+            </select>
+            <button id="save-site-theme">Save</button>
+            <span id="site-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
 
-    <!-- SITE THEME -->
-    <label>Site Theme:</label>
-    <select id="site-theme">
-        <option value="original">Original</option>
-        <option value="multicam">Multicam</option>
-        <option value="patriotic">Patriotic</option>
-        <option value="dark">Dark</option>
-    </select>
-    <button id="save-site-theme">Save</button>
-    <span id="site-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
+            <!-- Actions -->
+            <button id="save-draft">Save Draft</button>
+            <button id="publish">Publish</button>
+            <button id="logout">Logout</button>
 
-    <!-- Existing buttons -->
-    <button id="save-draft">Save Draft</button>
-    <button id="publish">Publish</button>
-    <button id="logout">Logout</button>
-    <button id="github-login">Login with GitHub</button>
-    <span id="auth-status" style="font-size:0.75rem; opacity:0.8;">Not authenticated</span>
-
-    </div>
-
+            <!-- GitHub auth -->
+            <button id="github-login">Login with GitHub</button>
+            <span id="auth-status" style="font-size:0.75rem; opacity:0.8;">Not authenticated</span>
+        </div>
     </header>
 
     <main id="cms-main">
         <div id="preview-container">
             <div id="top-pane">
-                <div class="pane-label">Editable Preview</div>
+                <span class="pane-label">Editable Preview</span>
                 <iframe
                     id="preview-frame-editable"
-                    src="https://sammassengale82.github.io/valorwaveentertainment/">
+                    src="https://valorwaveentertainment.com"
+                    loading="lazy">
                 </iframe>
             </div>
 
             <div id="drag-bar"></div>
 
             <div id="bottom-pane">
-                <div class="pane-label">Live Published Site</div>
+                <span class="pane-label">Live Site</span>
                 <iframe
                     id="preview-frame-live"
-                    src="https://valorwaveentertainment.com">
+                    src="https://valorwaveentertainment.com"
+                    loading="lazy">
                 </iframe>
             </div>
         </div>
     </main>
 
-    <!-- Editor Modal (FORCED hidden) -->
-    <div id="editor-overlay" class="hidden" style="display:none;">
+    <!-- Editor overlay / modal -->
+    <div id="editor-overlay" class="hidden">
         <div id="editor-modal">
-            <button id="close-editor" class="close-btn">×</button>
+            <button class="close-btn" id="cancel-editor" type="button">&times;</button>
             <h2>Edit Content</h2>
 
-            <label>Content</label>
+            <!-- Text / list content -->
+            <label for="editor-content">Content</label>
             <textarea id="editor-content"></textarea>
 
-            <label>Image URL:</label>
-            <input type="text" id="editor-image-url">
+            <!-- Image / link URL -->
+            <label for="editor-image-url">Image / Link URL</label>
+            <input type="text" id="editor-image-url" placeholder="https://...">
 
-            <label>Upload New Image</label>
-            <input type="file" id="editor-image-upload">
+            <!-- (Optional) file upload hook -->
+            <label for="editor-image-upload">Upload Image</label>
+            <input type="file" id="editor-image-upload" accept="image/*">
 
             <div class="editor-actions">
-                <button id="apply-changes">Apply Changes</button>
-                <button id="cancel-editor">Cancel</button>
+                <button id="apply-changes" type="button">Apply</button>
+                <button id="cancel-editor" type="button">Cancel</button>
             </div>
         </div>
     </div>
 
+    <!-- CMS logic -->
     <script src="cms-admin-v2.js"></script>
 </body>
 </html>
