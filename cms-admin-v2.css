@@ -6,19 +6,19 @@
 body {
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #0b0b0f;
-    color: #f5f5f5;
+    background: var(--bg);
+    color: var(--text);
 }
 
 /* Header */
 #cms-header {
-    background: #111827;
-    color: #f9fafb;
+    background: var(--accent);
+    color: var(--bg);
     padding: 10px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #1f2937;
+    border-bottom: 1px solid var(--border);
 }
 
 #cms-header h1 {
@@ -45,25 +45,23 @@ body {
     font-size: 0.8rem;
     padding: 4px 8px;
     border-radius: 4px;
-    border: 1px solid #374151;
-    background: #111827;
-    color: #e5e7eb;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
 }
 
 .cms-controls button {
-    border-color: #2563eb;
-    background: #1d4ed8;
     cursor: pointer;
 }
 
 .cms-controls button:hover {
-    background: #2563eb;
+    background: var(--border);
 }
 
 /* Main split layout */
 #cms-main {
     height: calc(100vh - 52px);
-    background: #020617;
+    background: var(--bg);
 }
 
 #preview-container {
@@ -79,13 +77,13 @@ body {
     width: 100%;
     flex: 1 1 50%;
     min-height: 80px;
-    background: #020617;
-    border-bottom: 1px solid #111827;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
 }
 
 #bottom-pane {
     border-bottom: none;
-    border-top: 1px solid #111827;
+    border-top: 1px solid var(--border);
 }
 
 .pane-label {
@@ -96,9 +94,9 @@ body {
     font-size: 0.7rem;
     padding: 2px 6px;
     border-radius: 999px;
-    background: rgba(15, 23, 42, 0.9);
-    color: #e5e7eb;
-    border: 1px solid #1f2937;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
 }
 
 /* Iframes */
@@ -115,7 +113,7 @@ body {
 /* Drag bar */
 #drag-bar {
     height: 6px;
-    background: #111827;
+    background: var(--border);
     cursor: row-resize;
     display: flex;
     align-items: center;
@@ -127,14 +125,15 @@ body {
     width: 40px;
     height: 2px;
     border-radius: 999px;
-    background: #4b5563;
+    background: var(--text);
+    opacity: 0.4;
 }
 
 /* Editor modal */
 #editor-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(0,0,0,0.65);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -142,13 +141,13 @@ body {
 }
 
 #editor-modal {
-    background: #020617;
+    background: var(--panel);
     border-radius: 10px;
-    border: 1px solid #1f2937;
+    border: 1px solid var(--border);
     padding: 16px;
     width: 95%;
     max-width: 640px;
-    color: #e5e7eb;
+    color: var(--text);
     position: relative;
 }
 
@@ -172,9 +171,9 @@ body {
     width: 100%;
     min-height: 120px;
     border-radius: 6px;
-    border: 1px solid #374151;
-    background: #020617;
-    color: #e5e7eb;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
     padding: 8px;
     font-size: 0.85rem;
 }
@@ -183,9 +182,9 @@ body {
 #editor-image-upload {
     width: 100%;
     border-radius: 6px;
-    border: 1px solid #374151;
-    background: #020617;
-    color: #e5e7eb;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
     padding: 6px;
     font-size: 0.85rem;
 }
@@ -201,19 +200,21 @@ body {
     padding: 6px 12px;
     font-size: 0.8rem;
     border-radius: 4px;
-    border: 1px solid #374151;
+    border: 1px solid var(--border);
     cursor: pointer;
+    background: var(--panel);
+    color: var(--text);
 }
 
 #apply-changes {
-    background: #16a34a;
-    border-color: #16a34a;
-    color: white;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
 }
 
 #cancel-editor {
-    background: #111827;
-    color: #e5e7eb;
+    background: var(--panel);
+    color: var(--text);
 }
 
 .close-btn {
@@ -222,27 +223,19 @@ body {
     right: 8px;
     border: none;
     background: transparent;
-    color: #9ca3af;
+    color: var(--text);
+    opacity: 0.6;
     font-size: 1.1rem;
     cursor: pointer;
+}
+
+.close-btn:hover {
+    opacity: 1;
 }
 
 /* Utility */
 .hidden {
     display: none;
-}
-
-/* Simple theme hooks (body class) */
-body.theme-original {
-    background: #020617;
-}
-
-body.theme-patriotic {
-    background: #0b1120;
-}
-
-body.theme-dark {
-    background: #000000;
 }
 
 /* Mobile tweaks */
