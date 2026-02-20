@@ -51,28 +51,33 @@
     </header>
 
     <main id="cms-main">
+    <div id="cms-layout">
+        <!-- Phase 8: File Sidebar -->
+        <aside id="file-sidebar">
+            <div id="file-sidebar-header">
+                <span>Files</span>
+            </div>
+
+            <div id="file-sidebar-content">
+                <div class="repo-section">
+                    <div class="repo-title">/valorwaveentertainment</div>
+                    <div id="repo-live-files" class="file-list"></div>
+                </div>
+
+                <div class="repo-section">
+                    <div class="repo-title">/Valorwave-CMS</div>
+                    <div id="repo-cms-files" class="file-list"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Existing preview container -->
         <div id="preview-container">
-            <div id="top-pane">
-                <span class="pane-label">Editable Preview</span>
-                <iframe
-                    id="preview-frame-editable"
-                    src="https://valorwaveentertainment.com"
-                    loading="lazy">
-                </iframe>
-            </div>
-
-            <div id="drag-bar"></div>
-
-            <div id="bottom-pane">
-                <span class="pane-label">Live Site</span>
-                <iframe
-                    id="preview-frame-live"
-                    src="https://valorwaveentertainment.com"
-                    loading="lazy">
-                </iframe>
-            </div>
+            ...
         </div>
-    </main>
+    </div>
+</main>
+
     <!-- Draft History Modal -->
         <div id="draft-history-overlay" class="hidden">
             <div id="draft-history-modal">
