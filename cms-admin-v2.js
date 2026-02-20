@@ -645,6 +645,191 @@ async function loadSidebarFileLists() {
     await renderRepoRoot("valorwaveentertainment", liveContainer);
     await renderRepoRoot("Valorwave-CMS", cmsContainer);
 }
+// ============================
+// PHASE 10 — FILE OPERATIONS (RIGHT-CLICK MENU)
+// ============================
+
+let contextTarget = null; // { repo, path, type, depth, element }
+
+const contextMenu = document.getElementById("context-menu");
+
+// Hide menu on click anywhere
+document.addEventListener("click", () => {
+    contextMenu.classList.add("hidden");
+});
+
+// Right-click handler for file/folder items
+document.addEventListener("contextmenu", (e) => {
+    const item = e.target.closest(".file-item");
+    if (!item) return;
+
+    e.preventDefault();
+
+    const repo = item.dataset.repo;
+    const path = item.dataset.path;
+    const type = item.dataset.type;
+    const depth = Number(item.dataset.depth);
+
+    contextTarget = { repo, path, type, depth, element: item };
+
+    // Show menu
+    contextMenu.style.left = e.pageX + "px";
+    contextMenu.style.top = e.pageY + "px";
+    contextMenu.classList.remove("hidden");
+
+    // Show/hide options based on type
+    document.querySelector("[data-action='open']").style.display =
+        type === "file" ? "block" : "none";
+
+    document.querySelector("[data-action='rename']").style.display = "block";
+    document.querySelector("[data-action='delete']").style.display = "block";
+
+    document.querySelector("[data-action='new-file']").style.display =
+        type === "dir" || path === "" ? "block" : "none";
+
+    document.querySelector("[data-action='new-folder']").style.display =
+        type === "dir" || path === "" ? "block" : "none";
+
+    document.querySelector("[data-action='upload-file']").style.display =
+        type === "dir" || path === "" ? "block" : "none";
+});
+
+// Handle menu actions
+contextMenu.addEventListener("click", async (e) => {
+    const action = e.target.dataset.action;
+    if (!action || !contextTarget) return;
+
+    contextMenu.classList.add("hidden");
+
+    const { repo, path, type, element } = contextTarget;
+
+    switch (action) {
+        case "open":
+            openFileFromRepo(repo, path);
+            break;
+
+        case "new-file":
+            await createNewFile(repo, path);
+            break;
+
+        case "new-folder":
+            await createNewFolder(repo, path);
+            break;
+
+        case "upload-file":
+            await uploadFileToFolder(repo, path);
+            break;
+
+        case "rename":
+            await renameItem(repo, path, type);
+            break;
+
+        case "delete":
+            await deleteItem(repo, path, type);
+            break;
+    }
+
+    // Refresh the folder containing this item
+    const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+    const parentContainer = element.parentElement;
+    await renderFolder(repo, parentPath, parentContainer, contextTarget.depth - 1);
+});
+async function createNewFile(repo, parentPath) {
+    const name = prompt("Enter new file name:");
+    if (!name) return;
+
+    const fullPath = parentPath ? `${parentPath}/${name}` : name;
+
+    await commitFile(fullPath, "", `Create file ${fullPath}`, repo);
+    alert(`Created file: ${fullPath}`);
+}
+
+async function createNewFolder(repo, parentPath) {
+    const name = prompt("Enter new folder name:");
+    if (!name) return;
+
+    const fullPath = parentPath ? `${parentPath}/${name}` : name;
+
+    // GitHub requires a placeholder file to create a folder
+    await commitFile(`${fullPath}/.keep`, "", `Create folder ${fullPath}`, repo);
+    alert(`Created folder: ${fullPath}`);
+}
+
+async function uploadFileToFolder(repo, parentPath) {
+    const input = document.createElement("input");
+    input.type = "file";
+
+    input.onchange = async () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        const arrayBuffer = await file.arrayBuffer();
+        const content = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+        const fullPath = parentPath ? `${parentPath}/${file.name}` : file.name;
+
+        await githubApiRequest(fullPath, "PUT", {
+            message: `Upload ${file.name}`,
+            content
+        }, repo);
+
+        alert(`Uploaded: ${file.name}`);
+    };
+
+    input.click();
+}
+
+async function renameItem(repo, path, type) {
+    const newName = prompt("Enter new name:", path.split("/").pop());
+    if (!newName) return;
+
+    const parent = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+    const newPath = parent ? `${parent}/${newName}` : newName;
+
+    // Get SHA
+    const file = await githubApiRequest(path, "GET", null, repo);
+
+    // Create new file
+    await githubApiRequest(newPath, "PUT", {
+        message: `Rename ${path} → ${newPath}`,
+        content: file.content,
+        sha: file.sha
+    }, repo);
+
+    // Delete old file
+    await githubApiRequest(path, "DELETE", {
+        message: `Remove old name ${path}`,
+        sha: file.sha
+    }, repo);
+
+    alert(`Renamed to: ${newName}`);
+}
+
+async function deleteItem(repo, path, type) {
+    const confirmDelete = confirm(`Delete ${path}? This cannot be undone.`);
+    if (!confirmDelete) return;
+
+    if (type === "file") {
+        const file = await githubApiRequest(path, "GET", null, repo);
+
+        await githubApiRequest(path, "DELETE", {
+            message: `Delete file ${path}`,
+            sha: file.sha
+        }, repo);
+
+        alert(`Deleted file: ${path}`);
+        return;
+    }
+
+    // Folder delete (recursive)
+    const contents = await githubApiRequest(path, "GET", null, repo);
+
+    for (const entry of contents) {
+        await deleteItem(repo, entry.path, entry.type);
+    }
+
+    alert(`Deleted folder: ${path}`);
+}
 
 // -------------------------------
 // THEME SYSTEM
