@@ -2,73 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Valor Wave Visual CMS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valor Wave CMS</title>
+
+  <!-- CMS Styles -->
   <link rel="stylesheet" href="/cms-admin-v2.css" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 </head>
 
 <body>
 
-  <!-- ============================================================
-       TOP BAR
-  ============================================================ -->
-  <header id="cms-topbar">
-    <div class="left">
-      <span id="cms-logo">Valor Wave CMS</span>
-      <span id="cms-status">Ready</span>
-    </div>
+  <header class="cms-header">
+    <h1>Valor Wave CMS Ready</h1>
 
-    <div class="right">
-      <button id="btn-save-draft" class="btn">Save Draft</button>
-      <button id="btn-publish" class="btn primary">Publish</button>
-      <button id="btn-logout" class="btn danger">Logout</button>
+    <div class="cms-actions">
+      <button id="saveDraftBtn">Save Draft</button>
+      <button id="publishBtn" class="publish">Publish</button>
+      <button id="logoutBtn" class="logout">Logout</button>
     </div>
   </header>
 
-  <!-- ============================================================
-       MAIN LAYOUT
-  ============================================================ -->
-  <main id="cms-main">
-    <iframe id="preview-frame" title="Site Preview"></iframe>
+  <main class="cms-main">
+    <section class="editor-panel">
+      <h2>Page Editor</h2>
+      <p>Edit your website visually. Click any editable section in the preview.</p>
+
+      <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+          <span id="closeModal" class="close">&times;</span>
+
+          <h3>Edit Content</h3>
+
+          <label>Content</label>
+          <textarea id="editContent"></textarea>
+
+          <label>Image URL</label>
+          <input type="text" id="editImageUrl" />
+
+          <label>Upload New Image</label>
+          <input type="file" id="imageUpload" />
+
+          <div class="modal-buttons">
+            <button id="applyChangesBtn" class="apply">Apply Changes</button>
+            <button id="cancelChangesBtn" class="cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="preview-panel">
+      <h2>Live Preview</h2>
+      <iframe id="previewFrame" src="https://valorwaveentertainment.com" loading="lazy"></iframe>
+    </section>
   </main>
 
-  <!-- ============================================================
-       POPUP EDITOR
-  ============================================================ -->
-  <div id="editor-overlay" class="hidden">
-    <div id="editor-modal">
-      <div class="editor-header">
-        <h2 id="editor-title">Edit Content</h2>
-        <button id="editor-close" class="icon-btn">&times;</button>
-      </div>
-
-      <div class="editor-body">
-        <!-- TEXT EDITOR -->
-        <div id="editor-text-block">
-          <label class="field-label">Content</label>
-          <textarea id="editor-textarea"></textarea>
-        </div>
-
-        <!-- IMAGE EDITOR -->
-        <div id="editor-image-block" class="hidden">
-          <label class="field-label">Image URL</label>
-          <input type="text" id="editor-image-url" />
-
-          <label class="field-label">Upload New Image</label>
-          <input type="file" id="editor-image-file" accept="image/*" />
-        </div>
-      </div>
-
-      <div class="editor-footer">
-        <button id="editor-save" class="btn primary">Apply Changes</button>
-        <button id="editor-cancel" class="btn">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       SCRIPT
-  ============================================================ -->
+  <!-- CMS Logic -->
   <script src="/cms-admin-v2.js"></script>
 
 </body>
