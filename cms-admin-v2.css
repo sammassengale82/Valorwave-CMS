@@ -308,3 +308,45 @@ body {
     background: rgba(59, 130, 246, 0.2);
     border-color: #3b82f6;
 }
+/* ============================
+   PHASE 6 — DRAFT HISTORY
+   ============================ */
+
+#draft-history-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+#draft-history-modal {
+    background: var(--panel-bg, #111827);
+    padding: 20px;
+    border-radius: 8px;
+    width: 420px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid var(--border, #374151);
+}
+
+#draft-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.draft-item {
+    padding: 10px;
+    border: 1px solid var(--border, #374151);
+    border-radius: 6px;
+    background: var(--button-bg, #1f2937);
+    cursor: pointer;
+}
+
+.draft-item:hover {
+    background: var(--button-hover, #4b5563);
+}
