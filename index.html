@@ -78,6 +78,30 @@
             <button class="close-btn" id="cancel-editor" type="button">&times;</button>
             <h2>Edit Content</h2>
 
+            <!-- WYSIWYG Toolbar -->
+    <div id="wysiwyg-toolbar">
+        <button type="button" data-action="bold"><b>B</b></button>
+        <button type="button" data-action="italic"><i>I</i></button>
+        <button type="button" data-action="underline"><u>U</u></button>
+
+        <span class="toolbar-divider"></span>
+
+        <button type="button" data-action="h1">H1</button>
+        <button type="button" data-action="h2">H2</button>
+        <button type="button" data-action="h3">H3</button>
+
+        <span class="toolbar-divider"></span>
+
+        <button type="button" data-action="ul">• List</button>
+        <button type="button" data-action="ol">1. List</button>
+
+        <span class="toolbar-divider"></span>
+
+        <button type="button" data-action="left">Left</button>
+        <button type="button" data-action="center">Center</button>
+        <button type="button" data-action="right">Right</button>
+    </div>
+
             <!-- Text / list content -->
             <label for="editor-content">Content</label>
             <textarea id="editor-content"></textarea>
