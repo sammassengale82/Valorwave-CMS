@@ -326,6 +326,55 @@ async function openDraftHistoryModal() {
 
     overlay.classList.remove("hidden");
 }
+// ============================
+// PHASE 7 — PUBLISH LOGS
+// ============================
+
+// Fetch list of publish logs
+async function fetchPublishLogList() {
+    return githubApiRequest("publish-logs", "GET", null, "Valorwave-CMS");
+}
+
+// Fetch a single publish log
+async function fetchPublishLog(path) {
+    const response = await githubApiRequest(path, "GET", null, "Valorwave-CMS");
+    if (!response?.content) return null;
+    return JSON.parse(atob(response.content));
+}
+
+// Open Publish Logs modal
+async function openPublishLogsModal() {
+    const overlay = document.getElementById("publish-logs-overlay");
+    const list = document.getElementById("publish-log-list");
+
+    list.innerHTML = "Loading...";
+
+    const logs = await fetchPublishLogList();
+    list.innerHTML = "";
+
+    logs.forEach(log => {
+        const item = document.createElement("div");
+        item.className = "publish-log-item";
+        item.textContent = log.name;
+        item.dataset.path = log.path;
+
+        item.addEventListener("click", async () => {
+            const data = await fetchPublishLog(log.path);
+            if (!data) return;
+
+            alert(
+                `Timestamp: ${data.timestamp}\n` +
+                `Message: ${data.message}\n` +
+                `Commit SHA: ${data.commitSha}\n` +
+                `Preview URL:\n${data.previewUrl}`
+            );
+        });
+
+        list.appendChild(item);
+    });
+
+    overlay.classList.remove("hidden");
+}
 
 // -------------------------------
 // THEME SYSTEM
@@ -496,19 +545,41 @@ publishBtn.addEventListener("click", async () => {
         const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
         const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
 
-        await commitFile(
+        // 1. Commit to live repo
+        const commitResponse = await commitFile(
             "index.html",
             html,
             "Publish from CMS",
             "valorwaveentertainment"
         );
 
-        alert("Site published!");
+        // 2. Build publish log
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const logPath = `publish-logs/${timestamp}.json`;
+
+        const logData = {
+            timestamp,
+            message: "Publish from CMS",
+            path: "index.html",
+            commitSha: commitResponse.commit.sha,
+            previewUrl: `https://raw.githubusercontent.com/sammassengale82/valorwaveentertainment/main/index.html`
+        };
+
+        // 3. Save publish log to Valorwave-CMS
+        await commitFile(
+            logPath,
+            JSON.stringify(logData, null, 2),
+            `Publish log ${timestamp}`,
+            "Valorwave-CMS"
+        );
+
+        alert("Site published and publish log saved!");
     } catch (e) {
         console.error(e);
-        alert("Failed to publish.");
+        alert("Failed to publish. Check console for details.");
     }
 });
+
 
 // -------------------------------
 // Logout
@@ -534,8 +605,18 @@ document.addEventListener("DOMContentLoaded", () => {
         draftHistoryBtn.addEventListener("click", openDraftHistoryModal);
         closeDraftHistoryBtn.addEventListener("click", () => {
             draftHistoryOverlay.classList.add("hidden");
-        });
-    }
+        // Phase 7 — Publish Logs
+    const publishLogsBtn = document.getElementById("publish-logs");
+    const publishLogsOverlay = document.getElementById("publish-logs-overlay");
+    const closePublishLogsBtn = document.getElementById("close-publish-logs");
+
+    if (publishLogsBtn && publishLogsOverlay && closePublishLogsBtn) {
+        publishLogsBtn.addEventListener("click", openPublishLogsModal);
+        closePublishLogsBtn.addEventListener("click", () => {
+            publishLogsOverlay.classList.add("hidden");
+    });
+}
+
 });
 
 // -------------------------------
