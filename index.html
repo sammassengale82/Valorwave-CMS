@@ -10,27 +10,38 @@
 </head>
 <body class="theme-original">
     <header id="cms-header">
-        <h1>Valor Wave CMS Ready</h1>
+        <h1>Valor Wave CMS System</h1>
 
         <div class="cms-controls">
-            <label>CMS:</label>
-            <select id="cms-theme">
-                <option value="original">Original</option>
-                <option value="patriotic">Patriotic</option>
-                <option value="dark">Dark</option>
-            </select>
 
-            <label>Site:</label>
-            <select id="site-theme">
-                <option value="original">Original</option>
-                <option value="patriotic">Patriotic</option>
-                <option value="dark">Dark</option>
-            </select>
+    <!-- CMS THEME -->
+    <label>CMS Theme:</label>
+    <select id="cms-theme">
+        <option value="original">Original</option>
+        <option value="multicam">Multicam</option>
+        <option value="patriotic">Patriotic</option>
+        <option value="dark">Dark</option>
+    </select>
+    <button id="save-cms-theme">Save</button>
+    <span id="cms-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
 
-            <button id="save-draft">Save Draft</button>
-            <button id="publish">Publish</button>
-            <button id="logout">Logout</button>
-        </div>
+    <!-- SITE THEME -->
+    <label>Site Theme:</label>
+    <select id="site-theme">
+        <option value="original">Original</option>
+        <option value="multicam">Multicam</option>
+        <option value="patriotic">Patriotic</option>
+        <option value="dark">Dark</option>
+    </select>
+    <button id="save-site-theme">Save</button>
+    <span id="site-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
+
+    <!-- Existing buttons -->
+    <button id="save-draft">Save Draft</button>
+    <button id="publish">Publish</button>
+    <button id="logout">Logout</button>
+    </div>
+
     </header>
 
     <main id="cms-main">
