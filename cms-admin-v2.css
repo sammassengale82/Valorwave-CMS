@@ -1,269 +1,273 @@
-/* Base */
-* {
+/* ============================================================
+   Valor Wave Visual CMS — Stylesheet
+   Clean, modern, theme-ready, visual-editor compatible
+============================================================ */
+
+/* RESET */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  height: 100%;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #05070a;
-  color: #f5f5f5;
+  background: #0b0f19;
+  color: #e5e7eb;
 }
 
-/* Header */
-.cms-header {
+/* ============================================================
+   THEME SUPPORT
+============================================================ */
+
+body.theme-original {
+  --accent: #2563eb;
+  --panel: #111827;
+  --border: #1f2937;
+  --bg: #0b0f19;
+  --text: #e5e7eb;
+}
+
+body.theme-multicam {
+  --accent: #8fa37b;
+  --panel: #1a1f14;
+  --border: #2a3320;
+  --bg: #0d1009;
+  --text: #e5e7eb;
+}
+
+body.theme-patriotic {
+  --accent: #b91c1c;
+  --panel: #111827;
+  --border: #1f2937;
+  --bg: #0b0f19;
+  --text: #e5e7eb;
+}
+
+/* ============================================================
+   TOP BAR
+============================================================ */
+
+#cms-topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background: #111827;
-  border-bottom: 1px solid #1f2937;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.cms-header h1 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.cms-actions {
+#cms-topbar .left {
   display: flex;
-  gap: 8px;
-}
-
-.cms-actions button {
-  padding: 6px 12px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.cms-actions #saveDraftBtn {
-  background: #374151;
-  color: #e5e7eb;
-}
-
-.cms-actions #publishBtn {
-  background: #10b981;
-  color: #022c22;
-  font-weight: 600;
-}
-
-.cms-actions #logoutBtn {
-  background: #b91c1c;
-  color: #fee2e2;
-}
-
-/* Layout */
-.cms-main {
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-}
-
-/* Editor Panel */
-.editor-panel {
-  flex: 0 0 320px;
-  background: #111827;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #1f2937;
-}
-
-.editor-panel h2 {
-  margin-top: 0;
-  font-size: 16px;
-}
-
-.editor-panel p {
-  font-size: 13px;
-  color: #9ca3af;
-}
-
-/* Theme selectors */
-.theme-selectors {
-  display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 12px;
-  margin-top: 16px;
 }
 
-.theme-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.theme-group label {
-  font-size: 13px;
+#cms-logo {
   font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
 }
 
-.theme-group select {
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid #374151;
-  background: #020617;
-  color: #e5e7eb;
-  font-size: 13px;
+#cms-status {
+  font-size: 0.85rem;
+  opacity: 0.8;
 }
 
-.editor-hint {
-  margin-top: 16px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-/* Preview Panel */
-.preview-panel {
-  flex: 1 1 auto;
-  background: #020617;
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid #1f2937;
+#cms-topbar .right {
   display: flex;
-  flex-direction: column;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.preview-panel h2 {
-  margin-top: 0;
-  font-size: 16px;
-}
+/* ============================================================
+   BUTTONS
+============================================================ */
 
-.preview-panel iframe {
-  margin-top: 8px;
-  width: 100%;
-  min-height: 650px;
+.btn {
+  padding: 6px 14px;
   border-radius: 6px;
-  border: 1px solid #374151;
-  background: #ffffff;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s ease;
 }
 
-/* Modal */
-.modal {
+.btn:hover {
+  background: var(--border);
+}
+
+.btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: #1d4ed8;
+}
+
+.btn.danger {
+  background: #b91c1c;
+  border-color: #991b1b;
+  color: #fff;
+}
+
+.btn.danger:hover {
+  background: #7f1d1d;
+}
+
+/* ============================================================
+   MAIN LAYOUT
+============================================================ */
+
+#cms-main {
+  height: calc(100vh - 60px);
+  background: var(--bg);
+  display: flex;
+  overflow: hidden;
+}
+
+#preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000;
+}
+
+/* ============================================================
+   POPUP EDITOR OVERLAY
+============================================================ */
+
+#editor-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
 }
 
-.modal.hidden {
+#editor-overlay.hidden {
   display: none;
 }
 
-.modal-content {
-  background: #020617;
-  border-radius: 8px;
+/* ============================================================
+   POPUP EDITOR MODAL
+============================================================ */
+
+#editor-modal {
+  width: min(700px, 95vw);
+  max-height: 90vh;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+
+.editor-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.editor-body {
   padding: 16px;
-  width: 100%;
-  max-width: 480px;
-  border: 1px solid #1f2937;
+  overflow-y: auto;
+  flex: 1;
 }
 
-.modal-content h3 {
-  margin-top: 0;
-  font-size: 16px;
-}
-
-.modal-content label {
+.field-label {
   display: block;
-  margin-top: 12px;
-  margin-bottom: 4px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  margin-bottom: 6px;
 }
 
-.modal-content textarea {
+#editor-textarea {
   width: 100%;
-  min-height: 120px;
-  border-radius: 4px;
-  border: 1px solid #374151;
-  background: #020617;
+  min-height: 200px;
+  background: #000;
   color: #e5e7eb;
-  padding: 8px;
-  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
   resize: vertical;
+  font-size: 0.9rem;
 }
 
-.modal-content input[type="text"],
-.modal-content input[type="file"] {
+#editor-image-url,
+#editor-image-file {
   width: 100%;
-  border-radius: 4px;
-  border: 1px solid #374151;
-  background: #020617;
-  color: #e5e7eb;
-  padding: 6px 8px;
-  font-size: 13px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #000;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
 
-.modal-buttons {
+.editor-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
 }
 
-.modal-buttons .apply {
-  background: #10b981;
-  color: #022c22;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
+/* ============================================================
+   IFRAME EDITABLE HIGHLIGHT
+============================================================ */
+
+.editable-highlight {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
   cursor: pointer;
-  font-size: 13px;
 }
 
-.modal-buttons .cancel {
-  background: #374151;
-  color: #e5e7eb;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-}
+/* ============================================================
+   RESPONSIVE
+============================================================ */
 
-.close {
-  float: right;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-/* Mobile */
-@media (max-width: 900px) {
-  .cms-main {
-    flex-direction: column;
-  }
-
-  .editor-panel {
-    flex: 1 1 auto;
-  }
-
-  .preview-panel iframe {
-    min-height: 500px;
-  }
-}
-
-@media (max-width: 600px) {
-  .cms-header {
+@media (max-width: 700px) {
+  #cms-topbar {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
   }
 
-  .cms-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+  #cms-main {
+    height: calc(100vh - 120px);
   }
 
-  .theme-selectors {
-    flex-direction: column;
+  #editor-modal {
+    width: 95vw;
   }
 }
