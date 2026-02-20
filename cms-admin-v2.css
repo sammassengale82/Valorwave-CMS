@@ -287,3 +287,24 @@ body {
     background: var(--border, #374151);
     margin: 0 4px;
 }
+
+/* ============================
+   PHASE 5 — IMAGE UPLOAD
+   ============================ */
+
+#image-drop-zone {
+    margin-top: 8px;
+    padding: 20px;
+    border: 2px dashed var(--border, #374151);
+    background: var(--panel-bg, #111827);
+    color: var(--text, #e5e7eb);
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+}
+
+#image-drop-zone.dragover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+}
