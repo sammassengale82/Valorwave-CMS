@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Valor Wave CMS</title>
 
-    <!-- GitHub RAW CSS -->
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/sammassengale82/Valorwave-CMS/main/cms-admin-v2.css">
-    <link rel="stylesheet" href="https://raw.githubusercontent.com/sammassengale82/Valorwave-CMS/main/themes.css">
-
+    <!-- Local CSS (served by GitHub Pages from this repo) -->
+    <link rel="stylesheet" href="cms-admin-v2.css">
+    <link rel="stylesheet" href="themes.css">
 </head>
 <body class="theme-original">
-
     <header id="cms-header">
         <h1>Valor Wave CMS Ready</h1>
 
@@ -37,14 +35,32 @@
     </header>
 
     <main id="cms-main">
-        <iframe id="preview-frame" src="https://sammassengale82.github.io/valorwaveentertainment/"></iframe>
+        <div id="preview-container">
+            <div id="top-pane">
+                <div class="pane-label">Editable Preview</div>
+                <iframe
+                    id="preview-frame-editable"
+                    src="https://sammassengale82.github.io/valorwaveentertainment/">
+                </iframe>
+            </div>
+
+            <div id="drag-bar"></div>
+
+            <div id="bottom-pane">
+                <div class="pane-label">Live Published Site</div>
+                <iframe
+                    id="preview-frame-live"
+                    src="https://valorwaveentertainment.com">
+                </iframe>
+            </div>
+        </div>
     </main>
 
     <!-- Editor Modal -->
     <div id="editor-overlay" class="hidden">
         <div id="editor-modal">
+            <button id="close-editor" class="close-btn">×</button>
             <h2>Edit Content</h2>
-            <button id="close-editor">×</button>
 
             <label>Content</label>
             <textarea id="editor-content"></textarea>
@@ -62,8 +78,7 @@
         </div>
     </div>
 
-    <!-- GitHub RAW JS -->
-    <script src="https://raw.githubusercontent.com/sammassengale82/Valorwave-CMS/main/cms-admin-v2.js"></script>
-
+    <!-- Local JS (served by GitHub Pages from this repo) -->
+    <script src="cms-admin-v2.js"></script>
 </body>
 </html>
