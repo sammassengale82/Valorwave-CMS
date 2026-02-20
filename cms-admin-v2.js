@@ -99,8 +99,7 @@ applyChangesBtn.addEventListener("click", () => {
     editorOverlay.classList.add("hidden");
 });
 
-// You can later wire up click handlers from inside the editable iframe
-// via postMessage to open this editor with specific content.
+// Listen for messages from the editable iframe (when we wire it later)
 window.addEventListener("message", (event) => {
     if (!event.data || typeof event.data !== "object") return;
 
