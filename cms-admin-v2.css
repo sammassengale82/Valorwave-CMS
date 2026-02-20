@@ -392,3 +392,78 @@ body {
 .publish-log-item:hover {
     background: var(--button-hover, #4b5563);
 }
+/* ============================
+   PHASE 8 — FILE SIDEBAR
+   ============================ */
+
+#cms-main {
+    height: calc(100vh - 80px); /* adjust if header height differs */
+}
+
+#cms-layout {
+    display: flex;
+    height: 100%;
+}
+
+#file-sidebar {
+    width: 260px;
+    background: var(--panel-bg, #111827);
+    border-right: 1px solid var(--border, #374151);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#file-sidebar-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border, #374151);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #e5e7eb;
+}
+
+#file-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.repo-section {
+    margin-bottom: 12px;
+}
+
+.repo-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.file-list {
+    border: 1px solid var(--border, #374151);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.file-item {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    color: #e5e7eb;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.file-item:hover {
+    background: var(--button-hover, #4b5563);
+}
+
+.file-item-folder {
+    font-weight: 600;
+}
+
+.file-item-file {
+    font-weight: 400;
+}
