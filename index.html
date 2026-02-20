@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Valor Wave CMS</title>
 
-  <!-- CMS Styles -->
+  <!-- CMS Core Styles -->
   <link rel="stylesheet" href="/cms-admin-v2.css" />
+
+  <!-- CMS Theme Styles -->
+  <link rel="stylesheet" href="/themes.css" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
@@ -29,6 +32,7 @@
       <h2>Page Editor</h2>
       <p>Edit your website visually. Click any editable section in the preview.</p>
 
+      <!-- EDIT MODAL -->
       <div id="editModal" class="modal hidden">
         <div class="modal-content">
           <span id="closeModal" class="close">&times;</span>
@@ -52,6 +56,7 @@
       </div>
     </section>
 
+    <!-- LIVE PREVIEW -->
     <section class="preview-panel">
       <h2>Live Preview</h2>
       <iframe id="previewFrame" src="https://valorwaveentertainment.com" loading="lazy"></iframe>
