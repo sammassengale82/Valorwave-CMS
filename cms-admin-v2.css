@@ -530,3 +530,18 @@ body {
 .context-item:hover {
     background: #4b5563;
 }
+/* ============================
+   PHASE 11 — DRAG & DROP
+   ============================ */
+
+.file-item.dragging {
+    opacity: 0.4;
+}
+
+.file-item.drop-target {
+    background: rgba(59, 130, 246, 0.25); /* blue highlight */
+}
+
+.file-item.invalid-drop {
+    background: rgba(239, 68, 68, 0.25); /* red highlight */
+}
