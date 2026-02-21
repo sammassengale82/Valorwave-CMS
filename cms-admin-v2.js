@@ -22,6 +22,7 @@ const editorImageURL = document.getElementById("editor-image-url");
 const editorImageUpload = document.getElementById("editor-image-upload");
 const applyChangesBtn = document.getElementById("apply-changes");
 const cancelEditorBtn = document.getElementById("cancel-editor");
+const cancelEditorBtnSecondary = document.getElementById("cancel-editor-secondary");
 
 const cmsThemeSelect = document.getElementById("cms-theme");
 const siteThemeSelect = document.getElementById("site-theme");
@@ -45,30 +46,32 @@ let currentEditType = "text";
 // -------------------------------
 let isDragging = false;
 
-dragBar.addEventListener("mousedown", () => {
-    isDragging = true;
-    document.body.style.userSelect = "none";
-});
+if (dragBar && topPane && bottomPane) {
+    dragBar.addEventListener("mousedown", () => {
+        isDragging = true;
+        document.body.style.userSelect = "none";
+    });
 
-document.addEventListener("mouseup", () => {
-    isDragging = false;
-    document.body.style.userSelect = "";
-});
+    document.addEventListener("mouseup", () => {
+        isDragging = false;
+        document.body.style.userSelect = "";
+    });
 
-document.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    const containerRect = topPane.parentElement.getBoundingClientRect();
-    const offsetY = e.clientY - containerRect.top;
-    const minHeight = 80;
+    document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const containerRect = topPane.parentElement.getBoundingClientRect();
+        const offsetY = e.clientY - containerRect.top;
+        const minHeight = 80;
 
-    const topHeight = Math.max(minHeight, Math.min(offsetY, containerRect.height - minHeight));
-    const bottomHeight = containerRect.height - topHeight;
+        const topHeight = Math.max(minHeight, Math.min(offsetY, containerRect.height - minHeight));
+        const bottomHeight = containerRect.height - topHeight;
 
-    topPane.style.flex = "none";
-    bottomPane.style.flex = "none";
-    topPane.style.height = `${topHeight}px`;
-    bottomPane.style.height = `${bottomHeight}px`;
-});
+        topPane.style.flex = "none";
+        bottomPane.style.flex = "none";
+        topPane.style.height = `${topHeight}px`;
+        bottomPane.style.height = `${bottomHeight}px`;
+    });
+}
 
 // -------------------------------
 // Editor modal logic (message-based)
@@ -97,10 +100,19 @@ window.addEventListener("message", (event) => {
     editorOverlay.classList.remove("hidden");
 });
 
-cancelEditorBtn.addEventListener("click", () => {
-    editorOverlay.classList.add("hidden");
-    currentEditTarget = null;
-});
+if (cancelEditorBtn) {
+    cancelEditorBtn.addEventListener("click", () => {
+        editorOverlay.classList.add("hidden");
+        currentEditTarget = null;
+    });
+}
+
+if (cancelEditorBtnSecondary) {
+    cancelEditorBtnSecondary.addEventListener("click", () => {
+        editorOverlay.classList.add("hidden");
+        currentEditTarget = null;
+    });
+}
 
 applyChangesBtn.addEventListener("click", async () => {
     // Phase 8: if we're editing a repo file, save to GitHub
@@ -160,7 +172,6 @@ applyChangesBtn.addEventListener("click", async () => {
     editorOverlay.classList.add("hidden");
     currentEditTarget = null;
 });
-
 
 // ============================
 // PHASE 4 — WYSIWYG TOOLBAR
@@ -355,6 +366,7 @@ async function openDraftHistoryModal() {
 
     overlay.classList.remove("hidden");
 }
+
 // ============================
 // PHASE 7 — PUBLISH LOGS
 // ============================
@@ -404,6 +416,7 @@ async function openPublishLogsModal() {
 
     overlay.classList.remove("hidden");
 }
+
 // ============================
 // PHASE 8 — MULTI-FILE SIDEBAR
 // ============================
@@ -468,13 +481,8 @@ async function loadSidebarFileLists() {
     cmsContainer.textContent = "Loading...";
 
     try {
-        const [liveEntries, cmsEntries] = await Promise.all([
-            fetchRepoRoot(LIVE_REPO),
-            fetchRepoRoot(CMS_REPO)
-        ]);
-
-        renderFileList(liveContainer, LIVE_REPO, liveEntries);
-        renderFileList(cmsContainer, CMS_REPO, cmsEntries);
+        await renderRepoRoot("valorwaveentertainment", liveContainer);
+        await renderRepoRoot("Valorwave-CMS", cmsContainer);
     } catch (e) {
         console.error("Failed to load file lists:", e);
         liveContainer.textContent = "Error loading files.";
@@ -509,6 +517,7 @@ async function openFileFromRepo(repoName, path) {
         alert("Failed to open file. Check console for details.");
     }
 }
+
 // ============================
 // PHASE 9 — EXPANDABLE FOLDER TREE
 // ============================
@@ -560,7 +569,7 @@ function createFileItem(entry, repoName, depth) {
             const expandedNow = folderState[key] === true;
             folderState[key] = !expandedNow;
 
-            renderFolder(repoName, entry.path, item.parentElement, depth);
+            renderFolder(repoName, entry.path, item, depth);
         });
     } else {
         label.textContent = entry.name;
@@ -583,7 +592,7 @@ function createFileItem(entry, repoName, depth) {
 
 async function renderFolder(repoName, path, container, depth) {
     // Clear existing children under this folder
-    const children = Array.from(container.children).filter(
+    const children = Array.from(container.parentElement.children).filter(
         el => el.dataset?.parent === `${repoName}/${path}`
     );
     children.forEach(el => el.remove());
@@ -592,9 +601,7 @@ async function renderFolder(repoName, path, container, depth) {
     const expanded = folderState[key] === true;
 
     // Update folder arrow
-    const folderLabel = container.querySelector(
-        `.folder-label`
-    );
+    const folderLabel = container.querySelector(".folder-label");
     if (folderLabel) {
         folderLabel.classList.remove("folder-expanded", "folder-collapsed");
         folderLabel.classList.add(expanded ? "folder-expanded" : "folder-collapsed");
@@ -640,16 +647,25 @@ async function renderRepoRoot(repoName, container) {
 }
 
 // Override Phase 8 sidebar loader
-async function loadSidebarFileLists() {
+async function loadSidebarFileListsTree() {
     const liveContainer = document.getElementById("repo-live-files");
     const cmsContainer = document.getElementById("repo-cms-files");
+
+    if (!liveContainer || !cmsContainer) return;
 
     liveContainer.textContent = "Loading...";
     cmsContainer.textContent = "Loading...";
 
-    await renderRepoRoot("valorwaveentertainment", liveContainer);
-    await renderRepoRoot("Valorwave-CMS", cmsContainer);
+    try {
+        await renderRepoRoot("valorwaveentertainment", liveContainer);
+        await renderRepoRoot("Valorwave-CMS", cmsContainer);
+    } catch (e) {
+        console.error("Failed to load file lists:", e);
+        liveContainer.textContent = "Error loading files.";
+        cmsContainer.textContent = "Error loading files.";
+    }
 }
+
 // ============================
 // PHASE 10 — FILE OPERATIONS (RIGHT-CLICK MENU)
 // ============================
@@ -658,87 +674,90 @@ let contextTarget = null; // { repo, path, type, depth, element }
 
 const contextMenu = document.getElementById("context-menu");
 
-// Hide menu on click anywhere
-document.addEventListener("click", () => {
-    contextMenu.classList.add("hidden");
-});
+if (contextMenu) {
+    // Hide menu on click anywhere
+    document.addEventListener("click", () => {
+        contextMenu.classList.add("hidden");
+    });
 
-// Right-click handler for file/folder items
-document.addEventListener("contextmenu", (e) => {
-    const item = e.target.closest(".file-item");
-    if (!item) return;
+    // Right-click handler for file/folder items
+    document.addEventListener("contextmenu", (e) => {
+        const item = e.target.closest(".file-item");
+        if (!item) return;
 
-    e.preventDefault();
+        e.preventDefault();
 
-    const repo = item.dataset.repo;
-    const path = item.dataset.path;
-    const type = item.dataset.type;
-    const depth = Number(item.dataset.depth);
+        const repo = item.dataset.repo;
+        const path = item.dataset.path;
+        const type = item.dataset.type;
+        const depth = Number(item.dataset.depth);
 
-    contextTarget = { repo, path, type, depth, element: item };
+        contextTarget = { repo, path, type, depth, element: item };
 
-    // Show menu
-    contextMenu.style.left = e.pageX + "px";
-    contextMenu.style.top = e.pageY + "px";
-    contextMenu.classList.remove("hidden");
+        // Show menu
+        contextMenu.style.left = e.pageX + "px";
+        contextMenu.style.top = e.pageY + "px";
+        contextMenu.classList.remove("hidden");
 
-    // Show/hide options based on type
-    document.querySelector("[data-action='open']").style.display =
-        type === "file" ? "block" : "none";
+        // Show/hide options based on type
+        document.querySelector("[data-action='open']").style.display =
+            type === "file" ? "block" : "none";
 
-    document.querySelector("[data-action='rename']").style.display = "block";
-    document.querySelector("[data-action='delete']").style.display = "block";
+        document.querySelector("[data-action='rename']").style.display = "block";
+        document.querySelector("[data-action='delete']").style.display = "block";
 
-    document.querySelector("[data-action='new-file']").style.display =
-        type === "dir" || path === "" ? "block" : "none";
+        document.querySelector("[data-action='new-file']").style.display =
+            type === "dir" || path === "" ? "block" : "none";
 
-    document.querySelector("[data-action='new-folder']").style.display =
-        type === "dir" || path === "" ? "block" : "none";
+        document.querySelector("[data-action='new-folder']").style.display =
+            type === "dir" || path === "" ? "block" : "none";
 
-    document.querySelector("[data-action='upload-file']").style.display =
-        type === "dir" || path === "" ? "block" : "none";
-});
+        document.querySelector("[data-action='upload-file']").style.display =
+            type === "dir" || path === "" ? "block" : "none";
+    });
 
-// Handle menu actions
-contextMenu.addEventListener("click", async (e) => {
-    const action = e.target.dataset.action;
-    if (!action || !contextTarget) return;
+    // Handle menu actions
+    contextMenu.addEventListener("click", async (e) => {
+        const action = e.target.dataset.action;
+        if (!action || !contextTarget) return;
 
-    contextMenu.classList.add("hidden");
+        contextMenu.classList.add("hidden");
 
-    const { repo, path, type, element } = contextTarget;
+        const { repo, path, type, element } = contextTarget;
 
-    switch (action) {
-        case "open":
-            openFileFromRepo(repo, path);
-            break;
+        switch (action) {
+            case "open":
+                openFileFromRepo(repo, path);
+                break;
 
-        case "new-file":
-            await createNewFile(repo, path);
-            break;
+            case "new-file":
+                await createNewFile(repo, path);
+                break;
 
-        case "new-folder":
-            await createNewFolder(repo, path);
-            break;
+            case "new-folder":
+                await createNewFolder(repo, path);
+                break;
 
-        case "upload-file":
-            await uploadFileToFolder(repo, path);
-            break;
+            case "upload-file":
+                await uploadFileToFolder(repo, path);
+                break;
 
-        case "rename":
-            await renameItem(repo, path, type);
-            break;
+            case "rename":
+                await renameItem(repo, path, type);
+                break;
 
-        case "delete":
-            await deleteItem(repo, path, type);
-            break;
-    }
+            case "delete":
+                await deleteItem(repo, path, type);
+                break;
+        }
 
-    // Refresh the folder containing this item
-    const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
-    const parentContainer = element.parentElement;
-    await renderFolder(repo, parentPath, parentContainer, contextTarget.depth - 1);
-});
+        // Refresh the folder containing this item
+        const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+        const parentContainer = element;
+        await renderFolder(repo, parentPath, parentContainer, contextTarget.depth - 1);
+    });
+}
+
 async function createNewFile(repo, parentPath) {
     const name = prompt("Enter new file name:");
     if (!name) return;
@@ -835,6 +854,7 @@ async function deleteItem(repo, path, type) {
 
     alert(`Deleted folder: ${path}`);
 }
+
 // ============================
 // PHASE 11 — DRAG & DROP MOVING
 // ============================
@@ -944,6 +964,7 @@ document.addEventListener("drop", async (e) => {
 
     dragItem = null;
 });
+
 async function moveItem(repo, oldPath, targetFolder) {
     const name = oldPath.split("/").pop();
     const newPath = `${targetFolder}/${name}`;
@@ -1050,6 +1071,14 @@ async function pollForGitHubToken(deviceCode, interval) {
 
         githubToken = data.access_token;
         authStatus.textContent = "Authenticated with GitHub.";
+
+        // Now that we're authenticated, load the sidebar trees
+        try {
+            await loadSidebarFileListsTree();
+        } catch (e) {
+            console.error("Failed to load sidebar after auth:", e);
+        }
+
         break;
     }
 }
@@ -1171,7 +1200,6 @@ publishBtn.addEventListener("click", async () => {
     }
 });
 
-
 // -------------------------------
 // Logout
 // -------------------------------
@@ -1211,8 +1239,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Phase 8 — load file sidebar
-    loadSidebarFileLists();
+    // Phase 8/9 — load file sidebar (only if already authenticated)
+    if (githubToken) {
+        loadSidebarFileListsTree().catch(e =>
+            console.error("Failed to load sidebar on init:", e)
+        );
+    }
 });
 
 // -------------------------------
