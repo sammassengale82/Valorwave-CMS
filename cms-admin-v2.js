@@ -160,54 +160,22 @@ saveSiteThemeBtn?.addEventListener("click", () => {
    PREVIEW LOADING (LIVE + EDITABLE)
 ============================================================ */
 async function loadEditablePreview() {
-    const rawUrl = "https://raw.githubusercontent.com/sammassengale82/valorwaveentertainment/main/index.html";
+    // Load the editable preview directly from GitHub Pages
+    // This avoids ALL asset rewrite issues and ALL 404 → HTML → "<" errors.
+    editableFrame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
 
-    try {
-        const res = await fetch(rawUrl);
-        if (!res.ok) throw new Error("Failed to fetch index.html");
-        let html = await res.text();
-
-        /* ------------------------------------------------------------
-           Inject visual-editor.js from PUBLIC SITE ROOT
-        ------------------------------------------------------------ */
-        const scriptTag = `<script src="https://valorwaveentertainment.com/visual-editor.js"></script>`;
-
-        html = html.includes("</body>")
-            ? html.replace("</body>", `${scriptTag}\n</body>`)
-            : html + scriptTag;
-
-        /* ------------------------------------------------------------
-           URL REWRITE ENGINE — FULLY FIXED
-           Ensures ALL assets load from https://valorwaveentertainment.com
-        ------------------------------------------------------------ */
-
-        // 1) Rewrite absolute-root URLs (start with /)
-        html = html.replace(/src="\//g, 'src="https://valorwaveentertainment.com/');
-        html = html.replace(/href="\//g, 'href="https://valorwaveentertainment.com/');
-
-        // 2) Rewrite ANY folder-based relative path (images/, img/, assets/, etc.)
-        //    This is the critical fix for your 404 → HTML → "<" errors.
-        html = html.replace(/src="([^"\/][^"]*\/[^"]*)"/g,
-            (match, p1) => `src="https://valorwaveentertainment.com/${p1}"`);
-
-        // 3) Rewrite single-file relative assets (logo.png, og-image.jpeg, etc.)
-        html = html.replace(/src="([^\/"][^"]+)"/g,
-            (match, p1) => `src="https://valorwaveentertainment.com/${p1}"`);
-
-        /* ------------------------------------------------------------
-           Inject into iframe
-        ------------------------------------------------------------ */
-        const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
-        doc.open();
-        doc.write(html);
-        doc.close();
-
-    } catch (err) {
-        console.error("Error loading editable preview:", err);
-    }
+    // Apply the saved site theme once the iframe loads
+    editableFrame.onload = () => {
+        const siteTheme = localStorage.getItem("site-theme") || "original";
+        editableFrame.contentWindow.postMessage(
+            { type: "set-theme", theme: siteTheme },
+            "*"
+        );
+    };
 }
 
 function loadLivePreview() {
+    // Live preview always loads the production site
     liveFrame.src = "https://valorwaveentertainment.com";
 }
 
