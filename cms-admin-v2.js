@@ -41,6 +41,10 @@ const authStatus = document.getElementById("auth-status");
 let currentEditTarget = null;
 let currentEditType = "text";
 
+// Phase 12: latest DOM from visual editor + known blocks
+let pendingHtml = null;
+let knownBlocks = [];
+
 // -------------------------------
 // Split pane drag logic
 // -------------------------------
@@ -78,26 +82,38 @@ if (dragBar && topPane && bottomPane) {
 // -------------------------------
 window.addEventListener("message", (event) => {
     const data = event.data;
-    if (!data || data.type !== "open-editor") return;
+    if (!data) return;
 
-    currentEditType = data.editType || "text";
-    currentEditTarget = data.targetSelector || null;
+    // Open editor from visual-editor.js
+    if (data.type === "open-editor") {
+        currentEditType = data.editType || "text";
+        currentEditTarget = data.targetSelector || null;
 
-    if (currentEditType === "text" || currentEditType === "list") {
-        editorContent.value = data.content || "";
-        editorImageURL.value = "";
-        editorImageUpload.value = "";
-    } else if (currentEditType === "image") {
-        editorContent.value = "";
-        editorImageURL.value = data.imageUrl || "";
-        editorImageUpload.value = "";
-    } else if (currentEditType === "link") {
-        editorContent.value = data.label || "";
-        editorImageURL.value = data.url || "";
-        editorImageUpload.value = "";
+        if (currentEditType === "text" || currentEditType === "list") {
+            editorContent.value = data.content || "";
+            editorImageURL.value = "";
+            editorImageUpload.value = "";
+        } else if (currentEditType === "image") {
+            editorContent.value = "";
+            editorImageURL.value = data.imageUrl || "";
+            editorImageUpload.value = "";
+        } else if (currentEditType === "link") {
+            editorContent.value = data.label || "";
+            editorImageURL.value = data.url || "";
+            editorImageUpload.value = "";
+        }
+
+        editorOverlay.classList.remove("hidden");
+        return;
     }
 
-    editorOverlay.classList.remove("hidden");
+    // Phase 12: DOM updated from visual editor
+    if (data.type === "dom-updated") {
+        pendingHtml = data.html;
+        updateKnownBlocksFromHtml(pendingHtml);
+        showUnsavedIndicator();
+        return;
+    }
 });
 
 if (cancelEditorBtn) {
@@ -130,7 +146,6 @@ applyChangesBtn.addEventListener("click", async () => {
 
             alert(`File saved to ${repoName}/${filePath}`);
 
-            // Clear context and close modal
             delete editorModal.dataset.repoName;
             delete editorModal.dataset.filePath;
             editorOverlay.classList.add("hidden");
@@ -370,20 +385,16 @@ async function openDraftHistoryModal() {
 // ============================
 // PHASE 7 — PUBLISH LOGS
 // ============================
-
-// Fetch list of publish logs
 async function fetchPublishLogList() {
     return githubApiRequest("publish-logs", "GET", null, "Valorwave-CMS");
 }
 
-// Fetch a single publish log
 async function fetchPublishLog(path) {
     const response = await githubApiRequest(path, "GET", null, "Valorwave-CMS");
     if (!response?.content) return null;
     return JSON.parse(atob(response.content));
 }
 
-// Open Publish Logs modal
 async function openPublishLogsModal() {
     const overlay = document.getElementById("publish-logs-overlay");
     const list = document.getElementById("publish-log-list");
@@ -438,7 +449,6 @@ function isTextFile(name) {
 }
 
 async function fetchRepoRoot(repoName) {
-    // root path is "" → /contents/
     return githubApiRequest("", "GET", null, repoName);
 }
 
@@ -452,7 +462,6 @@ function renderFileList(container, repoName, entries) {
         if (entry.type === "dir") {
             item.classList.add("file-item-folder");
             item.textContent = `/${entry.name}`;
-            // Phase 9: expand into full explorer
         } else {
             item.classList.add("file-item-file");
             item.textContent = entry.name;
@@ -500,14 +509,12 @@ async function openFileFromRepo(repoName, path) {
 
         const decoded = atob(file.content);
 
-        // Load into existing editor modal
         currentEditType = "text";
-        currentEditTarget = null; // we're editing a repo file, not DOM selector
+        currentEditTarget = null;
         editorContent.value = decoded;
         editorImageURL.value = "";
         editorImageUpload.value = "";
 
-        // Store context on the modal element so we know what to save later
         editorModal.dataset.repoName = repoName;
         editorModal.dataset.filePath = path;
 
@@ -522,8 +529,7 @@ async function openFileFromRepo(repoName, path) {
 // PHASE 9 — EXPANDABLE FOLDER TREE
 // ============================
 
-// Cache folder states so expanded folders stay open
-const folderState = {}; // key: "repo/path", value: true/false
+const folderState = {};
 
 function sortEntriesFoldersFirst(entries) {
     return entries.sort((a, b) => {
@@ -534,7 +540,6 @@ function sortEntriesFoldersFirst(entries) {
 }
 
 async function loadFolder(repoName, path) {
-    // path "" means repo root
     return githubApiRequest(path, "GET", null, repoName);
 }
 
@@ -547,13 +552,11 @@ function createFileItem(entry, repoName, depth) {
     item.dataset.type = entry.type;
     item.dataset.depth = depth;
 
-    // Indentation
     const indent = document.createElement("span");
     indent.className = "file-indent";
     indent.style.setProperty("--indent", `${depth * 16}px`);
     item.appendChild(indent);
 
-    // Label
     const label = document.createElement("span");
 
     if (entry.type === "dir") {
@@ -591,7 +594,6 @@ function createFileItem(entry, repoName, depth) {
 }
 
 async function renderFolder(repoName, path, container, depth) {
-    // Clear existing children under this folder
     const children = Array.from(container.parentElement.children).filter(
         el => el.dataset?.parent === `${repoName}/${path}`
     );
@@ -600,7 +602,6 @@ async function renderFolder(repoName, path, container, depth) {
     const key = `${repoName}/${path}`;
     const expanded = folderState[key] === true;
 
-    // Update folder arrow
     const folderLabel = container.querySelector(".folder-label");
     if (folderLabel) {
         folderLabel.classList.remove("folder-expanded", "folder-collapsed");
@@ -609,7 +610,6 @@ async function renderFolder(repoName, path, container, depth) {
 
     if (!expanded) return;
 
-    // Load folder contents
     const entries = await loadFolder(repoName, path);
     const sorted = sortEntriesFoldersFirst(entries);
 
@@ -618,7 +618,6 @@ async function renderFolder(repoName, path, container, depth) {
         item.dataset.parent = `${repoName}/${path}`;
         container.insertAdjacentElement("afterend", item);
 
-        // If folder is already expanded, recursively render children
         if (entry.type === "dir") {
             const childKey = `${repoName}/${entry.path}`;
             if (folderState[childKey]) {
@@ -638,7 +637,6 @@ async function renderRepoRoot(repoName, container) {
         const item = createFileItem(entry, repoName, 0);
         container.appendChild(item);
 
-        // Auto-expand if previously expanded
         const key = `${repoName}/${entry.path}`;
         if (entry.type === "dir" && folderState[key]) {
             renderFolder(repoName, entry.path, item, 0);
@@ -646,7 +644,6 @@ async function renderRepoRoot(repoName, container) {
     });
 }
 
-// Override Phase 8 sidebar loader
 async function loadSidebarFileListsTree() {
     const liveContainer = document.getElementById("repo-live-files");
     const cmsContainer = document.getElementById("repo-cms-files");
@@ -670,17 +667,15 @@ async function loadSidebarFileListsTree() {
 // PHASE 10 — FILE OPERATIONS (RIGHT-CLICK MENU)
 // ============================
 
-let contextTarget = null; // { repo, path, type, depth, element }
+let contextTarget = null;
 
 const contextMenu = document.getElementById("context-menu");
 
 if (contextMenu) {
-    // Hide menu on click anywhere
     document.addEventListener("click", () => {
         contextMenu.classList.add("hidden");
     });
 
-    // Right-click handler for file/folder items
     document.addEventListener("contextmenu", (e) => {
         const item = e.target.closest(".file-item");
         if (!item) return;
@@ -694,12 +689,10 @@ if (contextMenu) {
 
         contextTarget = { repo, path, type, depth, element: item };
 
-        // Show menu
         contextMenu.style.left = e.pageX + "px";
         contextMenu.style.top = e.pageY + "px";
         contextMenu.classList.remove("hidden");
 
-        // Show/hide options based on type
         document.querySelector("[data-action='open']").style.display =
             type === "file" ? "block" : "none";
 
@@ -716,7 +709,6 @@ if (contextMenu) {
             type === "dir" || path === "" ? "block" : "none";
     });
 
-    // Handle menu actions
     contextMenu.addEventListener("click", async (e) => {
         const action = e.target.dataset.action;
         if (!action || !contextTarget) return;
@@ -751,7 +743,6 @@ if (contextMenu) {
                 break;
         }
 
-        // Refresh the folder containing this item
         const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
         const parentContainer = element;
         await renderFolder(repo, parentPath, parentContainer, contextTarget.depth - 1);
@@ -774,7 +765,6 @@ async function createNewFolder(repo, parentPath) {
 
     const fullPath = parentPath ? `${parentPath}/${name}` : name;
 
-    // GitHub requires a placeholder file to create a folder
     await commitFile(`${fullPath}/.keep`, "", `Create folder ${fullPath}`, repo);
     alert(`Created folder: ${fullPath}`);
 }
@@ -810,17 +800,14 @@ async function renameItem(repo, path, type) {
     const parent = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
     const newPath = parent ? `${parent}/${newName}` : newName;
 
-    // Get SHA
     const file = await githubApiRequest(path, "GET", null, repo);
 
-    // Create new file
     await githubApiRequest(newPath, "PUT", {
         message: `Rename ${path} → ${newPath}`,
         content: file.content,
         sha: file.sha
     }, repo);
 
-    // Delete old file
     await githubApiRequest(path, "DELETE", {
         message: `Remove old name ${path}`,
         sha: file.sha
@@ -845,7 +832,6 @@ async function deleteItem(repo, path, type) {
         return;
     }
 
-    // Folder delete (recursive)
     const contents = await githubApiRequest(path, "GET", null, repo);
 
     for (const entry of contents) {
@@ -859,10 +845,9 @@ async function deleteItem(repo, path, type) {
 // PHASE 11 — DRAG & DROP MOVING
 // ============================
 
-let dragItem = null; // { repo, path, type, element }
+let dragItem = null;
 let dragOverItem = null;
 
-// Start dragging
 document.addEventListener("dragstart", (e) => {
     const item = e.target.closest(".file-item");
     if (!item) return;
@@ -878,7 +863,6 @@ document.addEventListener("dragstart", (e) => {
     e.dataTransfer.effectAllowed = "move";
 });
 
-// End dragging
 document.addEventListener("dragend", () => {
     if (dragItem?.element) {
         dragItem.element.classList.remove("dragging");
@@ -888,7 +872,6 @@ document.addEventListener("dragend", () => {
     clearDropHighlights();
 });
 
-// Drag over folder
 document.addEventListener("dragover", (e) => {
     const item = e.target.closest(".file-item");
     if (!item) return;
@@ -899,21 +882,20 @@ document.addEventListener("dragover", (e) => {
     const path = item.dataset.path;
     const type = item.dataset.type;
 
-    // Only folders can receive drops
+    if (!dragItem) return;
+
     if (type !== "dir") {
         item.classList.add("invalid-drop");
         dragOverItem = item;
         return;
     }
 
-    // Block cross-repo moves
     if (repo !== dragItem.repo) {
         item.classList.add("invalid-drop");
         dragOverItem = item;
         return;
     }
 
-    // Prevent dropping folder into itself or its children
     if (dragItem.type === "dir" && path.startsWith(dragItem.path)) {
         item.classList.add("invalid-drop");
         dragOverItem = item;
@@ -924,14 +906,12 @@ document.addEventListener("dragover", (e) => {
     dragOverItem = item;
 });
 
-// Clear highlights
 function clearDropHighlights() {
     document.querySelectorAll(".drop-target, .invalid-drop").forEach(el => {
         el.classList.remove("drop-target", "invalid-drop");
     });
 }
 
-// Drop handler
 document.addEventListener("drop", async (e) => {
     const item = e.target.closest(".file-item");
     if (!item || !dragItem) return;
@@ -942,16 +922,13 @@ document.addEventListener("drop", async (e) => {
 
     clearDropHighlights();
 
-    // Only folders can receive drops
     if (targetType !== "dir") return;
 
-    // Block cross-repo moves
     if (targetRepo !== dragItem.repo) {
         alert("Cannot move items between repos.");
         return;
     }
 
-    // Prevent dropping folder into itself or its children
     if (dragItem.type === "dir" && targetPath.startsWith(dragItem.path)) {
         alert("Cannot move a folder into itself or its own subfolder.");
         return;
@@ -959,7 +936,6 @@ document.addEventListener("drop", async (e) => {
 
     await moveItem(dragItem.repo, dragItem.path, targetPath);
 
-    // Refresh target folder
     await renderFolder(targetRepo, targetPath, item, Number(item.dataset.depth));
 
     dragItem = null;
@@ -969,17 +945,14 @@ async function moveItem(repo, oldPath, targetFolder) {
     const name = oldPath.split("/").pop();
     const newPath = `${targetFolder}/${name}`;
 
-    // Get SHA of old file/folder
     const entry = await githubApiRequest(oldPath, "GET", null, repo);
 
-    // Create new file/folder
     await githubApiRequest(newPath, "PUT", {
         message: `Move ${oldPath} → ${newPath}`,
         content: entry.content,
         sha: entry.sha
     }, repo);
 
-    // Delete old file/folder
     await githubApiRequest(oldPath, "DELETE", {
         message: `Remove old path ${oldPath}`,
         sha: entry.sha
@@ -1014,6 +987,18 @@ async function loadSavedThemes() {
 
 cmsThemeSelect.addEventListener("change", e => applyCmsTheme(e.target.value));
 siteThemeSelect.addEventListener("change", e => sendThemeToFrames(e.target.value));
+
+saveCmsThemeBtn.addEventListener("click", () => {
+    localStorage.setItem("cms-theme", cmsThemeSelect.value);
+    cmsThemeSavedMsg.style.opacity = "1";
+    setTimeout(() => cmsThemeSavedMsg.style.opacity = "0", 1200);
+});
+
+saveSiteThemeBtn.addEventListener("click", () => {
+    localStorage.setItem("site-theme", siteThemeSelect.value);
+    siteThemeSavedMsg.style.opacity = "1";
+    setTimeout(() => siteThemeSavedMsg.style.opacity = "0", 1200);
+});
 
 // -------------------------------
 // GitHub OAuth Device Flow
@@ -1072,7 +1057,6 @@ async function pollForGitHubToken(deviceCode, interval) {
         githubToken = data.access_token;
         authStatus.textContent = "Authenticated with GitHub.";
 
-        // Now that we're authenticated, load the sidebar trees
         try {
             await loadSidebarFileListsTree();
         } catch (e) {
@@ -1162,10 +1146,15 @@ publishBtn.addEventListener("click", async () => {
     if (!confirm("Publish changes to live site?")) return;
 
     try {
-        const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
-        const html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+        let html;
 
-        // 1. Commit to live repo
+        if (pendingHtml) {
+            html = pendingHtml;
+        } else {
+            const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
+            html = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+        }
+
         const commitResponse = await commitFile(
             "index.html",
             html,
@@ -1173,7 +1162,6 @@ publishBtn.addEventListener("click", async () => {
             "valorwaveentertainment"
         );
 
-        // 2. Build publish log
         const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
         const logPath = `publish-logs/${timestamp}.json`;
 
@@ -1185,7 +1173,6 @@ publishBtn.addEventListener("click", async () => {
             previewUrl: `https://raw.githubusercontent.com/sammassengale82/valorwaveentertainment/main/index.html`
         };
 
-        // 3. Save publish log to Valorwave-CMS
         await commitFile(
             logPath,
             JSON.stringify(logData, null, 2),
@@ -1194,6 +1181,8 @@ publishBtn.addEventListener("click", async () => {
         );
 
         alert("Site published and publish log saved!");
+        pendingHtml = null;
+        hideUnsavedIndicator();
     } catch (e) {
         console.error(e);
         alert("Failed to publish. Check console for details.");
@@ -1208,6 +1197,201 @@ logoutBtn.addEventListener("click", () => {
     authStatus.textContent = "Not authenticated";
     alert("Logged out.");
 });
+
+// -------------------------------
+// Phase 12 helpers: unsaved indicator + block list
+// -------------------------------
+function showUnsavedIndicator() {
+    const header = document.getElementById("cms-header");
+    if (!header) return;
+
+    let badge = header.querySelector(".unsaved-indicator");
+    if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "unsaved-indicator";
+        badge.textContent = "Unsaved changes";
+        header.appendChild(badge);
+    }
+    badge.style.display = "inline-block";
+}
+
+function hideUnsavedIndicator() {
+    const header = document.getElementById("cms-header");
+    if (!header) return;
+
+    const badge = header.querySelector(".unsaved-indicator");
+    if (badge) badge.style.display = "none";
+}
+
+function updateKnownBlocksFromHtml(html) {
+    knownBlocks = [];
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const blocks = doc.querySelectorAll("[data-editable-block]");
+        knownBlocks = Array.from(blocks).map(b => ({
+            id: b.getAttribute("data-block-id") || "",
+            tag: b.tagName.toLowerCase()
+        }));
+    } catch (e) {
+        console.error("Failed to parse HTML for blocks:", e);
+    }
+}
+
+// -------------------------------
+// Phase 12: Add Section modal (created dynamically)
+// -------------------------------
+let addSectionOverlay = null;
+let addSectionModal = null;
+let templateListEl = null;
+let targetBlockSelect = null;
+let positionSelectBefore = null;
+let positionSelectAfter = null;
+
+function createAddSectionModal() {
+    if (addSectionOverlay) return;
+
+    addSectionOverlay = document.createElement("div");
+    addSectionOverlay.id = "add-section-overlay";
+    addSectionOverlay.className = "overlay hidden";
+
+    addSectionModal = document.createElement("div");
+    addSectionModal.id = "add-section-modal";
+    addSectionModal.className = "modal";
+
+    const title = document.createElement("h2");
+    title.textContent = "Add Section";
+
+    const blockLabel = document.createElement("label");
+    blockLabel.textContent = "Insert relative to block:";
+
+    targetBlockSelect = document.createElement("select");
+    targetBlockSelect.id = "target-block-select";
+
+    const positionWrapper = document.createElement("div");
+    positionWrapper.className = "position-wrapper";
+
+    const beforeLabel = document.createElement("label");
+    positionSelectBefore = document.createElement("input");
+    positionSelectBefore.type = "radio";
+    positionSelectBefore.name = "insert-position";
+    positionSelectBefore.value = "before";
+    beforeLabel.appendChild(positionSelectBefore);
+    beforeLabel.appendChild(document.createTextNode(" Before"));
+
+    const afterLabel = document.createElement("label");
+    positionSelectAfter = document.createElement("input");
+    positionSelectAfter.type = "radio";
+    positionSelectAfter.name = "insert-position";
+    positionSelectAfter.value = "after";
+    positionSelectAfter.checked = true;
+    afterLabel.appendChild(positionSelectAfter);
+    afterLabel.appendChild(document.createTextNode(" After"));
+
+    positionWrapper.appendChild(beforeLabel);
+    positionWrapper.appendChild(afterLabel);
+
+    const templateLabel = document.createElement("h3");
+    templateLabel.textContent = "Choose a template:";
+
+    templateListEl = document.createElement("div");
+    templateListEl.id = "template-list";
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "close-btn";
+    closeBtn.textContent = "×";
+    closeBtn.addEventListener("click", () => {
+        addSectionOverlay.classList.add("hidden");
+    });
+
+    addSectionModal.appendChild(closeBtn);
+    addSectionModal.appendChild(title);
+    addSectionModal.appendChild(blockLabel);
+    addSectionModal.appendChild(targetBlockSelect);
+    addSectionModal.appendChild(positionWrapper);
+    addSectionModal.appendChild(templateLabel);
+    addSectionModal.appendChild(templateListEl);
+
+    addSectionOverlay.appendChild(addSectionModal);
+    document.body.appendChild(addSectionOverlay);
+
+    addSectionOverlay.addEventListener("click", (e) => {
+        if (e.target === addSectionOverlay) {
+            addSectionOverlay.classList.add("hidden");
+        }
+    });
+}
+
+function populateTargetBlockSelect() {
+    if (!targetBlockSelect) return;
+
+    targetBlockSelect.innerHTML = "";
+
+    const endOption = document.createElement("option");
+    endOption.value = "";
+    endOption.textContent = "End of page";
+    targetBlockSelect.appendChild(endOption);
+
+    knownBlocks.forEach(block => {
+        const opt = document.createElement("option");
+        opt.value = block.id;
+        opt.textContent = block.id ? `${block.id} (${block.tag})` : `(unnamed ${block.tag})`;
+        targetBlockSelect.appendChild(opt);
+    });
+}
+
+async function openAddSectionModal() {
+    createAddSectionModal();
+    populateTargetBlockSelect();
+
+    templateListEl.innerHTML = "Loading templates...";
+
+    try {
+        const files = await githubApiRequest("templates", "GET", null, "Valorwave-CMS");
+        templateListEl.innerHTML = "";
+
+        files.forEach(file => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "template-item";
+            btn.textContent = file.name;
+
+            btn.addEventListener("click", async () => {
+                try {
+                    const content = await githubApiRequest(file.path, "GET", null, "Valorwave-CMS");
+                    if (!content?.content) return;
+
+                    const html = atob(content.content);
+                    const targetBlockId = targetBlockSelect.value || null;
+                    const position = positionSelectBefore.checked ? "before" : "after";
+
+                    editableFrame.contentWindow.postMessage(
+                        {
+                            type: "insert-block",
+                            html,
+                            position,
+                            targetBlockId
+                        },
+                        "*"
+                    );
+
+                    addSectionOverlay.classList.add("hidden");
+                } catch (e) {
+                    console.error("Failed to load template:", e);
+                    alert("Failed to load template. Check console for details.");
+                }
+            });
+
+            templateListEl.appendChild(btn);
+        });
+    } catch (e) {
+        console.error(e);
+        templateListEl.textContent = "Failed to load templates.";
+    }
+
+    addSectionOverlay.classList.remove("hidden");
+}
 
 // ============================
 // INITIALIZATION
@@ -1227,7 +1411,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Phase 7 — Publish Logs
     const publishLogsBtn = document.getElementById("publish-logs");
     const publishLogsOverlay = document.getElementById("publish-logs-overlay");
     const closePublishLogsBtn = document.getElementById("close-publish-logs");
@@ -1239,15 +1422,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Phase 8/9 — load file sidebar (only if already authenticated)
+    const addSectionBtn = document.getElementById("add-section");
+    if (addSectionBtn) {
+        addSectionBtn.addEventListener("click", openAddSectionModal);
+    }
+
     if (githubToken) {
         loadSidebarFileListsTree().catch(e =>
             console.error("Failed to load sidebar on init:", e)
         );
     }
-});
 
-// -------------------------------
-// Load Themes
-// -------------------------------
-loadSavedThemes();
+    loadSavedThemes();
+});
