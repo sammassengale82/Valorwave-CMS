@@ -2,7 +2,7 @@
    VALOR WAVE CMS ADMIN — PHASE 13
    FULL VERSION (F1)
    Includes:
-   - GitHub OAuth (Device Flow)
+   - GitHub OAuth via Cloudflare Worker
    - Full DOM references
    - Split-pane logic
    - Theme system
@@ -11,11 +11,9 @@
    ============================================================ */
 
 /* -------------------------------
-   GitHub OAuth (Device Flow)
+   AUTH / GITHUB SESSION MARKER
 -------------------------------- */
-const GITHUB_CLIENT_ID = "0v23lioJaq0Kfz4sXFss";
-const GITHUB_SCOPES = "repo";
-let githubToken = null;
+let githubToken = null; // marker only — real token stays in Worker cookie
 
 /* -------------------------------
    DOM REFERENCES
@@ -160,11 +158,8 @@ saveSiteThemeBtn?.addEventListener("click", () => {
    PREVIEW LOADING (LIVE + EDITABLE)
 ============================================================ */
 async function loadEditablePreview() {
-    // Load the editable preview directly from GitHub Pages
-    // This avoids ALL asset rewrite issues and ALL 404 → HTML → "<" errors.
     editableFrame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
 
-    // Apply the saved site theme once the iframe loads
     editableFrame.onload = () => {
         const siteTheme = localStorage.getItem("site-theme") || "original";
         editableFrame.contentWindow.postMessage(
@@ -175,7 +170,6 @@ async function loadEditablePreview() {
 }
 
 function loadLivePreview() {
-    // Live preview always loads the production site
     liveFrame.src = "https://valorwaveentertainment.com";
 }
 
@@ -222,25 +216,68 @@ function hideUnsavedIndicator() {
     const badge = header.querySelector(".unsaved-indicator");
     if (badge) badge.style.display = "none";
 }
+
 /* ============================================================
-   GITHUB API HELPERS
+   AUTH UI + LOGIN REDIRECT + SESSION CHECK
 ============================================================ */
-async function githubApiRequest(path, method = "GET", body = null, repo, owner = "sammassengale82") {
-    if (!githubToken) throw new Error("Not authenticated with GitHub");
+function startLogin() {
+    window.location.href = "/login";
+}
 
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+async function checkAuth() {
+    try {
+        const res = await fetch("/api/me", { credentials: "include" });
+        if (!res.ok) throw new Error("Not logged in");
 
-    const options = {
-        method,
-        headers: {
-            "Authorization": `Bearer ${githubToken}`,
-            "Accept": "application/vnd.github+json"
-        }
-    };
+        const user = await res.json();
+        authStatus.textContent = `Logged in as ${user.login}`;
+        githubToken = "session-active";
+        return true;
+    } catch {
+        authStatus.textContent = "Not authenticated";
+        return false;
+    }
+}
 
-    if (body) options.body = JSON.stringify(body);
+githubLoginBtn?.addEventListener("click", startLogin);
 
-    const res = await fetch(url, options);
+logoutBtn?.addEventListener("click", async () => {
+    await fetch("/api/logout", { credentials: "include" });
+    githubToken = null;
+    authStatus.textContent = "Not authenticated";
+    window.location.reload();
+});
+
+async function enforceLogin() {
+    const loggedIn = await checkAuth();
+
+    if (!loggedIn) {
+        document.body.innerHTML = `
+            <div style="padding:40px;text-align:center;">
+                <h2>Please log in to access the CMS</h2>
+                <button id="login-now" class="btn">Login with GitHub</button>
+            </div>
+        `;
+
+        document.getElementById("login-now").addEventListener("click", startLogin);
+        return false;
+    }
+
+    return true;
+}
+
+/* ============================================================
+   GITHUB API HELPERS (VIA WORKER)
+   Expects a Worker endpoint /api/github that proxies to GitHub.
+============================================================ */
+async function githubApiRequest(path, method = "GET", body = null, repo) {
+    const res = await fetch("/api/github", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, method, body, repo })
+    });
+
     if (!res.ok) throw new Error(`GitHub ${method} failed: ${res.status}`);
     return res.json();
 }
@@ -263,75 +300,6 @@ async function commitFile(path, content, message, repo) {
 
     return githubApiRequest(path, "PUT", body, repo);
 }
-
-/* ============================================================
-   GITHUB DEVICE FLOW AUTH
-============================================================ */
-async function startGitHubDeviceFlow() {
-    authStatus.textContent = "Starting GitHub login...";
-
-    const res = await fetch("https://github.com/login/device/code", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        body: JSON.stringify({
-            client_id: GITHUB_CLIENT_ID,
-            scope: GITHUB_SCOPES
-        })
-    });
-
-    const data = await res.json();
-    if (!data.device_code) {
-        authStatus.textContent = "Failed to start GitHub login.";
-        return;
-    }
-
-    alert(`Go to ${data.verification_uri} and enter code: ${data.user_code}`);
-    authStatus.textContent = "Waiting for GitHub authorization...";
-
-    await pollForGitHubToken(data.device_code, data.interval);
-}
-
-async function pollForGitHubToken(deviceCode, interval) {
-    while (!githubToken) {
-        await new Promise(r => setTimeout(r, interval * 1000));
-
-        const res = await fetch("https://github.com/login/oauth/access_token", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({
-                client_id: GITHUB_CLIENT_ID,
-                device_code: deviceCode,
-                grant_type: "urn:ietf:params:oauth:grant-type:device_code"
-            })
-        });
-
-        const data = await res.json();
-
-        if (data.error === "authorization_pending") continue;
-        if (data.error) {
-            authStatus.textContent = "GitHub auth failed.";
-            return;
-        }
-
-        githubToken = data.access_token;
-        authStatus.textContent = "Authenticated with GitHub.";
-
-        await loadSidebarFileListsTree();
-        break;
-    }
-}
-
-githubLoginBtn?.addEventListener("click", () => {
-    if (githubToken) return alert("Already authenticated.");
-    startGitHubDeviceFlow();
-});
-
 /* ============================================================
    FILE SIDEBAR — TREE VIEW (PHASE 9)
 ============================================================ */
@@ -794,6 +762,7 @@ async function moveItem(repo, oldPath, targetFolder) {
 
     alert(`Moved: ${oldPath} → ${newPath}`);
 }
+
 /* ============================================================
    DRAFT SYSTEM
 ============================================================ */
@@ -1196,169 +1165,17 @@ async function openAddSectionModal() {
 addSectionBtn?.addEventListener("click", openAddSectionModal);
 
 /* ============================================================
-   LOGOUT
-============================================================ */
-logoutBtn?.addEventListener("click", () => {
-    githubToken = null;
-    authStatus.textContent = "Not authenticated";
-    alert("Logged out.");
-});
-
-/* ============================================================
    INITIALIZATION
 ============================================================ */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    const allowed = await enforceLogin();
+    if (!allowed) return;
+
     loadSavedThemes();
     loadEditablePreview();
     loadLivePreview();
-
-    if (githubToken) {
-        loadSidebarFileListsTree();
-    }
+    loadSidebarFileListsTree();
 });
-    /* ============================================================
-   PHASE 13 — EXPANSION PACK (2D-FULL)
-   Adds:
-   - SHA caching layer
-   - File diff viewer
-   - Ghost drag preview + auto-scroll
-   - Folder-state persistence
-   - Multi-select operations
-   - Duplicate file
-   - Open in new tab
-   - Template categories + search
-   - Block-ID validator + auto-assigner
-   - Error overlay system
-   - Keyboard shortcuts
-   - Unsaved diff engine
-============================================================ */
-
-/* ============================================================
-   SHA CACHE (prevents rate-limit spikes)
-============================================================ */
-const shaCache = {};
-
-async function getCachedSha(path, repo) {
-    const key = `${repo}:${path}`;
-    if (shaCache[key]) return shaCache[key];
-
-    try {
-        const data = await githubApiRequest(path, "GET", null, repo);
-        shaCache[key] = data.sha;
-        return data.sha;
-    } catch {
-        return null;
-    }
-}
-
-/* ============================================================
-   FILE DIFF VIEWER
-============================================================ */
-function showDiffViewer(oldContent, newContent, filename) {
-    const overlay = document.createElement("div");
-    overlay.className = "diff-overlay";
-
-    const modal = document.createElement("div");
-    modal.className = "diff-modal";
-
-    const title = document.createElement("h2");
-    title.textContent = `Changes in ${filename}`;
-
-    const closeBtn = document.createElement("button");
-    closeBtn.className = "close-btn";
-    closeBtn.textContent = "×";
-    closeBtn.addEventListener("click", () => overlay.remove());
-
-    const diffArea = document.createElement("pre");
-    diffArea.className = "diff-area";
-
-    const oldLines = oldContent.split("\n");
-    const newLines = newContent.split("\n");
-
-    let diffText = "";
-
-    const max = Math.max(oldLines.length, newLines.length);
-    for (let i = 0; i < max; i++) {
-        const oldLine = oldLines[i] || "";
-        const newLine = newLines[i] || "";
-
-        if (oldLine !== newLine) {
-            diffText += `- ${oldLine}\n+ ${newLine}\n`;
-        } else {
-            diffText += `  ${oldLine}\n`;
-        }
-    }
-
-    diffArea.textContent = diffText;
-
-    modal.appendChild(closeBtn);
-    modal.appendChild(title);
-    modal.appendChild(diffArea);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-}
-
-/* ============================================================
-   GHOST DRAG PREVIEW + AUTO-SCROLL
-============================================================ */
-let ghostEl = null;
-let autoScrollInterval = null;
-
-function createGhostPreview(text) {
-    ghostEl = document.createElement("div");
-    ghostEl.className = "ghost-preview";
-    ghostEl.textContent = text;
-    document.body.appendChild(ghostEl);
-}
-
-function moveGhostPreview(x, y) {
-    if (!ghostEl) return;
-    ghostEl.style.left = x + 10 + "px";
-    ghostEl.style.top = y + 10 + "px";
-}
-
-function destroyGhostPreview() {
-    if (ghostEl) ghostEl.remove();
-    ghostEl = null;
-}
-
-function startAutoScroll(e) {
-    stopAutoScroll();
-
-    autoScrollInterval = setInterval(() => {
-        const buffer = 80;
-        const speed = 12;
-
-        if (e.clientY < buffer) {
-            window.scrollBy(0, -speed);
-        } else if (e.clientY > window.innerHeight - buffer) {
-            window.scrollBy(0, speed);
-        }
-    }, 16);
-}
-
-function stopAutoScroll() {
-    if (autoScrollInterval) clearInterval(autoScrollInterval);
-    autoScrollInterval = null;
-}
-
-document.addEventListener("dragstart", (e) => {
-    const item = e.target.closest(".file-item");
-    if (!item) return;
-
-    createGhostPreview(item.dataset.path);
-});
-
-document.addEventListener("dragover", (e) => {
-    moveGhostPreview(e.clientX, e.clientY);
-    startAutoScroll(e);
-});
-
-document.addEventListener("dragend", () => {
-    destroyGhostPreview();
-    stopAutoScroll();
-});
-
 /* ============================================================
    FOLDER-STATE PERSISTENCE (localStorage)
 ============================================================ */
