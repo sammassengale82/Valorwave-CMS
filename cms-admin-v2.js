@@ -185,6 +185,7 @@ doc.open();
 doc.write(html);
 doc.close();
 }
+}
 function loadLivePreview() {
     liveFrame.src = "https://valorwaveentertainment.com";
 }
