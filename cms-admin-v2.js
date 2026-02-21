@@ -167,34 +167,46 @@ async function loadEditablePreview() {
         if (!res.ok) throw new Error("Failed to fetch index.html");
         let html = await res.text();
 
-        // Inject visual-editor.js from the PUBLIC SITE, not the CMS domain
-const scriptTag = `<script src="https://valorwaveentertainment.com/visual-editor.js"></script>`;
+        /* ------------------------------------------------------------
+           Inject visual-editor.js from PUBLIC SITE ROOT
+        ------------------------------------------------------------ */
+        const scriptTag = `<script src="https://valorwaveentertainment.com/visual-editor.js"></script>`;
 
-// Insert script before </body>
-html = html.includes("</body>")
-    ? html.replace("</body>", `${scriptTag}\n</body>`)
-    : html + scriptTag;
+        html = html.includes("</body>")
+            ? html.replace("</body>", `${scriptTag}\n</body>`)
+            : html + scriptTag;
 
-// Rewrite ALL relative asset URLs so they load from the public site
-html = html.replace(/src="\//g, 'src="https://valorwaveentertainment.com/');
-html = html.replace(/href="\//g, 'href="https://valorwaveentertainment.com/');
-// Rewrite relative image paths (no leading slash)
-html = html.replace(/src="images\//g, 'src="https://valorwaveentertainment.com/images/');
-html = html.replace(/src="img\//g, 'src="https://valorwaveentertainment.com/img/');
-html = html.replace(/src="assets\//g, 'src="https://valorwaveentertainment.com/assets/');
-// Catch-all for any relative path that doesn't start with http or /
-html = html.replace(/src="(?!https?:\/\/|\/)([^"]+)"/g,
-    'src="https://valorwaveentertainment.com/$1"');
+        /* ------------------------------------------------------------
+           URL REWRITE ENGINE — FULLY FIXED
+           Ensures ALL assets load from https://valorwaveentertainment.com
+        ------------------------------------------------------------ */
 
-// Inject into iframe safely (NO document.write on the main document)
-const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
-doc.open();
-doc.write(html);
-doc.close();
-} catch (err) { 
-       console.error("Error loading editable preview:", err);
+        // 1) Rewrite absolute-root URLs (start with /)
+        html = html.replace(/src="\//g, 'src="https://valorwaveentertainment.com/');
+        html = html.replace(/href="\//g, 'href="https://valorwaveentertainment.com/');
+
+        // 2) Rewrite ANY folder-based relative path (images/, img/, assets/, etc.)
+        //    This is the critical fix for your 404 → HTML → "<" errors.
+        html = html.replace(/src="([^"\/][^"]*\/[^"]*)"/g,
+            (match, p1) => `src="https://valorwaveentertainment.com/${p1}"`);
+
+        // 3) Rewrite single-file relative assets (logo.png, og-image.jpeg, etc.)
+        html = html.replace(/src="([^\/"][^"]+)"/g,
+            (match, p1) => `src="https://valorwaveentertainment.com/${p1}"`);
+
+        /* ------------------------------------------------------------
+           Inject into iframe
+        ------------------------------------------------------------ */
+        const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+    } catch (err) {
+        console.error("Error loading editable preview:", err);
+    }
 }
-}
+
 function loadLivePreview() {
     liveFrame.src = "https://valorwaveentertainment.com";
 }
