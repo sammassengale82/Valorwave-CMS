@@ -178,6 +178,13 @@ html = html.includes("</body>")
 // Rewrite ALL relative asset URLs so they load from the public site
 html = html.replace(/src="\//g, 'src="https://valorwaveentertainment.com/');
 html = html.replace(/href="\//g, 'href="https://valorwaveentertainment.com/');
+// Rewrite relative image paths (no leading slash)
+html = html.replace(/src="images\//g, 'src="https://valorwaveentertainment.com/images/');
+html = html.replace(/src="img\//g, 'src="https://valorwaveentertainment.com/img/');
+html = html.replace(/src="assets\//g, 'src="https://valorwaveentertainment.com/assets/');
+// Catch-all for any relative path that doesn't start with http or /
+html = html.replace(/src="(?!https?:\/\/|\/)([^"]+)"/g,
+    'src="https://valorwaveentertainment.com/$1"');
 
 // Inject into iframe safely (NO document.write on the main document)
 const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
