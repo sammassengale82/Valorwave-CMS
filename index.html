@@ -1,189 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Valor Wave CMS</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <title>Valor Wave CMS Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- CMS styles -->
-    <link rel="stylesheet" href="cms-admin-v2.css">
-    <!-- Theme variables -->
-    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="/cms-admin-v2.css" />
 </head>
 <body class="theme-original">
+
+<div id="cms-root">
+
+    <!-- ============================================================
+         HEADER
+    ============================================================ -->
     <header id="cms-header">
-        <h1>Valor Wave CMS Control</h1>
+        <div id="cms-header-left">
+            <div id="cms-logo">Valor Wave CMS</div>
 
-        <div class="cms-controls">
-            <!-- CMS THEME -->
-            <label>CMS Theme:</label>
-            <select id="cms-theme">
-                <option value="original">Original</option>
-                <option value="multicam">Multicam</option>
-                <option value="patriotic">Patriotic</option>
-                <option value="dark">Dark</option>
-            </select>
-            <button id="save-cms-theme">Save</button>
-            <span id="cms-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
+            <button id="add-section" class="btn-pill primary">Add Section</button>
+            <button id="save-draft" class="btn-pill">Save Draft</button>
+            <button id="publish" class="btn-pill primary">Publish</button>
+        </div>
 
-            <!-- SITE THEME -->
-            <label>Site Theme:</label>
-            <select id="site-theme">
-                <option value="original">Original</option>
-                <option value="multicam">Multicam</option>
-                <option value="patriotic">Patriotic</option>
-                <option value="dark">Dark</option>
-            </select>
-            <button id="save-site-theme">Save</button>
-            <span id="site-theme-saved" style="font-size:0.75rem; opacity:0; transition:opacity .3s;">Saved!</span>
+        <div id="cms-header-right">
+            <div class="theme-select-group">
+                <label>CMS Theme:</label>
+                <select id="cms-theme">
+                    <option value="original">Original</option>
+                    <option value="army">Army</option>
+                    <option value="patriotic">Patriotic</option>
+                </select>
+                <span id="cms-theme-saved" class="saved-msg">Saved</span>
+            </div>
 
-            <!-- Actions -->
-            <button id="save-draft">Save Draft</button>
-            <button id="draft-history">Draft History</button>
-            <button id="publish-logs">Publish Logs</button>
-            <button id="publish">Publish</button>
-            <button id="logout">Logout</button>
+            <div class="theme-select-group">
+                <label>Site Theme:</label>
+                <select id="site-theme">
+                    <option value="original">Original</option>
+                    <option value="army">Army</option>
+                    <option value="patriotic">Patriotic</option>
+                </select>
+                <span id="site-theme-saved" class="saved-msg">Saved</span>
+            </div>
 
-            <!-- GitHub auth -->
-            <button id="github-login">Login with GitHub</button>
-            <span id="auth-status" style="font-size:0.75rem; opacity:0.8;">Not authenticated</span>
+            <button id="draft-history">Drafts</button>
+            <button id="publish-logs">Logs</button>
+
+            <button id="github-login" class="primary">GitHub Login</button>
+            <span id="auth-status">Not authenticated</span>
+
+            <button id="logout" class="danger">Logout</button>
         </div>
     </header>
 
-    <main id="cms-main">
-        <div id="cms-layout">
-            <!-- Phase 8: File Sidebar -->
-            <aside id="file-sidebar">
-                <div id="file-sidebar-header">
-                    <span>Files</span>
-                </div>
+    <!-- ============================================================
+         SIDEBAR
+    ============================================================ -->
+    <aside id="cms-sidebar">
 
-                <div id="file-sidebar-content">
-                    <div class="repo-section">
-                        <div class="repo-title">/valorwaveentertainment</div>
-                        <div id="repo-live-files" class="file-list"></div>
-                    </div>
-
-                    <div class="repo-section">
-                        <div class="repo-title">/Valorwave-CMS</div>
-                        <div id="repo-cms-files" class="file-list"></div>
-                    </div>
-                </div>
-            </aside>
-
-            <!-- Split-pane preview container -->
-            <div id="preview-container">
-
-                <!-- TOP PANE — Editable Visual Preview -->
-                <div id="top-pane">
-                    <span class="pane-label">Editable Preview</span>
-                    <!-- Loads the site from sammassengale82/valorwaveentertainment (GitHub Pages) in editable mode -->
-                    <iframe
-                        id="preview-frame-editable"
-                        src="https://sammassengale82.github.io/valorwaveentertainment/"
-                    ></iframe>
-                </div>
-
-                <!-- DRAG BAR -->
-                <div id="drag-bar"></div>
-
-                <!-- BOTTOM PANE — Live Published Preview -->
-                <div id="bottom-pane">
-                    <span class="pane-label">Live Site</span>
-                    <!-- Live deployed site -->
-                    <iframe
-                        id="preview-frame-live"
-                        src="https://valorwaveentertainment.com"
-                    ></iframe>
-                </div>
-
-            </div>
+        <div id="sidebar-top">
+            <div class="sidebar-section-title">Live Site Repo</div>
         </div>
+
+        <div id="sidebar-bottom">
+            <div id="repo-live-files"></div>
+
+            <div class="sidebar-section-title">CMS Repo</div>
+            <div id="repo-cms-files"></div>
+        </div>
+
+    </aside>
+
+    <!-- ============================================================
+         MAIN CONTENT
+    ============================================================ -->
+    <main id="cms-main">
+
+        <div id="preview-container">
+
+            <!-- TOP PANE (Editable Preview) -->
+            <div id="top-pane">
+                <div id="top-pane-header">
+                    <span>Editable Preview</span>
+                </div>
+
+                <div class="preview-frame-wrapper">
+                    <iframe id="preview-frame-editable"></iframe>
+                </div>
+            </div>
+
+            <!-- DRAG BAR -->
+            <div id="drag-bar"></div>
+
+            <!-- BOTTOM PANE (Live Preview) -->
+            <div id="bottom-pane">
+                <div id="bottom-pane-header">
+                    <span>Live Site</span>
+                </div>
+
+                <div class="preview-frame-wrapper">
+                    <iframe id="preview-frame-live"></iframe>
+                </div>
+            </div>
+
+        </div>
+
     </main>
 
-    <!-- Draft History Modal -->
-    <div id="draft-history-overlay" class="hidden">
-        <div id="draft-history-modal">
-            <button class="close-btn" id="close-draft-history">&times;</button>
-            <h2>Draft History</h2>
-            <div id="draft-list"></div>
+</div>
+
+<!-- ============================================================
+     CONTEXT MENU
+============================================================ -->
+<div id="context-menu" class="hidden">
+    <button data-action="open">Open</button>
+    <button data-action="rename">Rename</button>
+    <button data-action="delete">Delete</button>
+    <button data-action="new-file">New File</button>
+    <button data-action="new-folder">New Folder</button>
+    <button data-action="upload-file">Upload File</button>
+</div>
+
+<!-- ============================================================
+     EDITOR MODAL
+============================================================ -->
+<div id="editor-overlay" class="overlay hidden">
+    <div id="editor-modal" class="modal">
+
+        <button class="close-btn" id="cancel-editor-secondary">×</button>
+
+        <h2>Editor</h2>
+
+        <div id="wysiwyg-toolbar">
+            <button data-action="bold">Bold</button>
+            <button data-action="italic">Italic</button>
+            <button data-action="underline">Underline</button>
+            <button data-action="h1">H1</button>
+            <button data-action="h2">H2</button>
+            <button data-action="h3">H3</button>
+            <button data-action="ul">• List</button>
+            <button data-action="ol">1. List</button>
+            <button data-action="left">Left</button>
+            <button data-action="center">Center</button>
+            <button data-action="right">Right</button>
         </div>
-    </div>
 
-    <!-- Publish Logs Modal -->
-    <div id="publish-logs-overlay" class="hidden">
-        <div id="publish-logs-modal">
-            <button class="close-btn" id="close-publish-logs">&times;</button>
-            <h2>Publish Logs</h2>
-            <div id="publish-log-list"></div>
-        </div>
-    </div>
-
-    <!-- Editor overlay / modal -->
-    <div id="editor-overlay" class="hidden">
-        <div id="editor-modal">
-            <button class="close-btn" id="cancel-editor" type="button">&times;</button>
-            <h2>Edit Content</h2>
-
-            <!-- WYSIWYG Toolbar -->
-            <div id="wysiwyg-toolbar">
-                <button type="button" data-action="bold"><b>B</b></button>
-                <button type="button" data-action="italic"><i>I</i></button>
-                <button type="button" data-action="underline"><u>U</u></button>
-
-                <span class="toolbar-divider"></span>
-
-                <button type="button" data-action="h1">H1</button>
-                <button type="button" data-action="h2">H2</button>
-                <button type="button" data-action="h3">H3</button>
-
-                <span class="toolbar-divider"></span>
-
-                <button type="button" data-action="ul">• List</button>
-                <button type="button" data-action="ol">1. List</button>
-
-                <span class="toolbar-divider"></span>
-
-                <button type="button" data-action="left">Left</button>
-                <button type="button" data-action="center">Center</button>
-                <button type="button" data-action="right">Right</button>
-            </div>
-
-            <!-- Text / list content -->
-            <label for="editor-content">Content</label>
+        <div id="editor-modal-body">
             <textarea id="editor-content"></textarea>
 
-            <!-- Image / link URL -->
-            <label for="editor-image-url">Image / Link URL</label>
-            <input type="text" id="editor-image-url" placeholder="https://...">
+            <div>
+                <input id="editor-image-url" placeholder="Image URL" />
+                <input id="editor-image-upload" type="file" />
 
-            <!-- (Optional) file upload hook -->
-            <label for="editor-image-upload">Upload Image</label>
-            <input type="file" id="editor-image-upload" accept="image/*">
-
-            <!-- Drag & Drop Zone -->
-            <div id="image-drop-zone">
-                Drag & Drop Image Here
-            </div>
-
-            <div class="editor-actions">
-                <button id="apply-changes" type="button">Apply</button>
-                <button id="cancel-editor-secondary" type="button">Cancel</button>
+                <div id="image-drop-zone">Drop image here</div>
             </div>
         </div>
-    </div>
 
-    <!-- Phase 10 — Context Menu -->
-    <div id="context-menu" class="hidden">
-        <div class="context-item" data-action="open">Open</div>
-        <div class="context-item" data-action="new-file">New File</div>
-        <div class="context-item" data-action="new-folder">New Folder</div>
-        <div class="context-item" data-action="upload-file">Upload File</div>
-        <div class="context-item" data-action="rename">Rename</div>
-        <div class="context-item" data-action="delete">Delete</div>
-    </div>
+        <div id="editor-modal-footer">
+            <button id="cancel-editor">Cancel</button>
+            <button id="apply-changes" class="primary">Apply</button>
+        </div>
 
-    <!-- CMS logic -->
-    <script src="cms-admin-v2.js"></script>
+    </div>
+</div>
+
+<!-- ============================================================
+     ADD SECTION MODAL (Created dynamically in JS)
+============================================================ -->
+
+<!-- ============================================================
+     DRAFT HISTORY OVERLAY
+============================================================ -->
+<div id="draft-history-overlay" class="overlay hidden">
+    <div class="modal">
+        <button id="close-draft-history" class="close-btn">×</button>
+        <h2>Draft History</h2>
+        <div id="draft-list"></div>
+    </div>
+</div>
+
+<!-- ============================================================
+     PUBLISH LOGS OVERLAY
+============================================================ -->
+<div id="publish-logs-overlay" class="overlay hidden">
+    <div class="modal">
+        <button id="close-publish-logs" class="close-btn">×</button>
+        <h2>Publish Logs</h2>
+        <div id="publish-log-list"></div>
+    </div>
+</div>
+
+<!-- ============================================================
+     ERROR + DIFF OVERLAYS (Created dynamically)
+============================================================ -->
+
+<script src="/cms-admin-v2.js"></script>
+
 </body>
 </html>
