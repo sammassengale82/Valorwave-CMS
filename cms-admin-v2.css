@@ -252,6 +252,7 @@ body {
         flex-wrap: wrap;
     }
 }
+
 /* ============================
    PHASE 4 — WYSIWYG TOOLBAR
    ============================ */
@@ -308,6 +309,7 @@ body {
     background: rgba(59, 130, 246, 0.2);
     border-color: #3b82f6;
 }
+
 /* ============================
    PHASE 6 — DRAFT HISTORY
    ============================ */
@@ -350,6 +352,7 @@ body {
 .draft-item:hover {
     background: var(--button-hover, #4b5563);
 }
+
 /* ============================
    PHASE 7 — PUBLISH LOGS
    ============================ */
@@ -374,125 +377,9 @@ body {
     border: 1px solid var(--border, #374151);
 }
 
-#publish-log-list {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.publish-log-item {
-    padding: 10px;
-    border: 1px solid var(--border, #374151);
-    border-radius: 6px;
-    background: var(--button-bg, #1f2937);
-    cursor: pointer;
-}
-
-.publish-log-item:hover {
-    background: var(--button-hover, #4b5563);
-}
 /* ============================
-   PHASE 8 — FILE SIDEBAR
+   PHASE 9 — FOLDER TREE
    ============================ */
-
-#cms-main {
-    height: calc(100vh - 80px); /* adjust if header height differs */
-}
-
-#cms-layout {
-    display: flex;
-    height: 100%;
-}
-
-#file-sidebar {
-    width: 260px;
-    background: var(--panel-bg, #111827);
-    border-right: 1px solid var(--border, #374151);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-#file-sidebar-header {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border, #374151);
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #e5e7eb;
-}
-
-#file-sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px;
-}
-
-.repo-section {
-    margin-bottom: 12px;
-}
-
-.repo-title {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #9ca3af;
-    margin-bottom: 4px;
-}
-
-.file-list {
-    border: 1px solid var(--border, #374151);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.file-item {
-    padding: 6px 8px;
-    font-size: 0.85rem;
-    color: #e5e7eb;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.file-item:hover {
-    background: var(--button-hover, #4b5563);
-}
-
-.file-item-folder {
-    font-weight: 600;
-}
-
-.file-item-file {
-    font-weight: 400;
-}
-/* ============================
-   PHASE 9 — FILE EXPLORER
-   ============================ */
-
-.file-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    padding: 6px 8px;
-    font-size: 0.85rem;
-    color: #e5e7eb;
-}
-
-.file-item:hover {
-    background: var(--button-hover, #4b5563);
-}
-
-.file-indent {
-    display: inline-block;
-    width: var(--indent, 0px);
-}
-
-.folder-label {
-    font-weight: 600;
-}
 
 .folder-expanded::before {
     content: "▾ ";
@@ -501,6 +388,7 @@ body {
 .folder-collapsed::before {
     content: "▸ ";
 }
+
 /* ============================
    PHASE 10 — CONTEXT MENU
    ============================ */
@@ -530,6 +418,7 @@ body {
 .context-item:hover {
     background: #4b5563;
 }
+
 /* ============================
    PHASE 11 — DRAG & DROP
    ============================ */
@@ -539,9 +428,19 @@ body {
 }
 
 .file-item.drop-target {
-    background: rgba(59, 130, 246, 0.25); /* blue highlight */
+    background: rgba(59, 130, 246, 0.25);
 }
 
 .file-item.invalid-drop {
-    background: rgba(239, 68, 68, 0.25); /* red highlight */
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* ============================
+   FIXED OVERLAY VISIBILITY
+   ============================ */
+
+#editor-overlay.hidden,
+#draft-history-overlay.hidden,
+#publish-logs-overlay.hidden {
+    display: none !important;
 }
