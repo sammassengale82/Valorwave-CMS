@@ -532,6 +532,11 @@ async function loadFolder(repoName, path) {
 function createFileItem(entry, repoName, depth) {
     const item = document.createElement("div");
     item.className = "file-item";
+    item.draggable = true;
+    item.dataset.repo = repoName;
+    item.dataset.path = entry.path;
+    item.dataset.type = entry.type;
+    item.dataset.depth = depth;
 
     // Indentation
     const indent = document.createElement("span");
@@ -829,6 +834,137 @@ async function deleteItem(repo, path, type) {
     }
 
     alert(`Deleted folder: ${path}`);
+}
+// ============================
+// PHASE 11 — DRAG & DROP MOVING
+// ============================
+
+let dragItem = null; // { repo, path, type, element }
+let dragOverItem = null;
+
+// Start dragging
+document.addEventListener("dragstart", (e) => {
+    const item = e.target.closest(".file-item");
+    if (!item) return;
+
+    dragItem = {
+        repo: item.dataset.repo,
+        path: item.dataset.path,
+        type: item.dataset.type,
+        element: item
+    };
+
+    item.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+});
+
+// End dragging
+document.addEventListener("dragend", () => {
+    if (dragItem?.element) {
+        dragItem.element.classList.remove("dragging");
+    }
+    dragItem = null;
+
+    clearDropHighlights();
+});
+
+// Drag over folder
+document.addEventListener("dragover", (e) => {
+    const item = e.target.closest(".file-item");
+    if (!item) return;
+
+    e.preventDefault();
+
+    const repo = item.dataset.repo;
+    const path = item.dataset.path;
+    const type = item.dataset.type;
+
+    // Only folders can receive drops
+    if (type !== "dir") {
+        item.classList.add("invalid-drop");
+        dragOverItem = item;
+        return;
+    }
+
+    // Block cross-repo moves
+    if (repo !== dragItem.repo) {
+        item.classList.add("invalid-drop");
+        dragOverItem = item;
+        return;
+    }
+
+    // Prevent dropping folder into itself or its children
+    if (dragItem.type === "dir" && path.startsWith(dragItem.path)) {
+        item.classList.add("invalid-drop");
+        dragOverItem = item;
+        return;
+    }
+
+    item.classList.add("drop-target");
+    dragOverItem = item;
+});
+
+// Clear highlights
+function clearDropHighlights() {
+    document.querySelectorAll(".drop-target, .invalid-drop").forEach(el => {
+        el.classList.remove("drop-target", "invalid-drop");
+    });
+}
+
+// Drop handler
+document.addEventListener("drop", async (e) => {
+    const item = e.target.closest(".file-item");
+    if (!item || !dragItem) return;
+
+    const targetRepo = item.dataset.repo;
+    const targetPath = item.dataset.path;
+    const targetType = item.dataset.type;
+
+    clearDropHighlights();
+
+    // Only folders can receive drops
+    if (targetType !== "dir") return;
+
+    // Block cross-repo moves
+    if (targetRepo !== dragItem.repo) {
+        alert("Cannot move items between repos.");
+        return;
+    }
+
+    // Prevent dropping folder into itself or its children
+    if (dragItem.type === "dir" && targetPath.startsWith(dragItem.path)) {
+        alert("Cannot move a folder into itself or its own subfolder.");
+        return;
+    }
+
+    await moveItem(dragItem.repo, dragItem.path, targetPath);
+
+    // Refresh target folder
+    await renderFolder(targetRepo, targetPath, item, Number(item.dataset.depth));
+
+    dragItem = null;
+});
+async function moveItem(repo, oldPath, targetFolder) {
+    const name = oldPath.split("/").pop();
+    const newPath = `${targetFolder}/${name}`;
+
+    // Get SHA of old file/folder
+    const entry = await githubApiRequest(oldPath, "GET", null, repo);
+
+    // Create new file/folder
+    await githubApiRequest(newPath, "PUT", {
+        message: `Move ${oldPath} → ${newPath}`,
+        content: entry.content,
+        sha: entry.sha
+    }, repo);
+
+    // Delete old file/folder
+    await githubApiRequest(oldPath, "DELETE", {
+        message: `Remove old path ${oldPath}`,
+        sha: entry.sha
+    }, repo);
+
+    alert(`Moved: ${oldPath} → ${newPath}`);
 }
 
 // -------------------------------
