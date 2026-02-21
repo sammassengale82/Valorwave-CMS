@@ -1,4 +1,7 @@
-/* Base layout */
+/* ============================
+   BASE LAYOUT
+   ============================ */
+
 * {
     box-sizing: border-box;
 }
@@ -6,387 +9,333 @@
 body {
     margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    background: #0f172a;
+    color: #e5e7eb;
 }
 
-/* Header */
 #cms-header {
-    background: var(--accent);
-    color: var(--bg);
-    padding: 10px 12px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border);
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: #111827;
+    border-bottom: 1px solid #1f2937;
 }
 
 #cms-header h1 {
     margin: 0;
-    font-size: 1rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    font-size: 1.1rem;
 }
 
 .cms-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
-.cms-controls label {
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-
-.cms-controls select,
-.cms-controls button {
-    font-size: 0.8rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-}
-
-.cms-controls button {
-    cursor: pointer;
-}
-
-.cms-controls button:hover {
-    background: var(--border);
-}
-
-/* Main split layout */
 #cms-main {
-    height: calc(100vh - 52px);
-    background: var(--bg);
+    display: flex;
+    height: calc(100vh - 56px);
 }
 
-#preview-container {
+#cms-layout {
+    display: flex;
+    width: 100%;
+}
+
+/* ============================
+   SIDEBAR
+   ============================ */
+
+#file-sidebar {
+    width: 260px;
+    background: #020617;
+    border-right: 1px solid #1f2937;
     display: flex;
     flex-direction: column;
-    height: 100%;
 }
 
-/* Panes */
-#top-pane,
-#bottom-pane {
-    position: relative;
-    width: 100%;
-    flex: 1 1 50%;
-    min-height: 80px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
+#file-sidebar-header {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #1f2937;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #9ca3af;
 }
 
-#bottom-pane {
-    border-bottom: none;
-    border-top: 1px solid var(--border);
+#file-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
 }
 
-.pane-label {
-    position: absolute;
-    top: 6px;
-    left: 10px;
-    z-index: 2;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 999px;
-    background: var(--panel);
-    color: var(--text);
-    border: 1px solid var(--border);
+.repo-section {
+    margin-bottom: 0.75rem;
 }
 
-/* Iframes */
-#preview-frame-editable,
-#preview-frame-live {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-/* Drag bar */
-#drag-bar {
-    height: 6px;
-    background: var(--border);
-    cursor: row-resize;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#drag-bar::before {
-    content: "";
-    width: 40px;
-    height: 2px;
-    border-radius: 999px;
-    background: var(--text);
-    opacity: 0.4;
-}
-
-/* Editor modal */
-#editor-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.65);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-}
-
-#editor-modal {
-    background: var(--panel);
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    padding: 16px;
-    width: 95%;
-    max-width: 640px;
-    color: var(--text);
-    position: relative;
-}
-
-#editor-modal h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 1rem;
+.repo-title {
+    font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
 }
 
-#editor-modal label {
-    display: block;
-    margin-top: 10px;
-    margin-bottom: 4px;
+.file-list {
     font-size: 0.8rem;
-    opacity: 0.85;
 }
 
-#editor-content {
-    width: 100%;
-    min-height: 120px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    padding: 8px;
-    font-size: 0.85rem;
-}
+/* File items & folders */
 
-#editor-image-url,
-#editor-image-upload {
-    width: 100%;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    padding: 6px;
-    font-size: 0.85rem;
-}
-
-.editor-actions {
+.file-item {
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 14px;
-}
-
-.editor-actions button {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    background: var(--panel);
-    color: var(--text);
-}
-
-#apply-changes {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--bg);
-}
-
-#cancel-editor {
-    background: var(--panel);
-    color: var(--text);
-}
-
-.close-btn {
-    position: absolute;
-    top: 6px;
-    right: 8px;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    opacity: 0.6;
-    font-size: 1.1rem;
-    cursor: pointer;
-}
-
-.close-btn:hover {
-    opacity: 1;
-}
-
-/* Utility */
-.hidden {
-    display: none;
-}
-
-/* Mobile tweaks */
-@media (max-width: 768px) {
-    #cms-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-    }
-
-    .cms-controls {
-        width: 100%;
-        justify-content: flex-start;
-        flex-wrap: wrap;
-    }
-}
-
-/* ============================
-   PHASE 4 — WYSIWYG TOOLBAR
-   ============================ */
-
-#wysiwyg-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 8px;
-    background: var(--panel-bg, #111827);
-    border-bottom: 1px solid var(--border, #374151);
-    margin-bottom: 8px;
-}
-
-#wysiwyg-toolbar button {
-    padding: 4px 8px;
-    font-size: 13px;
-    background: var(--button-bg, #1f2937);
-    color: var(--text, #e5e7eb);
-    border: 1px solid var(--border, #374151);
-    border-radius: 4px;
-    cursor: pointer;
-    line-height: 1.2;
-}
-
-#wysiwyg-toolbar button:hover {
-    background: var(--button-hover, #4b5563);
-}
-
-#wysiwyg-toolbar .toolbar-divider {
-    width: 1px;
-    align-self: stretch;
-    background: var(--border, #374151);
-    margin: 0 4px;
-}
-
-/* ============================
-   PHASE 5 — IMAGE UPLOAD
-   ============================ */
-
-#image-drop-zone {
-    margin-top: 8px;
-    padding: 20px;
-    border: 2px dashed var(--border, #374151);
-    background: var(--panel-bg, #111827);
-    color: var(--text, #e5e7eb);
-    text-align: center;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background .2s, border-color .2s;
-}
-
-#image-drop-zone.dragover {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: #3b82f6;
-}
-
-/* ============================
-   PHASE 6 — DRAFT HISTORY
-   ============================ */
-
-#draft-history-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 2000;
-}
-
-#draft-history-modal {
-    background: var(--panel-bg, #111827);
-    padding: 20px;
-    border-radius: 8px;
-    width: 420px;
-    max-height: 70vh;
-    overflow-y: auto;
-    border: 1px solid var(--border, #374151);
-}
-
-#draft-list {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.draft-item {
-    padding: 10px;
-    border: 1px solid var(--border, #374151);
-    border-radius: 6px;
-    background: var(--button-bg, #1f2937);
+    padding: 2px 4px;
     cursor: pointer;
+    user-select: none;
 }
 
-.draft-item:hover {
-    background: var(--button-hover, #4b5563);
+.file-item:hover {
+    background: #111827;
 }
 
-/* ============================
-   PHASE 7 — PUBLISH LOGS
-   ============================ */
-
-#publish-logs-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2100;
+.file-indent {
+    display: inline-block;
+    width: var(--indent, 0px);
 }
 
-#publish-logs-modal {
-    background: var(--panel-bg, #111827);
-    padding: 20px;
-    border-radius: 8px;
-    width: 480px;
-    max-height: 70vh;
-    overflow-y: auto;
-    border: 1px solid var(--border, #374151);
+.folder-label {
+    position: relative;
+    padding-left: 0.25rem;
 }
 
-/* ============================
-   PHASE 9 — FOLDER TREE
-   ============================ */
+.file-item-file {
+    padding-left: 0.25rem;
+}
 
+/* Folder arrows (Phase 9) */
 .folder-expanded::before {
     content: "▾ ";
 }
 
 .folder-collapsed::before {
     content: "▸ ";
+}
+
+/* Drag states (Phase 11) */
+.file-item.dragging {
+    opacity: 0.4;
+}
+
+.file-item.drop-target {
+    background: rgba(59, 130, 246, 0.25);
+}
+
+.file-item.invalid-drop {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* ============================
+   PREVIEW SPLIT PANE
+   ============================ */
+
+#preview-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #020617;
+}
+
+#top-pane,
+#bottom-pane {
+    position: relative;
+    flex: 1;
+    min-height: 80px;
+    border-bottom: 1px solid #1f2937;
+}
+
+#bottom-pane {
+    border-bottom: none;
+}
+
+.pane-label {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    z-index: 5;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+#preview-frame-editable,
+#preview-frame-live {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Drag bar between panes */
+#drag-bar {
+    height: 6px;
+    background: #1f2937;
+    cursor: row-resize;
+}
+
+/* ============================
+   MODALS / OVERLAYS
+   ============================ */
+
+.hidden {
+    display: none;
+}
+
+#editor-overlay,
+#draft-history-overlay,
+#publish-logs-overlay,
+#add-section-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9000;
+}
+
+#editor-modal,
+#draft-history-modal,
+#publish-logs-modal,
+#add-section-modal {
+    background: #020617;
+    border-radius: 8px;
+    border: 1px solid #1f2937;
+    padding: 1rem;
+    width: 480px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+#editor-modal h2,
+#draft-history-modal h2,
+#publish-logs-modal h2,
+#add-section-modal h2 {
+    margin-top: 0;
+    font-size: 1rem;
+}
+
+.close-btn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+/* ============================
+   EDITOR CONTENT
+   ============================ */
+
+#editor-content {
+    width: 100%;
+    min-height: 160px;
+    margin-bottom: 0.5rem;
+    background: #020617;
+    color: #e5e7eb;
+    border: 1px solid #1f2937;
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+#editor-image-url,
+#editor-image-upload {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+}
+
+#image-drop-zone {
+    border: 1px dashed #4b5563;
+    border-radius: 4px;
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-bottom: 0.75rem;
+}
+
+#image-drop-zone.dragover {
+    border-color: #3b82f6;
+    background: rgba(37, 99, 235, 0.1);
+}
+
+.editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* WYSIWYG toolbar */
+#wysiwyg-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+#wysiwyg-toolbar button {
+    background: #111827;
+    border: 1px solid #1f2937;
+    color: #e5e7eb;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#wysiwyg-toolbar button:hover {
+    background: #1f2937;
+}
+
+.toolbar-divider {
+    width: 1px;
+    background: #374151;
+    margin: 0 4px;
+}
+
+/* ============================
+   DRAFT / PUBLISH LISTS
+   ============================ */
+
+#draft-list,
+#publish-log-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #1f2937;
+    border-radius: 4px;
+    padding: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.draft-item,
+.publish-log-item {
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.draft-item:hover,
+.publish-log-item:hover {
+    background: #111827;
 }
 
 /* ============================
@@ -420,7 +369,7 @@ body {
 }
 
 /* ============================
-   PHASE 11 — DRAG & DROP
+   PHASE 11 — DRAG & DROP (file tree)
    ============================ */
 
 .file-item.dragging {
@@ -436,11 +385,122 @@ body {
 }
 
 /* ============================
-   FIXED OVERLAY VISIBILITY
+   PHASE 12 — BLOCK CONTROLS (inside iframe, mirrored here)
    ============================ */
 
-#editor-overlay.hidden,
-#draft-history-overlay.hidden,
-#publish-logs-overlay.hidden {
-    display: none !important;
+.cms-block {
+    position: relative;
+}
+
+.cms-block-handle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(15, 23, 42, 0.9);
+    color: #e5e7eb;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: grab;
+    z-index: 10;
+}
+
+.cms-block-handle:active {
+    cursor: grabbing;
+}
+
+.cms-block-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(239, 68, 68, 0.9);
+    color: #f9fafb;
+    border: none;
+    border-radius: 999px;
+    width: 20px;
+    height: 20px;
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.cms-block-dragging {
+    opacity: 0.5;
+}
+
+/* Unsaved indicator */
+.unsaved-indicator {
+    margin-left: 12px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #111827;
+    font-size: 0.75rem;
+    display: none;
+}
+
+/* Add Section modal specifics */
+#add-section-modal h3 {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+}
+
+#target-block-select {
+    width: 100%;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    background: #020617;
+    color: #e5e7eb;
+    border: 1px solid #1f2937;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+}
+
+.position-wrapper {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+}
+
+.template-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 0.25rem;
+    padding: 4px 6px;
+    background: #111827;
+    border: 1px solid #1f2937;
+    border-radius: 4px;
+    color: #e5e7eb;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.template-item:hover {
+    background: #1f2937;
+}
+
+/* ============================
+   TESTIMONIAL TABLE SCROLL
+   ============================ */
+
+.testimonial-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.testimonial-table {
+    min-width: 600px;
+    border-collapse: collapse;
+}
+
+.testimonial-table th,
+.testimonial-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.5);
+    white-space: nowrap;
 }
