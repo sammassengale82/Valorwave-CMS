@@ -187,6 +187,7 @@ doc.close();
 } catch (err) { 
        console.error("Error loading editable preview:", err);
 }
+}
 function loadLivePreview() {
     liveFrame.src = "https://valorwaveentertainment.com";
 }
