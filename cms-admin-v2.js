@@ -1196,7 +1196,10 @@ document.addEventListener("DOMContentLoaded", () => {
         draftHistoryBtn.addEventListener("click", openDraftHistoryModal);
         closeDraftHistoryBtn.addEventListener("click", () => {
             draftHistoryOverlay.classList.add("hidden");
-        // Phase 7 — Publish Logs
+        });
+    }
+
+    // Phase 7 — Publish Logs
     const publishLogsBtn = document.getElementById("publish-logs");
     const publishLogsOverlay = document.getElementById("publish-logs-overlay");
     const closePublishLogsBtn = document.getElementById("close-publish-logs");
@@ -1205,9 +1208,10 @@ document.addEventListener("DOMContentLoaded", () => {
         publishLogsBtn.addEventListener("click", openPublishLogsModal);
         closePublishLogsBtn.addEventListener("click", () => {
             publishLogsOverlay.classList.add("hidden");
-          });
-}
-// Phase 8 — load file sidebar
+        });
+    }
+
+    // Phase 8 — load file sidebar
     loadSidebarFileLists();
 });
 
