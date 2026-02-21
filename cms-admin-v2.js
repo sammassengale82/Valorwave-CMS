@@ -184,7 +184,8 @@ const doc = editableFrame.contentDocument || editableFrame.contentWindow.documen
 doc.open();
 doc.write(html);
 doc.close();
-}
+} catch (err) { 
+       console.error("Error loading editable preview:", err);
 }
 function loadLivePreview() {
     liveFrame.src = "https://valorwaveentertainment.com";
