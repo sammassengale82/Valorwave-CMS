@@ -1225,6 +1225,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (githubToken) {
         loadSidebarFileListsTree();
     }
+});
     /* ============================================================
    PHASE 13 — EXPANSION PACK (2D-FULL)
    Adds:
