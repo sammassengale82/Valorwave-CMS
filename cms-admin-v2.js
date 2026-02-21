@@ -167,20 +167,23 @@ async function loadEditablePreview() {
         if (!res.ok) throw new Error("Failed to fetch index.html");
         let html = await res.text();
 
-        // Inject visual-editor.js
-        const scriptTag = `<script src="/visual-editor.js"></script>`;
-        html = html.includes("</body>")
-            ? html.replace("</body>", `${scriptTag}\n</body>`)
-            : html + scriptTag;
+        // Inject visual-editor.js from the PUBLIC SITE, not the CMS domain
+const scriptTag = `<script src="https://valorwaveentertainment.com/visual-editor.js"></script>`;
 
-        const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
-        doc.open();
-        doc.write(html);
-        doc.close();
-    } catch (err) {
-        console.error("Error loading editable preview:", err);
-    }
-}
+// Insert script before </body>
+html = html.includes("</body>")
+    ? html.replace("</body>", `${scriptTag}\n</body>`)
+    : html + scriptTag;
+
+// Rewrite ALL relative asset URLs so they load from the public site
+html = html.replace(/src="\//g, 'src="https://valorwaveentertainment.com/');
+html = html.replace(/href="\//g, 'href="https://valorwaveentertainment.com/');
+
+// Inject into iframe safely (NO document.write on the main document)
+const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
+doc.open();
+doc.write(html);
+doc.close();
 
 function loadLivePreview() {
     liveFrame.src = "https://valorwaveentertainment.com";
