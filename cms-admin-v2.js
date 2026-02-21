@@ -1574,5 +1574,3 @@ function showUnsavedDiff() {
 
     showDiffViewer(lastSavedHtml, latestDomHtml, "index.html");
 }
-
-});
