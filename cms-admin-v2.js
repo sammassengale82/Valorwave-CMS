@@ -417,21 +417,70 @@ saveSiteThemeBtn?.addEventListener("click", () => {
 /* ============================================================
    PREVIEW LOADING (LIVE + EDITABLE)
 ============================================================ */
+
+// Inject CSS into iframe
+function injectCSSIntoIframe(iframe, href) {
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc) return;
+
+        const link = doc.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+
+        doc.head.appendChild(link);
+    } catch (e) {
+        console.warn("Failed to inject CSS into iframe:", e);
+    }
+}
+
+// Inject JS into iframe
+function injectScriptIntoIframe(iframe, src) {
+    try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc) return;
+
+        const script = doc.createElement("script");
+        script.src = src;
+        script.type = "text/javascript";
+
+        doc.body.appendChild(script);
+    } catch (e) {
+        console.warn("Failed to inject script into iframe:", e);
+    }
+}
+
 async function loadEditablePreview() {
+    const editableFrame = document.getElementById("preview-frame-editable");
+
+    // Load the GitHub Pages version of the site
     editableFrame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
 
     editableFrame.onload = () => {
+        // Inject VE CSS
+        injectCSSIntoIframe(editableFrame, "/visual-editor/visual-editor.css");
+
+        // Inject VE JS
+        injectScriptIntoIframe(editableFrame, "/visual-editor/visual-editor.js");
+
+        // Apply site theme
         const siteTheme = localStorage.getItem("site-theme") || "original";
-        editableFrame.contentWindow.postMessage(
-            { type: "set-theme", theme: siteTheme },
-            "*"
-        );
+        try {
+            editableFrame.contentWindow.postMessage(
+                { type: "set-theme", theme: siteTheme },
+                "*"
+            );
+        } catch (e) {
+            console.warn("Failed to send theme to VE:", e);
+        }
     };
 }
 
 function loadLivePreview() {
+    const liveFrame = document.getElementById("preview-frame-live");
     liveFrame.src = "https://valorwaveentertainment.com";
 }
+
 
 /* ============================================================
    MESSAGE LISTENER (INITIAL)
