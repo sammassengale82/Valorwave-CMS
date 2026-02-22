@@ -17,8 +17,8 @@ let editorApplyBtn = null;
 let editorCancelBtn = null;
 let editorCloseBtn = null;
 
-let cmsThemeSelect = null;
-let siteThemeSelect = null;
+let panelcmsThemeSelect = null;
+let panelsiteThemeSelect = null;
 let saveCmsThemeBtn = null;
 let saveSiteThemeBtn = null;
 let previewDraftBtn = null;
@@ -41,8 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
     editorCancelBtn = document.getElementById("editor-cancel-btn");
     editorCloseBtn = document.getElementById("editor-panel-close");
 
-    cmsThemeSelect = document.getElementById("cms-theme-select");
-    siteThemeSelect = document.getElementById("site-theme-select");
+    panelcmsThemeSelect = document.getElementById("cms-theme-select");
+    panelsiteThemeSelect = document.getElementById("site-theme-select");
     saveCmsThemeBtn = document.getElementById("save-cms-theme");
     saveSiteThemeBtn = document.getElementById("save-site-theme");
     previewDraftBtn = document.getElementById("preview-draft-btn");
@@ -85,7 +85,7 @@ function setupPanelResize() {
 ============================================================ */
 function setupThemeControls() {
     // CMS Theme
-    cmsThemeSelect?.addEventListener("change", () => {
+    panelcmsThemeSelect?.addEventListener("change", () => {
         document.body.classList.remove("cms-theme-original", "cms-theme-army", "cms-theme-patriotic");
         document.body.classList.add(`cms-theme-${cmsThemeSelect.value}`);
     });
@@ -96,7 +96,7 @@ function setupThemeControls() {
     });
 
     // Site Theme
-    siteThemeSelect?.addEventListener("change", () => {
+    panelsiteThemeSelect?.addEventListener("change", () => {
         if (editableFrame?.contentWindow) {
             editableFrame.contentWindow.postMessage({
                 type: "set-theme",
