@@ -104,18 +104,45 @@ async function checkAuthStatus() {
 
         if (!res.ok) {
             authStatus.textContent = "Not authenticated.";
-            return;
+            return false;
         }
 
         const user = await res.json();
         authStatus.textContent = `Logged in as ${user.login}`;
+        githubToken = "session-active";
+        return true;
     } catch (e) {
         console.error("Auth check failed:", e);
         authStatus.textContent = "Auth check failed.";
+        return false;
     }
 }
 
 checkAuthStatus();
+
+/* ============================================================
+   ENFORCE LOGIN (GATE CMS)
+============================================================ */
+async function enforceLogin() {
+    const loggedIn = await checkAuthStatus();
+
+    if (!loggedIn) {
+        document.body.innerHTML = `
+            <div style="padding:40px;text-align:center;">
+                <h2>Please log in to access the CMS</h2>
+                <button id="login-now" class="btn">Login with GitHub</button>
+            </div>
+        `;
+
+        document.getElementById("login-now").addEventListener("click", () => {
+            window.location.href = `${API_BASE}/login`;
+        });
+
+        return false;
+    }
+
+    return true;
+}
 
 /* ============================================================
    GITHUB API HELPERS (via Worker)
@@ -303,89 +330,6 @@ function hideUnsavedIndicator() {
 }
 
 /* ============================================================
-   AUTH UI + LOGIN REDIRECT + SESSION CHECK
-============================================================ */
-function startLogin() {
-    window.location.href = "/login";
-}
-
-async function checkAuth() {
-    try {
-        const res = await fetch("/api/me", { credentials: "include" });
-        if (!res.ok) throw new Error("Not logged in");
-
-        const user = await res.json();
-        authStatus.textContent = `Logged in as ${user.login}`;
-        githubToken = "session-active";
-        return true;
-    } catch {
-        authStatus.textContent = "Not authenticated";
-        return false;
-    }
-}
-
-githubLoginBtn?.addEventListener("click", startLogin);
-
-logoutBtn?.addEventListener("click", async () => {
-    await fetch("/api/logout", { credentials: "include" });
-    githubToken = null;
-    authStatus.textContent = "Not authenticated";
-    window.location.reload();
-});
-
-async function enforceLogin() {
-    const loggedIn = await checkAuth();
-
-    if (!loggedIn) {
-        document.body.innerHTML = `
-            <div style="padding:40px;text-align:center;">
-                <h2>Please log in to access the CMS</h2>
-                <button id="login-now" class="btn">Login with GitHub</button>
-            </div>
-        `;
-
-        document.getElementById("login-now").addEventListener("click", startLogin);
-        return false;
-    }
-
-    return true;
-}
-
-/* ============================================================
-   GITHUB API HELPERS (VIA WORKER)
-   Expects a Worker endpoint /api/github that proxies to GitHub.
-============================================================ */
-async function githubApiRequest(path, method = "GET", body = null, repo) {
-    const res = await fetch("/api/github", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, method, body, repo })
-    });
-
-    if (!res.ok) throw new Error(`GitHub ${method} failed: ${res.status}`);
-    return res.json();
-}
-
-async function getFileSha(path, repo) {
-    try {
-        const data = await githubApiRequest(path, "GET", null, repo);
-        return data.sha;
-    } catch {
-        return null;
-    }
-}
-
-async function commitFile(path, content, message, repo) {
-    const sha = await getFileSha(path, repo);
-    const encoded = btoa(unescape(encodeURIComponent(content)));
-
-    const body = { message, content: encoded };
-    if (sha) body.sha = sha;
-
-    return githubApiRequest(path, "PUT", body, repo);
-}
-/* ============================================================
    FILE SIDEBAR — TREE VIEW (PHASE 9)
 ============================================================ */
 function isTextFile(name) {
@@ -441,6 +385,7 @@ function createFileItem(entry, repoName, depth) {
         label.addEventListener("click", async () => {
             const expandedNow = folderState[key] === true;
             folderState[key] = !expandedNow;
+            saveFolderState();
             renderFolder(repoName, entry.path, item, depth);
         });
     } else {
@@ -487,11 +432,9 @@ async function renderFolder(repoName, path, container, depth) {
         item.dataset.parent = `${repoName}/${path}`;
         container.insertAdjacentElement("afterend", item);
 
-        if (entry.type === "dir") {
-            const childKey = `${repoName}/${entry.path}`;
-            if (folderState[childKey]) {
-                renderFolder(repoName, entry.path, item, depth + 1);
-            }
+        const childKey = `${repoName}/${entry.path}`;
+        if (entry.type === "dir" && folderState[childKey]) {
+            renderFolder(repoName, entry.path, item, depth + 1);
         }
     });
 }
@@ -1261,6 +1204,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadLivePreview();
     loadSidebarFileListsTree();
 });
+
 /* ============================================================
    FOLDER-STATE PERSISTENCE (localStorage)
 ============================================================ */
