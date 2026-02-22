@@ -1,0 +1,93 @@
+<!-- ============================================================
+     EDITOR SIDE PANEL (Resizable, Hybrid: Content / Design / Settings)
+     Squarespace + Wix + Webflow Style
+============================================================ -->
+<aside id="editor-panel" class="hidden">
+    
+    <!-- Drag Handle (Resizable Left Edge) -->
+    <div id="editor-panel-resize-handle"></div>
+
+    <!-- Panel Header -->
+    <div id="editor-panel-header">
+        <div id="editor-panel-title">
+            <span id="editor-block-icon">🔧</span>
+            <span id="editor-block-name">Editor</span>
+        </div>
+        <button id="editor-panel-close">×</button>
+    </div>
+
+    <!-- Scrollable Content Area -->
+    <div id="editor-panel-scroll">
+
+        <!-- ============================================================
+             CMS THEME CONTROLS (Header + Panel)
+        ============================================================= -->
+        <section class="editor-section">
+            <h3>CMS Theme</h3>
+
+            <label>Choose CMS Theme</label>
+            <select id="cms-theme-select">
+                <option value="original">Original</option>
+                <option value="army">Army</option>
+                <option value="patriotic">Patriotic</option>
+            </select>
+
+            <button id="save-cms-theme" class="theme-save-btn">Save CMS Theme</button>
+        </section>
+
+        <!-- ============================================================
+             SITE THEME CONTROLS (Preview + Publish)
+        ============================================================= -->
+        <section class="editor-section">
+            <h3>Site Theme</h3>
+
+            <label>Choose Site Theme</label>
+            <select id="site-theme-select">
+                <option value="original">Original</option>
+                <option value="army">Army</option>
+                <option value="patriotic">Patriotic</option>
+            </select>
+
+            <button id="save-site-theme" class="theme-save-btn">Save Site Theme</button>
+            <button id="preview-draft-btn" class="theme-save-btn">Preview Draft</button>
+        </section>
+
+        <!-- ============================================================
+             CONTENT SECTION (Dynamic per block type)
+        ============================================================= -->
+        <section id="editor-content-section" class="editor-section">
+            <h3>Content</h3>
+            <div id="editor-content-fields">
+                <!-- Populated dynamically by editor-panel.js -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+             DESIGN SECTION (Collapsible)
+        ============================================================= -->
+        <section id="editor-design-section" class="editor-section collapsible">
+            <h3 class="collapsible-header">Design</h3>
+            <div class="collapsible-body" id="editor-design-fields">
+                <!-- Populated dynamically by editor-panel.js -->
+            </div>
+        </section>
+
+        <!-- ============================================================
+             SETTINGS SECTION (Collapsible)
+        ============================================================= -->
+        <section id="editor-settings-section" class="editor-section collapsible">
+            <h3 class="collapsible-header">Settings</h3>
+            <div class="collapsible-body" id="editor-settings-fields">
+                <!-- Populated dynamically by editor-panel.js -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Panel Footer -->
+    <div id="editor-panel-footer">
+        <button id="editor-cancel-btn" class="editor-footer-btn">Cancel</button>
+        <button id="editor-apply-btn" class="editor-footer-btn primary">Apply</button>
+    </div>
+
+</aside>
