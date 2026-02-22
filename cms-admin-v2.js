@@ -66,6 +66,91 @@ const imageDropZone = document.getElementById("image-drop-zone");
 
 const addSectionBtn = document.getElementById("add-section");
 
+/* ============================================================
+   TWO-SUBDOMAIN ARCHITECTURE
+   UI:  https://cms.valorwaveentertainment.com
+   API: https://cms-api.valorwaveentertainment.com
+============================================================ */
+const API_BASE = "https://cms-api.valorwaveentertainment.com";
+
+/* ============================================================
+   LOGIN / LOGOUT (via Worker)
+============================================================ */
+githubLoginBtn?.addEventListener("click", () => {
+    window.location.href = `${API_BASE}/login`;
+});
+
+logoutBtn?.addEventListener("click", async () => {
+    try {
+        await fetch(`${API_BASE}/api/logout`, {
+            method: "POST",
+            credentials: "include"
+        });
+        window.location.reload();
+    } catch (e) {
+        console.error(e);
+        alert("Logout failed.");
+    }
+});
+
+/* ============================================================
+   AUTH STATUS CHECK
+============================================================ */
+async function checkAuthStatus() {
+    try {
+        const res = await fetch(`${API_BASE}/api/me`, {
+            credentials: "include"
+        });
+
+        if (!res.ok) {
+            authStatus.textContent = "Not authenticated.";
+            return;
+        }
+
+        const user = await res.json();
+        authStatus.textContent = `Logged in as ${user.login}`;
+    } catch (e) {
+        console.error("Auth check failed:", e);
+        authStatus.textContent = "Auth check failed.";
+    }
+}
+
+checkAuthStatus();
+
+/* ============================================================
+   GITHUB API HELPERS (via Worker)
+============================================================ */
+async function githubApiRequest(path, method = "GET", body = null, repo, owner = "sammassengale82") {
+    const res = await fetch(`${API_BASE}/api/github`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, method, body, repo, owner })
+    });
+
+    if (!res.ok) throw new Error(`GitHub ${method} failed: ${res.status}`);
+    return res.json();
+}
+
+async function getFileSha(path, repo) {
+    try {
+        const data = await githubApiRequest(path, "GET", null, repo);
+        return data.sha || null;
+    } catch {
+        return null;
+    }
+}
+
+async function commitFile(path, content, message, repo) {
+    const sha = await getFileSha(path, repo);
+    const encoded = btoa(unescape(encodeURIComponent(content)));
+
+    const body = { message, content: encoded };
+    if (sha) body.sha = sha;
+
+    return githubApiRequest(path, "PUT", body, repo);
+}
+
 /* -------------------------------
    GLOBAL STATE
 -------------------------------- */
