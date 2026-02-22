@@ -1,14 +1,12 @@
 /* ============================================================
-   VALOR WAVE CMS ADMIN — PHASE 13 STYLES
+   VALOR WAVE CMS ADMIN — PHASE 14 CLEAN VERSION
    - Layout
    - Themes
    - Sidebar + file tree
-   - Editor modal + WYSIWYG
-   - Add Section modal
+   - Context menu
+   - Preview panes
    - Draft / publish overlays
-   - Error / diff overlays
-   - Grid editor handles
-   - Ghost drag preview
+   - Responsive layout
 ============================================================ */
 
 /* -----------------------------
@@ -50,12 +48,7 @@ html, body {
     border-bottom: 1px solid #1f2937;
 }
 
-#cms-header-left {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
+#cms-header-left,
 #cms-header-right {
     display: flex;
     align-items: center;
@@ -196,11 +189,6 @@ body.theme-original {
     color: #e5e7eb;
 }
 
-body.theme-army {
-    background: #020617;
-    color: #e5e7eb;
-}
-
 body.theme-army #cms-header {
     background: linear-gradient(to right, #0f172a, #1f2937);
 }
@@ -212,11 +200,6 @@ body.theme-army #cms-logo {
 body.theme-army button.primary {
     background: #4d7c0f;
     border-color: #3f6212;
-}
-
-body.theme-patriotic {
-    background: #020617;
-    color: #e5e7eb;
 }
 
 body.theme-patriotic #cms-header {
@@ -413,211 +396,6 @@ body.theme-patriotic #cms-logo {
 }
 
 /* -----------------------------
-   EDITOR OVERLAY + MODAL
------------------------------ */
-.overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-}
-
-.overlay.hidden {
-    display: none;
-}
-
-.modal {
-    background: #020617;
-    border-radius: 0.75rem;
-    border: 1px solid #1f2937;
-    padding: 1rem;
-    width: 640px;
-    max-width: 95vw;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
-}
-
-.modal h2 {
-    margin: 0;
-    font-size: 1rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #9ca3af;
-}
-
-.modal .close-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.75rem;
-    background: transparent;
-    border: none;
-    font-size: 1.1rem;
-    color: #6b7280;
-    padding: 0;
-}
-
-.modal .close-btn:hover {
-    color: #e5e7eb;
-}
-
-/* Editor layout */
-#editor-modal {
-    position: relative;
-}
-
-#editor-modal-body {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
-    gap: 0.75rem;
-}
-
-#editor-content {
-    width: 100%;
-    min-height: 220px;
-    resize: vertical;
-    background: #020617;
-    border-radius: 0.5rem;
-    border: 1px solid #1f2937;
-    color: #e5e7eb;
-    padding: 0.5rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: 0.8rem;
-}
-
-#editor-image-url {
-    width: 100%;
-    background: #020617;
-    border-radius: 0.375rem;
-    border: 1px solid #1f2937;
-    color: #e5e7eb;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.8rem;
-}
-
-#editor-image-upload {
-    width: 100%;
-    font-size: 0.8rem;
-}
-
-/* Image drop zone */
-#image-drop-zone {
-    margin-top: 0.5rem;
-    border-radius: 0.5rem;
-    border: 1px dashed #374151;
-    padding: 0.5rem;
-    font-size: 0.75rem;
-    color: #9ca3af;
-    text-align: center;
-    background: rgba(15, 23, 42, 0.7);
-}
-
-#image-drop-zone.drag-over {
-    border-color: #22c55e;
-    background: rgba(22, 163, 74, 0.15);
-}
-
-/* Editor footer */
-#editor-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-}
-
-/* -----------------------------
-   WYSIWYG TOOLBAR
------------------------------ */
-#wysiwyg-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin-bottom: 0.35rem;
-}
-
-#wysiwyg-toolbar button {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.45rem;
-}
-
-/* -----------------------------
-   ADD SECTION MODAL
------------------------------ */
-#add-section-overlay {
-    z-index: 60;
-}
-
-#add-section-modal {
-    position: relative;
-}
-
-#add-section-modal h2 {
-    margin-bottom: 0.5rem;
-}
-
-#add-section-modal h3 {
-    margin: 0.75rem 0 0.35rem;
-    font-size: 0.85rem;
-    color: #9ca3af;
-}
-
-#target-block-select {
-    width: 100%;
-    background: #020617;
-    border-radius: 0.375rem;
-    border: 1px solid #1f2937;
-    color: #e5e7eb;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.8rem;
-}
-
-.position-wrapper {
-    display: flex;
-    gap: 1rem;
-    margin-top: 0.35rem;
-    font-size: 0.8rem;
-    color: #9ca3af;
-}
-
-#template-list {
-    margin-top: 0.35rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.35rem;
-}
-
-.template-item {
-    background: #020617;
-    border-radius: 0.5rem;
-    border: 1px solid #1f2937;
-    padding: 0.4rem 0.5rem;
-    font-size: 0.8rem;
-    text-align: left;
-    color: #e5e7eb;
-}
-
-.template-item:hover {
-    background: rgba(37, 99, 235, 0.15);
-    border-color: #2563eb;
-}
-
-/* Template search */
-.template-search {
-    width: 100%;
-    margin-bottom: 0.35rem;
-    background: #020617;
-    border-radius: 0.375rem;
-    border: 1px solid #1f2937;
-    color: #e5e7eb;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.8rem;
-}
-
-/* -----------------------------
    DRAFT HISTORY OVERLAY
 ----------------------------- */
 #draft-history-overlay .modal {
@@ -678,180 +456,6 @@ body.theme-patriotic #cms-logo {
 }
 
 /* -----------------------------
-   ERROR OVERLAY
------------------------------ */
-.error-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(127, 29, 29, 0.75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 70;
-}
-
-.error-modal {
-    background: #020617;
-    border-radius: 0.75rem;
-    border: 1px solid #7f1d1d;
-    padding: 1rem;
-    width: 420px;
-    max-width: 95vw;
-    color: #fecaca;
-}
-
-.error-modal h2 {
-    margin: 0 0 0.5rem;
-    font-size: 1rem;
-    color: #fecaca;
-}
-
-.error-modal p {
-    margin: 0 0 0.75rem;
-    font-size: 0.85rem;
-}
-
-/* -----------------------------
-   DIFF OVERLAY
------------------------------ */
-.diff-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 65;
-}
-
-.diff-modal {
-    background: #020617;
-    border-radius: 0.75rem;
-    border: 1px solid #1f2937;
-    padding: 1rem;
-    width: 720px;
-    max-width: 95vw;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.diff-modal h2 {
-    margin: 0;
-    font-size: 0.95rem;
-    color: #e5e7eb;
-}
-
-.diff-area {
-    flex: 1;
-    overflow: auto;
-    background: #020617;
-    border-radius: 0.5rem;
-    border: 1px solid #1f2937;
-    padding: 0.5rem;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    color: #e5e7eb;
-    white-space: pre;
-}
-
-/* -----------------------------
-   GRID EDITOR (visual-editor.js)
------------------------------ */
-.cms-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
-}
-
-.cms-grid-item {
-    position: relative;
-    background: rgba(15, 23, 42, 0.85);
-    border-radius: 0.5rem;
-    border: 1px solid rgba(148, 163, 184, 0.35);
-    padding: 0.5rem;
-    overflow: hidden;
-}
-
-/* Drag handle */
-.grid-drag-handle {
-    position: absolute;
-    top: 0.25rem;
-    left: 0.35rem;
-    font-size: 0.7rem;
-    color: #9ca3af;
-    cursor: grab;
-    user-select: none;
-    z-index: 2;
-}
-
-/* Resize handles (RH1) */
-.grid-resize-handle {
-    position: absolute;
-    background: rgba(59, 130, 246, 0.85);
-    z-index: 2;
-}
-
-.grid-resize-right {
-    top: 0;
-    right: 0;
-    width: 4px;
-    height: 100%;
-    cursor: ew-resize;
-}
-
-.grid-resize-bottom {
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 4px;
-    cursor: ns-resize;
-}
-
-.grid-resize-corner {
-    right: 0;
-    bottom: 0;
-    width: 10px;
-    height: 10px;
-    cursor: nwse-resize;
-}
-
-/* Table column resize handle */
-.table-col-resize {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 4px;
-    height: 100%;
-    cursor: col-resize;
-    background: rgba(148, 163, 184, 0.6);
-}
-
-/* Placeholder while dragging grid items */
-.cms-grid-placeholder {
-    border-radius: 0.5rem;
-    border: 1px dashed rgba(148, 163, 184, 0.7);
-    background: rgba(15, 23, 42, 0.4);
-}
-
-/* -----------------------------
-   GHOST DRAG PREVIEW
------------------------------ */
-.ghost-preview {
-    position: fixed;
-    pointer-events: none;
-    z-index: 99999;
-    background: rgba(15, 23, 42, 0.95);
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.6);
-    padding: 0.25rem 0.6rem;
-    font-size: 0.75rem;
-    color: #e5e7eb;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-}
-
-/* -----------------------------
    RESPONSIVE
 ----------------------------- */
 @media (max-width: 960px) {
@@ -875,10 +479,6 @@ body.theme-patriotic #cms-logo {
 }
 
 @media (max-width: 640px) {
-    #editor-modal-body {
-        grid-template-columns: 1fr;
-    }
-
     #cms-header-left {
         flex-wrap: wrap;
     }
