@@ -195,6 +195,154 @@ let dragItem = null; // For file drag/move
 let dragOverItem = null;
 
 /* ============================================================
+   VISUAL EDITOR MESSAGE BRIDGE
+   - Receives open-editor from preview iframe
+   - Opens modal and populates fields
+   - Sends apply-edit back to iframe
+============================================================ */
+
+function openEditorModalFromPayload(payload) {
+    currentEditType = payload.editType || "block";
+    currentTargetSelector = payload.targetSelector || null;
+    currentEditTarget = payload;
+
+    const tagName = (payload.tagName || "").toLowerCase();
+
+    // MAIN TEXT AREA CONTENT
+    let mainText = payload.html || payload.text || "";
+
+    // LINK
+    if (currentEditType === "link" || tagName === "a") {
+        mainText = payload.label || payload.text || "";
+        if (editorImageURL) {
+            editorImageURL.value = payload.url || "";
+            editorImageURL.placeholder = "Link URL";
+        }
+    }
+
+    // IMAGE
+    if (currentEditType === "image" || tagName === "img") {
+        mainText = payload.alt || "";
+        if (editorImageURL) {
+            editorImageURL.value = payload.imageUrl || "";
+            editorImageURL.placeholder = "Image URL";
+        }
+    }
+
+    // TEXTAREA
+    if (editorContent) editorContent.value = mainText;
+
+    // CLEAR FILE INPUT
+    if (editorImageUpload) editorImageUpload.value = "";
+
+    // SHOW MODAL
+    if (editorOverlay) editorOverlay.style.display = "flex";
+    if (editorModal) editorModal.style.display = "block";
+}
+
+function closeEditorModal() {
+    if (editorOverlay) editorOverlay.style.display = "none";
+    if (editorModal) editorModal.style.display = "none";
+
+    currentEditTarget = null;
+    currentTargetSelector = null;
+    currentEditType = "text";
+}
+
+/* ============================================================
+   MESSAGE LISTENER (VE → CMS)
+============================================================ */
+window.addEventListener("message", (event) => {
+    if (!editableFrame || event.source !== editableFrame.contentWindow) return;
+
+    const data = event.data || {};
+    if (data.type === "open-editor") {
+        openEditorModalFromPayload(data);
+    }
+});
+
+/* ============================================================
+   APPLY EDIT
+============================================================ */
+applyChangesBtn?.addEventListener("click", () => {
+    if (!editableFrame || !currentTargetSelector) {
+        closeEditorModal();
+        return;
+    }
+
+    const payload = {
+        type: "apply-edit",
+        editType: currentEditType,
+        targetSelector: currentTargetSelector
+    };
+
+    const mainText = editorContent ? editorContent.value : "";
+
+    // TEXT/BLOCK
+    if (currentEditType === "text" || currentEditType === "block") {
+        payload.html = mainText;
+    }
+
+    // LINK
+    if (currentEditType === "link") {
+        payload.label = mainText;
+        payload.url = editorImageURL?.value || "";
+    }
+
+    // IMAGE
+    if (currentEditType === "image") {
+        payload.alt = mainText;
+        payload.imageUrl = editorImageURL?.value || "";
+    }
+
+    // STYLE / CLASSES passthrough
+    if (currentEditTarget?.style) payload.style = currentEditTarget.style;
+    if (currentEditTarget?.classes) payload.classes = currentEditTarget.classes;
+
+    editableFrame.contentWindow.postMessage(payload, "*");
+    closeEditorModal();
+});
+
+/* ============================================================
+   CANCEL EDIT
+============================================================ */
+cancelEditorBtn?.addEventListener("click", closeEditorModal);
+cancelEditorBtnSecondary?.addEventListener("click", closeEditorModal);
+
+/* ============================================================
+   IMAGE UPLOAD / DROP → URL FIELD
+============================================================ */
+editorImageUpload?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !editorImageURL) return;
+
+    const reader = new FileReader();
+    reader.onload = () => editorImageURL.value = reader.result;
+    reader.readAsDataURL(file);
+});
+
+imageDropZone?.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    imageDropZone.classList.add("drag-over");
+});
+
+imageDropZone?.addEventListener("dragleave", () => {
+    imageDropZone.classList.remove("drag-over");
+});
+
+imageDropZone?.addEventListener("drop", (e) => {
+    e.preventDefault();
+    imageDropZone.classList.remove("drag-over");
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !editorImageURL) return;
+
+    const reader = new FileReader();
+    reader.onload = () => editorImageURL.value = reader.result;
+    reader.readAsDataURL(file);
+});
+
+/* ============================================================
    SPLIT-PANE DRAG LOGIC
 ============================================================ */
 let isDraggingPane = false;
@@ -288,12 +436,18 @@ function loadLivePreview() {
 /* ============================================================
    MESSAGE LISTENER (INITIAL)
 ============================================================ */
+/* ============================================================
+   MESSAGE LISTENER (VE + DOM SYNC)
+============================================================ */
 window.addEventListener("message", (event) => {
     const data = event.data;
     if (!data) return;
 
+    // Only trust messages from the editable preview frame
+    if (!editableFrame || event.source !== editableFrame.contentWindow) return;
+
     if (data.type === "open-editor") {
-        openEditorModal(data);
+        openEditorModalFromPayload(data);
         return;
     }
 
@@ -462,7 +616,7 @@ async function loadSidebarFileListsTree() {
 
     try {
         await renderRepoRoot("valorwaveentertainment", repoLiveFilesContainer);
-        await renderRepoRoot("Valorwave-CMS", repoCmsFilesContainer);
+        await renderRepoRoot("ValorWave-CMS", repoCmsFilesContainer);
     } catch (e) {
         console.error("Failed to load file lists:", e);
         repoLiveFilesContainer.textContent = "Error loading files.";
@@ -485,14 +639,19 @@ async function openFileFromRepo(repoName, path) {
 
         currentEditType = "text";
         currentTargetSelector = null;
-        editorContent.value = decoded;
-        editorImageURL.value = "";
-        editorImageUpload.value = "";
+        currentEditTarget = null;
 
-        editorModal.dataset.repoName = repoName;
-        editorModal.dataset.filePath = path;
+        if (editorContent) editorContent.value = decoded;
+        if (editorImageURL) editorImageURL.value = "";
+        if (editorImageUpload) editorImageUpload.value = "";
 
-        editorOverlay.classList.remove("hidden");
+        if (editorModal) {
+            editorModal.dataset.repoName = repoName;
+            editorModal.dataset.filePath = path;
+        }
+
+        if (editorOverlay) editorOverlay.style.display = "flex";
+        if (editorModal) editorModal.style.display = "block";
     } catch (e) {
         console.error("Failed to open file:", e);
         alert("Failed to open file. Check console for details.");
@@ -531,14 +690,10 @@ document.addEventListener("contextmenu", (e) => {
     document.querySelector("[data-action='rename']").style.display = "block";
     document.querySelector("[data-action='delete']").style.display = "block";
 
-    document.querySelector("[data-action='new-file']").style.display =
-        type === "dir" || path === "" ? "block" : "none";
+    document.querySelector("[data-action='new-file']").style.display = "block";
+    document.querySelector("[data-action='new-folder']").style.display = "block";
+    document.querySelector("[data-action='upload-file']").style.display = "block";
 
-    document.querySelector("[data-action='new-folder']").style.display =
-        type === "dir" || path === "" ? "block" : "none";
-
-    document.querySelector("[data-action='upload-file']").style.display =
-        type === "dir" || path === "" ? "block" : "none";
 });
 
 contextMenu.addEventListener("click", async (e) => {
@@ -547,23 +702,31 @@ contextMenu.addEventListener("click", async (e) => {
 
     contextMenu.classList.add("hidden");
 
-    const { repo, path, type, element } = contextTarget;
+    const { repo, path, type, element, depth } = contextTarget;
+
+    // Compute the folder that should receive new items / uploads
+    const parentFolderForNew =
+        type === "dir"
+            ? path
+            : (path.includes("/") ? path.split("/").slice(0, -1).join("/") : "");
 
     switch (action) {
         case "open":
-            openFileFromRepo(repo, path);
+            if (type === "file") {
+                await openFileFromRepo(repo, path);
+            }
             break;
 
         case "new-file":
-            await createNewFile(repo, path);
+            await createNewFile(repo, parentFolderForNew);
             break;
 
         case "new-folder":
-            await createNewFolder(repo, path);
+            await createNewFolder(repo, parentFolderForNew);
             break;
 
         case "upload-file":
-            await uploadFileToFolder(repo, path);
+            await uploadFileToFolder(repo, parentFolderForNew);
             break;
 
         case "rename":
@@ -577,7 +740,7 @@ contextMenu.addEventListener("click", async (e) => {
 
     const parentPath = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
     const parentContainer = element;
-    await renderFolder(repo, parentPath, parentContainer, contextTarget.depth - 1);
+    await renderFolder(repo, parentPath, parentContainer, depth - 1);
 });
 
 /* ============================================================
@@ -859,6 +1022,11 @@ draftHistoryBtn?.addEventListener("click", async () => {
 closeDraftHistoryBtn?.addEventListener("click", () => {
     draftHistoryOverlay.classList.add("hidden");
 });
+draftHistoryOverlay?.addEventListener("click", (e) => {
+    if (e.target === draftHistoryOverlay) {
+        draftHistoryOverlay.classList.add("hidden");
+    }
+});
 
 /* ============================================================
    PUBLISH LOGS
@@ -941,6 +1109,11 @@ publishLogsBtn?.addEventListener("click", async () => {
 
 closePublishLogsBtn?.addEventListener("click", () => {
     publishLogsOverlay.classList.add("hidden");
+});
+publishLogsOverlay?.addEventListener("click", (e) => {
+    if (e.target === publishLogsOverlay) {
+        publishLogsOverlay.classList.add("hidden");
+    }
 });
 
 /* ============================================================
@@ -1124,11 +1297,11 @@ function createAddSectionModal() {
 }
 
 function populateTargetBlockSelect() {
-    if (!targetBlockSelect) return;
+    if (!targetBlockSelect || !editableFrame || !editableFrame.contentDocument) return;
 
     targetBlockSelect.innerHTML = "";
 
-    const blocks = editableFrame.contentDocument.querySelectorAll("[data-editable-block]");
+    const blocks = editableFrame.contentDocument.querySelectorAll("[data-ve-block-id]");
 
     const endOption = document.createElement("option");
     endOption.value = "";
@@ -1136,7 +1309,7 @@ function populateTargetBlockSelect() {
     targetBlockSelect.appendChild(endOption);
 
     blocks.forEach(block => {
-        const id = block.getAttribute("data-block-id") || "(unnamed)";
+        const id = block.getAttribute("data-ve-block-id") || "(unnamed)";
         const opt = document.createElement("option");
         opt.value = id;
         opt.textContent = id;
@@ -1327,18 +1500,18 @@ function createTemplateSearchBar() {
    BLOCK-ID VALIDATOR + AUTO-ASSIGNER
 ============================================================ */
 function ensureBlockIds() {
-    const doc = editableFrame.contentDocument;
+    const doc = editableFrame?.contentDocument;
     if (!doc) return;
 
-    const blocks = doc.querySelectorAll("[data-editable-block]");
+    const blocks = doc.querySelectorAll("[data-ve-block-id]");
     const used = new Set();
 
     blocks.forEach(block => {
-        let id = block.getAttribute("data-block-id");
+        let id = block.getAttribute("data-ve-block-id");
 
         if (!id || used.has(id)) {
             id = `block-${Math.random().toString(36).slice(2, 8)}`;
-            block.setAttribute("data-block-id", id);
+            block.setAttribute("data-ve-block-id", id);
         }
 
         used.add(id);
@@ -1387,9 +1560,11 @@ document.addEventListener("keydown", (e) => {
     }
 
     if (e.key === "Escape") {
-        closeEditorModal();
-        if (addSectionOverlay) addSectionOverlay.classList.add("hidden");
-    }
+    closeEditorModal();
+    if (addSectionOverlay) addSectionOverlay.classList.add("hidden");
+    if (draftHistoryOverlay) draftHistoryOverlay.classList.add("hidden");
+    if (publishLogsOverlay) publishLogsOverlay.classList.add("hidden");
+}
 
     if (e.key === "Delete") {
         deleteSelectedItems();
