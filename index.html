@@ -5,8 +5,14 @@
     <title>Valor Wave CMS Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- CMS Styles -->
     <link rel="stylesheet" href="/cms-admin-v2.css" />
+    <link rel="stylesheet" href="/themes.css" />
+
+    <!-- Hybrid Editor Panel Styles -->
+    <link rel="stylesheet" href="/editor-panel.css" />
 </head>
+
 <body class="theme-original">
 
 <div id="cms-root">
@@ -18,12 +24,16 @@
         <div id="cms-header-left">
             <div id="cms-logo">Valor Wave CMS</div>
 
+            <!-- Phase 14: Add Section now opens Hybrid Panel -->
             <button id="add-section" class="btn-pill primary">Add Section</button>
+
             <button id="save-draft" class="btn-pill">Save Draft</button>
             <button id="publish" class="btn-pill primary">Publish</button>
         </div>
 
         <div id="cms-header-right">
+
+            <!-- CMS Theme -->
             <div class="theme-select-group">
                 <label>CMS Theme:</label>
                 <select id="cms-theme">
@@ -34,6 +44,7 @@
                 <span id="cms-theme-saved" class="saved-msg">Saved</span>
             </div>
 
+            <!-- Site Theme -->
             <div class="theme-select-group">
                 <label>Site Theme:</label>
                 <select id="site-theme">
@@ -123,51 +134,11 @@
 </div>
 
 <!-- ============================================================
-     EDITOR MODAL
+     HYBRID EDITOR PANEL (Phase 14)
 ============================================================ -->
-<div id="editor-overlay" class="overlay hidden">
-    <div id="editor-modal" class="modal">
-
-        <button class="close-btn" id="cancel-editor-secondary">×</button>
-
-        <h2>Editor</h2>
-
-        <div id="wysiwyg-toolbar">
-            <button data-action="bold">Bold</button>
-            <button data-action="italic">Italic</button>
-            <button data-action="underline">Underline</button>
-            <button data-action="h1">H1</button>
-            <button data-action="h2">H2</button>
-            <button data-action="h3">H3</button>
-            <button data-action="ul">• List</button>
-            <button data-action="ol">1. List</button>
-            <button data-action="left">Left</button>
-            <button data-action="center">Center</button>
-            <button data-action="right">Right</button>
-        </div>
-
-        <div id="editor-modal-body">
-            <textarea id="editor-content"></textarea>
-
-            <div>
-                <input id="editor-image-url" placeholder="Image URL" />
-                <input id="editor-image-upload" type="file" />
-
-                <div id="image-drop-zone">Drop image here</div>
-            </div>
-        </div>
-
-        <div id="editor-modal-footer">
-            <button id="cancel-editor">Cancel</button>
-            <button id="apply-changes" class="primary">Apply</button>
-        </div>
-
-    </div>
+<div id="editor-panel-container">
+    <!-- editor-panel.html is injected here by cms-admin-v2.js -->
 </div>
-
-<!-- ============================================================
-     ADD SECTION MODAL (Created dynamically in JS)
-============================================================ -->
 
 <!-- ============================================================
      DRAFT HISTORY OVERLAY
@@ -192,10 +163,10 @@
 </div>
 
 <!-- ============================================================
-     ERROR + DIFF OVERLAYS (Created dynamically)
+     CMS SCRIPT
 ============================================================ -->
-
-<script src="cms-admin-v2.js?v=4"></script>
+<script src="/cms-admin-v2.js"></script>
+<script src="/editor-panel.js"></script>
 
 </body>
 </html>
