@@ -1117,58 +1117,6 @@ publishLogsOverlay?.addEventListener("click", (e) => {
 });
 
 /* ============================================================
-   EDITOR MODAL
-============================================================ */
-function openEditorModal(payload) {
-    currentEditType = payload.editType;
-    currentTargetSelector = payload.targetSelector;
-
-    if (currentEditType === "text" || currentEditType === "list") {
-        editorContent.value = payload.content || "";
-        editorImageURL.value = "";
-    } else if (currentEditType === "image") {
-        editorContent.value = "";
-        editorImageURL.value = payload.imageUrl || "";
-    } else if (currentEditType === "link") {
-        editorContent.value = payload.label || "";
-        editorImageURL.value = payload.url || "";
-    }
-
-    editorOverlay.classList.remove("hidden");
-}
-
-function closeEditorModal() {
-    editorOverlay.classList.add("hidden");
-    currentEditType = null;
-    currentTargetSelector = null;
-}
-
-applyChangesBtn?.addEventListener("click", () => {
-    if (!editableFrame || !currentTargetSelector || !currentEditType) return;
-
-    const message = {
-        type: "apply-edit",
-        targetSelector: currentTargetSelector,
-        editType: currentEditType
-    };
-
-    if (currentEditType === "text" || currentEditType === "list") {
-        message.content = editorContent.value;
-    } else if (currentEditType === "image") {
-        message.imageUrl = editorImageURL.value;
-    } else if (currentEditType === "link") {
-        message.label = editorContent.value;
-        message.url = editorImageURL.value;
-    }
-
-    editableFrame.contentWindow.postMessage(message, "*");
-    closeEditorModal();
-});
-
-cancelEditorBtn?.addEventListener("click", closeEditorModal);
-cancelEditorBtnSecondary?.addEventListener("click", closeEditorModal);
-
-/* ============================================================
    WYSIWYG TOOLBAR
 ============================================================ */
 wysiwygToolbar?.addEventListener("click", (e) => {
@@ -1560,11 +1508,11 @@ document.addEventListener("keydown", (e) => {
     }
 
     if (e.key === "Escape") {
-    closeEditorModal();
-    if (addSectionOverlay) addSectionOverlay.classList.add("hidden");
-    if (draftHistoryOverlay) draftHistoryOverlay.classList.add("hidden");
-    if (publishLogsOverlay) publishLogsOverlay.classList.add("hidden");
-}
+        closeEditorModal();
+        if (addSectionOverlay) addSectionOverlay.classList.add("hidden");
+        if (draftHistoryOverlay) draftHistoryOverlay.classList.add("hidden");
+        if (publishLogsOverlay) publishLogsOverlay.classList.add("hidden");
+    }
 
     if (e.key === "Delete") {
         deleteSelectedItems();
