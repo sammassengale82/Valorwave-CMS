@@ -173,43 +173,55 @@ let dragItem = null;
 let dragOverItem = null;
 
 /* ============================================================
-   VISUAL EDITOR BRIDGE
+   VISUAL EDITOR BRIDGE — PHASE 14 (Hybrid Side Panel)
 ============================================================ */
 function openEditorModalFromPayload(payload) {
+    // Store state
     currentEditType = payload.editType || "block";
     currentTargetSelector = payload.targetSelector || null;
     currentEditTarget = payload;
 
-    const tagName = (payload.tagName || "").toLowerCase();
+    // Update panel title
+    const nameEl = document.getElementById("editor-block-name");
+    if (nameEl) {
+        nameEl.textContent = currentEditType;
+    }
 
+    // Show the hybrid side panel
+    const panel = document.getElementById("editor-panel");
+    if (panel) {
+        panel.classList.remove("hidden");
+    }
+
+    // Determine main editable text
     let mainText = payload.html || payload.text || "";
 
-    if (currentEditType === "link" || tagName === "a") {
-        mainText = payload.label || payload.text || mainText;
-        if (editorImageURL) {
-            editorImageURL.value = payload.url || "";
-            editorImageURL.placeholder = "Link URL";
-        }
+    // Populate CONTENT section
+    const contentFields = document.getElementById("editor-content-fields");
+    if (contentFields) {
+        contentFields.innerHTML = "";
+
+        const textarea = document.createElement("textarea");
+        textarea.id = "editor-content-textarea";
+        textarea.value = mainText;
+        textarea.className = "editor-textarea";
+
+        contentFields.appendChild(textarea);
     }
 
-    if (currentEditType === "image" || tagName === "img") {
-        mainText = payload.alt || mainText;
-        if (editorImageURL) {
-            editorImageURL.value = payload.imageUrl || "";
-            editorImageURL.placeholder = "Image URL";
-        }
-    }
+    // Clear DESIGN + SETTINGS sections (they will be populated later)
+    const designFields = document.getElementById("editor-design-fields");
+    if (designFields) designFields.innerHTML = "";
 
-    if (editorContent) editorContent.value = mainText;
-    if (editorImageUpload) editorImageUpload.value = "";
-
-    if (editorOverlay) editorOverlay.style.display = "flex";
-    if (editorModal) editorModal.style.display = "block";
+    const settingsFields = document.getElementById("editor-settings-fields");
+    if (settingsFields) settingsFields.innerHTML = "";
 }
 
 function closeEditorModal() {
-    if (editorOverlay) editorOverlay.style.display = "none";
-    if (editorModal) editorModal.style.display = "none";
+    const panel = document.getElementById("editor-panel");
+    if (panel) {
+        panel.classList.add("hidden");
+    }
 
     currentEditTarget = null;
     currentTargetSelector = null;
