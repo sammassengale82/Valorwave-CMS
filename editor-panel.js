@@ -19,8 +19,8 @@ let editorCloseBtn = null;
 
 let panelcmsThemeSelect = null;
 let panelsiteThemeSelect = null;
-let saveCmsThemeBtn = null;
-let saveSiteThemeBtn = null;
+let panelsaveCmsThemeBtn = null;
+let panelsaveSiteThemeBtn = null;
 let previewDraftBtn = null;
 
 let currentEditPayload = null;
@@ -43,8 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     panelcmsThemeSelect = document.getElementById("cms-theme-select");
     panelsiteThemeSelect = document.getElementById("site-theme-select");
-    saveCmsThemeBtn = document.getElementById("save-cms-theme");
-    saveSiteThemeBtn = document.getElementById("save-site-theme");
+    panelsaveCmsThemeBtn = document.getElementById("save-cms-theme");
+    panelsaveSiteThemeBtn = document.getElementById("save-site-theme");
     previewDraftBtn = document.getElementById("preview-draft-btn");
 
     setupPanelResize();
@@ -90,7 +90,7 @@ function setupThemeControls() {
         document.body.classList.add(`cms-theme-${cmsThemeSelect.value}`);
     });
 
-    saveCmsThemeBtn?.addEventListener("click", async () => {
+    panelsaveCmsThemeBtn?.addEventListener("click", async () => {
         await saveThemeFile("cms-theme.txt", cmsThemeSelect.value);
         alert("CMS Theme saved.");
     });
@@ -105,7 +105,7 @@ function setupThemeControls() {
         }
     });
 
-    saveSiteThemeBtn?.addEventListener("click", async () => {
+    panelsaveSiteThemeBtn?.addEventListener("click", async () => {
         await saveThemeFile("site-theme.txt", siteThemeSelect.value);
         alert("Site Theme saved.");
     });
