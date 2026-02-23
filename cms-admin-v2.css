@@ -342,8 +342,8 @@ body.theme-patriotic #cms-logo {
 
 /* -----------------------------
    MAIN PREVIEW AREA (PHASE 14)
-   Fixed 1/3 editable preview
-   Fixed 2/3 live preview
+   Fixed 1/2 editable preview
+   Fixed 1/2 live preview
 ----------------------------- */
 
 #preview-container {
@@ -560,7 +560,7 @@ body.theme-patriotic #cms-logo {
 /* Textarea styling */
 .editor-textarea {
     width: 100%;
-    min-height: 140px;
+    min-height: 360px;
     padding: 10px;
     border: 1px solid #ccc;
     resize: vertical;
