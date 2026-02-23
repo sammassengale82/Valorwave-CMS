@@ -1,6 +1,6 @@
 /* ============================================================
-   VALOR WAVE CMS ADMIN — PHASE 14
-   FULL VERSION
+   VALOR WAVE CMS ADMIN — PHASE 14 (Hybrid Side Panel)
+   cms-admin-v3.js — COMPLETE
 ============================================================ */
 
 /* -------------------------------
@@ -9,31 +9,14 @@
 let githubToken = null;
 
 /* -------------------------------
-   DOM REFERENCES
+   DOM REFERENCES (HEADER / LAYOUT)
 -------------------------------- */
 const editableFrame = document.getElementById("preview-frame-editable");
 const liveFrame = document.getElementById("preview-frame-live");
 
-const editorOverlay = document.getElementById("editor-overlay");
-const editorModal = document.getElementById("editor-modal");
-const editorContent = document.getElementById("editor-content");
-const editorImageURL = document.getElementById("editor-image-url");
-const editorImageUpload = document.getElementById("editor-image-upload");
-const applyChangesBtn = document.getElementById("apply-changes");
-const cancelEditorBtn = document.getElementById("cancel-editor");
-const cancelEditorBtnSecondary = document.getElementById("cancel-editor-secondary");
-
-const cmsThemeSelect = document.getElementById("cms-theme");
-const siteThemeSelect = document.getElementById("site-theme");
-const saveCmsThemeBtn = document.getElementById("save-cms-theme");
-const saveSiteThemeBtn = document.getElementById("save-site-theme");
-const cmsThemeSavedMsg = document.getElementById("cms-theme-saved");
-const siteThemeSavedMsg = document.getElementById("site-theme-saved");
-
 const saveDraftBtn = document.getElementById("save-draft");
 const publishBtn = document.getElementById("publish");
 const logoutBtn = document.getElementById("logout");
-
 const githubLoginBtn = document.getElementById("github-login");
 const authStatus = document.getElementById("auth-status");
 
@@ -50,9 +33,17 @@ const publishLogsOverlay = document.getElementById("publish-logs-overlay");
 const publishLogList = document.getElementById("publish-log-list");
 const closePublishLogsBtn = document.getElementById("close-publish-logs");
 
-const wysiwygToolbar = document.getElementById("wysiwyg-toolbar");
-const imageDropZone = document.getElementById("image-drop-zone");
 const addSectionBtn = document.getElementById("add-section");
+
+const headerCmsThemeSelect = document.getElementById("cms-theme");
+const headerSiteThemeSelect = document.getElementById("site-theme");
+const headerCmsThemeSavedMsg = document.getElementById("cms-theme-saved");
+const headerSiteThemeSavedMsg = document.getElementById("site-theme-saved");
+
+/* -------------------------------
+   PANEL DOM REFERENCES
+-------------------------------- */
+let panelRoot = null; // #editor-panel (loaded from editor-panel.html)
 
 /* ============================================================
    TWO-SUBDOMAIN ARCHITECTURE
@@ -89,17 +80,17 @@ async function checkAuthStatus() {
         });
 
         if (!res.ok) {
-            authStatus.textContent = "Not authenticated.";
+            if (authStatus) authStatus.textContent = "Not authenticated.";
             return false;
         }
 
         const user = await res.json();
-        authStatus.textContent = `Logged in as ${user.login}`;
+        if (authStatus) authStatus.textContent = `Logged in as ${user.login}`;
         githubToken = "session-active";
         return true;
     } catch (e) {
         console.error("Auth check failed:", e);
-        authStatus.textContent = "Auth check failed.";
+        if (authStatus) authStatus.textContent = "Auth check failed.";
         return false;
     }
 }
@@ -172,164 +163,18 @@ let contextTarget = null;
 let dragItem = null;
 let dragOverItem = null;
 
-/* ============================================================
-   VISUAL EDITOR BRIDGE — PHASE 14 (Hybrid Side Panel)
-============================================================ */
-function openEditorModalFromPayload(payload) {
-    // Store state
-    currentEditType = payload.editType || "block";
-    currentTargetSelector = payload.targetSelector || null;
-    currentEditTarget = payload;
+let addSectionOverlay = null;
+let addSectionModal = null;
+let templateListEl = null;
+let targetBlockSelect = null;
+let positionSelectBefore = null;
+let positionSelectAfter = null;
 
-    // Update panel title
-    const nameEl = document.getElementById("editor-block-name");
-    if (nameEl) {
-        nameEl.textContent = currentEditType;
-    }
-
-    // Show the hybrid side panel
-    const panel = document.getElementById("editor-panel");
-    if (panel) {
-        panel.classList.remove("hidden");
-    }
-
-    // Determine main editable text
-    let mainText = payload.html || payload.text || "";
-
-    // Populate CONTENT section
-    const contentFields = document.getElementById("editor-content-fields");
-    if (contentFields) {
-        contentFields.innerHTML = "";
-
-        const textarea = document.createElement("textarea");
-        textarea.id = "editor-content-textarea";
-        textarea.value = mainText;
-        textarea.className = "editor-textarea";
-
-        contentFields.appendChild(textarea);
-    }
-
-    // Clear DESIGN + SETTINGS sections (they will be populated later)
-    const designFields = document.getElementById("editor-design-fields");
-    if (designFields) designFields.innerHTML = "";
-
-    const settingsFields = document.getElementById("editor-settings-fields");
-    if (settingsFields) settingsFields.innerHTML = "";
-}
-
-function closeEditorModal() {
-    const panel = document.getElementById("editor-panel");
-    if (panel) {
-        panel.classList.add("hidden");
-    }
-
-    currentEditTarget = null;
-    currentTargetSelector = null;
-    currentEditType = "text";
-}
+let lastSavedHtml = null;
+let selectedItems = new Set();
 
 /* ============================================================
-   MESSAGE LISTENER (NO IFRAME FILTERING)
-============================================================ */
-window.addEventListener("message", (event) => {
-    const data = event.data || {};
-    if (!data.type) return;
-
-    console.log("[CMS] Received message:", data);
-
-    if (data.type === "open-editor") {
-        const normalized = {
-            editType: data.editType || "block",
-            targetSelector: data.blockId || null,
-            html: typeof data.innerHTML === "string" ? data.innerHTML : "",
-            raw: data
-        };
-        openEditorModalFromPayload(normalized);
-        return;
-    }
-
-    if (data.type === "dom-updated") {
-        latestDomHtml = data.html;
-        showUnsavedIndicator();
-        return;
-    }
-});
-/* ============================================================
-   APPLY EDIT
-============================================================ */
-applyChangesBtn?.addEventListener("click", () => {
-    if (!editableFrame) {
-        closeEditorModal();
-        return;
-    }
-
-    const payload = {
-        type: "apply-edit",
-        editType: currentEditType
-    };
-
-    const mainText = editorContent ? editorContent.value : "";
-
-    if (currentEditType === "text" || currentEditType === "block") {
-        payload.html = mainText;
-    }
-
-    if (currentEditType === "link") {
-        payload.label = mainText;
-        payload.url = editorImageURL?.value || "";
-    }
-
-    if (currentEditType === "image") {
-        payload.alt = mainText;
-        payload.imageUrl = editorImageURL?.value || "";
-    }
-
-    if (currentEditTarget?.style) payload.style = currentEditTarget.style;
-    if (currentEditTarget?.classes) payload.classes = currentEditTarget.classes;
-
-    console.log("[CMS] Sending apply-edit to VE:", payload);
-    editableFrame.contentWindow.postMessage(payload, "*");
-    closeEditorModal();
-});
-
-cancelEditorBtn?.addEventListener("click", closeEditorModal);
-cancelEditorBtnSecondary?.addEventListener("click", closeEditorModal);
-
-/* ============================================================
-   IMAGE UPLOAD / DROP → URL FIELD
-============================================================ */
-editorImageUpload?.addEventListener("change", (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !editorImageURL) return;
-
-    const reader = new FileReader();
-    reader.onload = () => editorImageURL.value = reader.result;
-    reader.readAsDataURL(file);
-});
-
-imageDropZone?.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    imageDropZone.classList.add("drag-over");
-});
-
-imageDropZone?.addEventListener("dragleave", () => {
-    imageDropZone.classList.remove("drag-over");
-});
-
-imageDropZone?.addEventListener("drop", (e) => {
-    e.preventDefault();
-    imageDropZone.classList.remove("drag-over");
-
-    const file = e.dataTransfer.files?.[0];
-    if (!file || !editorImageURL) return;
-
-    const reader = new FileReader();
-    reader.onload = () => editorImageURL.value = reader.result;
-    reader.readAsDataURL(file);
-});
-
-/* ============================================================
-   THEME SYSTEM
+   THEME SYSTEM (HEADER + PANEL)
 ============================================================ */
 function applyCmsTheme(theme) {
     document.body.className = `theme-${theme}`;
@@ -341,31 +186,114 @@ function sendThemeToFrames(theme) {
     try { liveFrame?.contentWindow.postMessage(msg, "*"); } catch {}
 }
 
+function syncHeaderThemeControls(cmsTheme, siteTheme) {
+    if (headerCmsThemeSelect) headerCmsThemeSelect.value = cmsTheme;
+    if (headerSiteThemeSelect) headerSiteThemeSelect.value = siteTheme;
+}
+
+function syncPanelThemeControls() {
+    if (!panelRoot) return;
+    const panelCmsSelect = panelRoot.querySelector("#cms-theme-select");
+    const panelSiteSelect = panelRoot.querySelector("#site-theme-select");
+
+    const cmsTheme = localStorage.getItem("cms-theme") || "original";
+    const siteTheme = localStorage.getItem("site-theme") || "original";
+
+    if (panelCmsSelect) panelCmsSelect.value = cmsTheme;
+    if (panelSiteSelect) panelSiteSelect.value = siteTheme;
+}
+
 function loadSavedThemes() {
     const cmsTheme = localStorage.getItem("cms-theme") || "original";
     const siteTheme = localStorage.getItem("site-theme") || "original";
 
-    if (cmsThemeSelect) cmsThemeSelect.value = cmsTheme;
-    if (siteThemeSelect) siteThemeSelect.value = siteTheme;
-
+    syncHeaderThemeControls(cmsTheme, siteTheme);
     applyCmsTheme(cmsTheme);
     sendThemeToFrames(siteTheme);
 }
 
-cmsThemeSelect?.addEventListener("change", e => applyCmsTheme(e.target.value));
-siteThemeSelect?.addEventListener("change", e => sendThemeToFrames(e.target.value));
+function wireHeaderThemeControls() {
+    headerCmsThemeSelect?.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        applyCmsTheme(theme);
+    });
 
-saveCmsThemeBtn?.addEventListener("click", () => {
-    localStorage.setItem("cms-theme", cmsThemeSelect.value);
-    cmsThemeSavedMsg.style.opacity = "1";
-    setTimeout(() => cmsThemeSavedMsg.style.opacity = "0", 1200);
-});
+    headerSiteThemeSelect?.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        sendThemeToFrames(theme);
+    });
 
-saveSiteThemeBtn?.addEventListener("click", () => {
-    localStorage.setItem("site-theme", siteThemeSelect.value);
-    siteThemeSavedMsg.style.opacity = "1";
-    setTimeout(() => siteThemeSavedMsg.style.opacity = "0", 1200);
-});
+    const headerSaveCms = document.getElementById("save-cms-theme");
+    const headerSaveSite = document.getElementById("save-site-theme");
+
+    headerSaveCms?.addEventListener("click", () => {
+        const theme = headerCmsThemeSelect?.value || "original";
+        localStorage.setItem("cms-theme", theme);
+        if (headerCmsThemeSavedMsg) {
+            headerCmsThemeSavedMsg.style.opacity = "1";
+            setTimeout(() => headerCmsThemeSavedMsg.style.opacity = "0", 1200);
+        }
+        syncPanelThemeControls();
+    });
+
+    headerSaveSite?.addEventListener("click", () => {
+        const theme = headerSiteThemeSelect?.value || "original";
+        localStorage.setItem("site-theme", theme);
+        if (headerSiteThemeSavedMsg) {
+            headerSiteThemeSavedMsg.style.opacity = "1";
+            setTimeout(() => headerSiteThemeSavedMsg.style.opacity = "0", 1200);
+        }
+        sendThemeToFrames(theme);
+        syncPanelThemeControls();
+    });
+}
+
+function wirePanelThemeControls() {
+    if (!panelRoot) return;
+
+    const panelCmsSelect = panelRoot.querySelector("#cms-theme-select");
+    const panelSiteSelect = panelRoot.querySelector("#site-theme-select");
+    const panelSaveCms = panelRoot.querySelector("#save-cms-theme");
+    const panelSaveSite = panelRoot.querySelector("#save-site-theme");
+    const previewDraftBtn = panelRoot.querySelector("#preview-draft-btn");
+
+    panelCmsSelect?.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        applyCmsTheme(theme);
+        if (headerCmsThemeSelect) headerCmsThemeSelect.value = theme;
+    });
+
+    panelSiteSelect?.addEventListener("change", (e) => {
+        const theme = e.target.value;
+        sendThemeToFrames(theme);
+        if (headerSiteThemeSelect) headerSiteThemeSelect.value = theme;
+    });
+
+    panelSaveCms?.addEventListener("click", () => {
+        const theme = panelCmsSelect?.value || "original";
+        localStorage.setItem("cms-theme", theme);
+        applyCmsTheme(theme);
+        syncHeaderThemeControls(theme, localStorage.getItem("site-theme") || "original");
+    });
+
+    panelSaveSite?.addEventListener("click", () => {
+        const theme = panelSiteSelect?.value || "original";
+        localStorage.setItem("site-theme", theme);
+        sendThemeToFrames(theme);
+        syncHeaderThemeControls(localStorage.getItem("cms-theme") || "original", theme);
+    });
+
+    previewDraftBtn?.addEventListener("click", () => {
+        if (!latestDomHtml) {
+            alert("No draft content to preview.");
+            return;
+        }
+        const w = window.open("", "_blank");
+        w.document.open();
+        w.document.write(latestDomHtml);
+        w.document.close();
+    });
+}
 
 /* ============================================================
    PREVIEW LOADING
@@ -392,7 +320,7 @@ function loadLivePreview() {
 }
 
 /* ============================================================
-   UNSAVED INDICATOR
+   UNSAVED INDICATOR + DIFF
 ============================================================ */
 function showUnsavedIndicator() {
     const header = document.getElementById("cms-header");
@@ -414,6 +342,17 @@ function hideUnsavedIndicator() {
 
     const badge = header.querySelector(".unsaved-indicator");
     if (badge) badge.style.display = "none";
+}
+
+function updateLastSavedHtml(html) {
+    lastSavedHtml = html;
+}
+
+function showUnsavedDiff() {
+    if (!lastSavedHtml || !latestDomHtml) return;
+    if (typeof showDiffViewer === "function") {
+        showDiffViewer(lastSavedHtml, latestDomHtml, "index.html");
+    }
 }
 
 /* ============================================================
@@ -544,20 +483,21 @@ async function renderRepoRoot(repoName, container) {
 }
 
 async function loadSidebarFileListsTree() {
-    repoLiveFilesContainer.textContent = "Loading...";
-    repoCmsFilesContainer.textContent = "Loading...";
+    if (repoLiveFilesContainer) repoLiveFilesContainer.textContent = "Loading...";
+    if (repoCmsFilesContainer) repoCmsFilesContainer.textContent = "Loading...";
 
     try {
         await renderRepoRoot("valorwaveentertainment", repoLiveFilesContainer);
         await renderRepoRoot("ValorWave-CMS", repoCmsFilesContainer);
     } catch (e) {
         console.error("Failed to load file lists:", e);
-        repoLiveFilesContainer.textContent = "Error loading files.";
-        repoCmsFilesContainer.textContent = "Error loading files.";
+        if (repoLiveFilesContainer) repoLiveFilesContainer.textContent = "Error loading files.";
+        if (repoCmsFilesContainer) repoCmsFilesContainer.textContent = "Error loading files.";
     }
 }
+
 /* ============================================================
-   OPEN FILE FROM REPO
+   OPEN FILE FROM REPO (RAW EDIT)
 ============================================================ */
 async function openFileFromRepo(repoName, path) {
     try {
@@ -569,21 +509,15 @@ async function openFileFromRepo(repoName, path) {
 
         const decoded = atob(file.content);
 
-        currentEditType = "text";
-        currentTargetSelector = null;
-        currentEditTarget = null;
-
-        if (editorContent) editorContent.value = decoded;
-        if (editorImageURL) editorImageURL.value = "";
-        if (editorImageUpload) editorImageUpload.value = "";
-
-        if (editorModal) {
-            editorModal.dataset.repoName = repoName;
-            editorModal.dataset.filePath = path;
-        }
-
-        if (editorOverlay) editorOverlay.style.display = "flex";
-        if (editorModal) editorModal.style.display = "block";
+        // Use hybrid panel for raw file editing as well
+        const payload = {
+            editType: "file",
+            targetSelector: null,
+            html: decoded,
+            path,
+            repoName
+        };
+        openEditorModalFromPayload(payload);
     } catch (e) {
         console.error("Failed to open file:", e);
         alert("Failed to open file. Check console for details.");
@@ -596,12 +530,12 @@ async function openFileFromRepo(repoName, path) {
 const contextMenu = document.getElementById("context-menu");
 
 document.addEventListener("click", () => {
-    contextMenu.classList.add("hidden");
+    if (contextMenu) contextMenu.classList.add("hidden");
 });
 
 document.addEventListener("contextmenu", (e) => {
     const item = e.target.closest(".file-item");
-    if (!item) return;
+    if (!item || !contextMenu) return;
 
     e.preventDefault();
 
@@ -616,18 +550,18 @@ document.addEventListener("contextmenu", (e) => {
     contextMenu.style.top = e.pageY + "px";
     contextMenu.classList.remove("hidden");
 
-    document.querySelector("[data-action='open']").style.display =
+    contextMenu.querySelector("[data-action='open']").style.display =
         type === "file" ? "block" : "none";
 
-    document.querySelector("[data-action='rename']").style.display = "block";
-    document.querySelector("[data-action='delete']").style.display = "block";
+    contextMenu.querySelector("[data-action='rename']").style.display = "block";
+    contextMenu.querySelector("[data-action='delete']").style.display = "block";
 
-    document.querySelector("[data-action='new-file']").style.display = "block";
-    document.querySelector("[data-action='new-folder']").style.display = "block";
-    document.querySelector("[data-action='upload-file']").style.display = "block";
+    contextMenu.querySelector("[data-action='new-file']").style.display = "block";
+    contextMenu.querySelector("[data-action='new-folder']").style.display = "block";
+    contextMenu.querySelector("[data-action='upload-file']").style.display = "block";
 });
 
-contextMenu.addEventListener("click", async (e) => {
+contextMenu?.addEventListener("click", async (e) => {
     const action = e.target.dataset.action;
     if (!action || !contextTarget) return;
 
@@ -793,6 +727,7 @@ saveDraftBtn?.addEventListener("click", async () => {
 });
 
 draftHistoryBtn?.addEventListener("click", async () => {
+    if (!draftList) return;
     draftList.innerHTML = "Loading...";
 
     try {
@@ -822,11 +757,11 @@ draftHistoryBtn?.addEventListener("click", async () => {
         draftList.textContent = "Failed to load drafts.";
     }
 
-    draftHistoryOverlay.classList.remove("hidden");
+    draftHistoryOverlay?.classList.remove("hidden");
 });
 
 closeDraftHistoryBtn?.addEventListener("click", () => {
-    draftHistoryOverlay.classList.add("hidden");
+    draftHistoryOverlay?.classList.add("hidden");
 });
 draftHistoryOverlay?.addEventListener("click", (e) => {
     if (e.target === draftHistoryOverlay) {
@@ -869,6 +804,7 @@ publishBtn?.addEventListener("click", async () => {
 
         alert("Site published and publish log saved!");
         hideUnsavedIndicator();
+        updateLastSavedHtml(latestDomHtml);
     } catch (e) {
         console.error(e);
         alert("Failed to publish.");
@@ -876,6 +812,7 @@ publishBtn?.addEventListener("click", async () => {
 });
 
 publishLogsBtn?.addEventListener("click", async () => {
+    if (!publishLogList) return;
     publishLogList.innerHTML = "Loading...";
 
     try {
@@ -907,11 +844,11 @@ publishLogsBtn?.addEventListener("click", async () => {
         publishLogList.textContent = "Failed to load logs.";
     }
 
-    publishLogsOverlay.classList.remove("hidden");
+    publishLogsOverlay?.classList.remove("hidden");
 });
 
 closePublishLogsBtn?.addEventListener("click", () => {
-    publishLogsOverlay.classList.add("hidden");
+    publishLogsOverlay?.classList.add("hidden");
 });
 publishLogsOverlay?.addEventListener("click", (e) => {
     if (e.target === publishLogsOverlay) {
@@ -922,13 +859,6 @@ publishLogsOverlay?.addEventListener("click", (e) => {
 /* ============================================================
    ADD SECTION MODAL
 ============================================================ */
-let addSectionOverlay = null;
-let addSectionModal = null;
-let templateListEl = null;
-let targetBlockSelect = null;
-let positionSelectBefore = null;
-let positionSelectAfter = null;
-
 function createAddSectionModal() {
     if (addSectionOverlay) return;
 
@@ -1093,10 +1023,8 @@ function loadFolderState() {
 loadFolderState();
 
 /* ============================================================
-   MULTI-SELECT + SHORTCUTS + DIFF
+   MULTI-SELECT + SHORTCUTS
 ============================================================ */
-let selectedItems = new Set();
-
 document.addEventListener("click", (e) => {
     const item = e.target.closest(".file-item");
     if (!item) return;
@@ -1157,17 +1085,130 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-let lastSavedHtml = null;
+/* ============================================================
+   VISUAL EDITOR BRIDGE — HYBRID SIDE PANEL
+============================================================ */
+function openEditorModalFromPayload(payload) {
+    currentEditType = payload.editType || "block";
+    currentTargetSelector = payload.targetSelector || null;
+    currentEditTarget = payload;
 
-function updateLastSavedHtml(html) {
-    lastSavedHtml = html;
+    if (!panelRoot) {
+        panelRoot = document.getElementById("editor-panel");
+    }
+
+    const nameEl = panelRoot?.querySelector("#editor-block-name");
+    if (nameEl) {
+        nameEl.textContent = currentEditType;
+    }
+
+    if (panelRoot) {
+        panelRoot.classList.remove("hidden");
+    }
+
+    let mainText = payload.html || payload.text || "";
+
+    const contentFields = panelRoot?.querySelector("#editor-content-fields");
+    if (contentFields) {
+        contentFields.innerHTML = "";
+
+        const textarea = document.createElement("textarea");
+        textarea.id = "editor-content-textarea";
+        textarea.value = mainText;
+        textarea.className = "editor-textarea";
+
+        contentFields.appendChild(textarea);
+    }
+
+    const designFields = panelRoot?.querySelector("#editor-design-fields");
+    if (designFields) designFields.innerHTML = "";
+
+    const settingsFields = panelRoot?.querySelector("#editor-settings-fields");
+    if (settingsFields) settingsFields.innerHTML = "";
 }
 
-function showUnsavedDiff() {
-    if (!lastSavedHtml || !latestDomHtml) return;
+function closeEditorModal() {
+    if (!panelRoot) {
+        panelRoot = document.getElementById("editor-panel");
+    }
+    if (panelRoot) {
+        panelRoot.classList.add("hidden");
+    }
 
-    showDiffViewer(lastSavedHtml, latestDomHtml, "index.html");
+    currentEditTarget = null;
+    currentTargetSelector = null;
+    currentEditType = "text";
 }
+
+/* ============================================================
+   APPLY / CANCEL HANDLERS (PANEL)
+============================================================ */
+function wirePanelApplyCancel() {
+    if (!panelRoot) return;
+
+    const applyBtn = panelRoot.querySelector("#editor-apply-btn");
+    const cancelBtn = panelRoot.querySelector("#editor-cancel-btn");
+    const closeBtn = panelRoot.querySelector("#editor-panel-close");
+
+    applyBtn?.addEventListener("click", () => {
+        if (!editableFrame) {
+            closeEditorModal();
+            return;
+        }
+
+        const textarea = panelRoot.querySelector("#editor-content-textarea");
+        const newHtml = textarea ? textarea.value : "";
+
+        const payload = {
+            type: "apply-edit",
+            editType: currentEditType,
+            html: newHtml
+        };
+
+        if (currentEditTarget && currentEditTarget.path && currentEditTarget.repoName) {
+            // Raw file editing
+            latestDomHtml = newHtml;
+            showUnsavedIndicator();
+            closeEditorModal();
+            return;
+        }
+
+        editableFrame.contentWindow.postMessage(payload, "*");
+        closeEditorModal();
+    });
+
+    const doCancel = () => closeEditorModal();
+
+    cancelBtn?.addEventListener("click", doCancel);
+    closeBtn?.addEventListener("click", doCancel);
+}
+
+/* ============================================================
+   MESSAGE LISTENER (CMS <-> VE)
+============================================================ */
+window.addEventListener("message", (event) => {
+    const data = event.data || {};
+    if (!data.type) return;
+
+    console.log("[CMS] Received message:", data);
+
+    if (data.type === "open-editor") {
+        const normalized = {
+            editType: data.editType || "block",
+            targetSelector: data.blockId || null,
+            html: typeof data.innerHTML === "string" ? data.innerHTML : "",
+            raw: data
+        };
+        openEditorModalFromPayload(normalized);
+        return;
+    }
+
+    if (data.type === "dom-updated") {
+        latestDomHtml = data.html;
+        showUnsavedIndicator();
+        return;
+    }
+});
 
 /* ============================================================
    INITIALIZATION
@@ -1177,6 +1218,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!allowed) return;
 
     loadSavedThemes();
+    wireHeaderThemeControls();
     loadEditablePreview();
     loadLivePreview();
     loadSidebarFileListsTree();
@@ -1184,11 +1226,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     fetch("/editor-panel.html")
         .then(res => res.text())
         .then(html => {
-            document.getElementById("editor-panel-container").innerHTML = html;
+            const container = document.getElementById("editor-panel-container");
+            if (!container) return;
+            container.innerHTML = html;
 
-            if (typeof initializeEditorPanel === "function") {
-                initializeEditorPanel();
-            }
+            panelRoot = document.getElementById("editor-panel");
+
+            syncPanelThemeControls();
+            wirePanelThemeControls();
+            wirePanelApplyCancel();
         })
         .catch(err => console.error("Failed to load editor panel:", err));
 });
