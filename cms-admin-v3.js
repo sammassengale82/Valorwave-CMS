@@ -174,7 +174,7 @@ let lastSavedHtml = null;
 let selectedItems = new Set();
 
 /* ============================================================
-   THEME SYSTEM (HEADER + PANEL)
+   THEME SYSTEM (HEADER ONLY)
 ============================================================ */
 function applyCmsTheme(theme) {
     document.body.className = `theme-${theme}`;
@@ -189,18 +189,6 @@ function sendThemeToFrames(theme) {
 function syncHeaderThemeControls(cmsTheme, siteTheme) {
     if (headerCmsThemeSelect) headerCmsThemeSelect.value = cmsTheme;
     if (headerSiteThemeSelect) headerSiteThemeSelect.value = siteTheme;
-}
-
-function syncPanelThemeControls() {
-    if (!panelRoot) return;
-    const panelCmsSelect = panelRoot.querySelector("#cms-theme-select");
-    const panelSiteSelect = panelRoot.querySelector("#site-theme-select");
-
-    const cmsTheme = localStorage.getItem("cms-theme") || "original";
-    const siteTheme = localStorage.getItem("site-theme") || "original";
-
-    if (panelCmsSelect) panelCmsSelect.value = cmsTheme;
-    if (panelSiteSelect) panelSiteSelect.value = siteTheme;
 }
 
 function loadSavedThemes() {
@@ -229,69 +217,21 @@ function wireHeaderThemeControls() {
     headerSaveCms?.addEventListener("click", () => {
         const theme = headerCmsThemeSelect?.value || "original";
         localStorage.setItem("cms-theme", theme);
+        applyCmsTheme(theme);
         if (headerCmsThemeSavedMsg) {
             headerCmsThemeSavedMsg.style.opacity = "1";
             setTimeout(() => headerCmsThemeSavedMsg.style.opacity = "0", 1200);
         }
-        syncPanelThemeControls();
     });
 
     headerSaveSite?.addEventListener("click", () => {
         const theme = headerSiteThemeSelect?.value || "original";
         localStorage.setItem("site-theme", theme);
+        sendThemeToFrames(theme);
         if (headerSiteThemeSavedMsg) {
             headerSiteThemeSavedMsg.style.opacity = "1";
             setTimeout(() => headerSiteThemeSavedMsg.style.opacity = "0", 1200);
         }
-        sendThemeToFrames(theme);
-        syncPanelThemeControls();
-    });
-}
-
-function wirePanelThemeControls() {
-    if (!panelRoot) return;
-
-    const panelCmsSelect = panelRoot.querySelector("#cms-theme-select");
-    const panelSiteSelect = panelRoot.querySelector("#site-theme-select");
-    const panelSaveCms = panelRoot.querySelector("#save-cms-theme");
-    const panelSaveSite = panelRoot.querySelector("#save-site-theme");
-    const previewDraftBtn = panelRoot.querySelector("#preview-draft-btn");
-
-    panelCmsSelect?.addEventListener("change", (e) => {
-        const theme = e.target.value;
-        applyCmsTheme(theme);
-        if (headerCmsThemeSelect) headerCmsThemeSelect.value = theme;
-    });
-
-    panelSiteSelect?.addEventListener("change", (e) => {
-        const theme = e.target.value;
-        sendThemeToFrames(theme);
-        if (headerSiteThemeSelect) headerSiteThemeSelect.value = theme;
-    });
-
-    panelSaveCms?.addEventListener("click", () => {
-        const theme = panelCmsSelect?.value || "original";
-        localStorage.setItem("cms-theme", theme);
-        applyCmsTheme(theme);
-        syncHeaderThemeControls(theme, localStorage.getItem("site-theme") || "original");
-    });
-
-    panelSaveSite?.addEventListener("click", () => {
-        const theme = panelSiteSelect?.value || "original";
-        localStorage.setItem("site-theme", theme);
-        sendThemeToFrames(theme);
-        syncHeaderThemeControls(localStorage.getItem("cms-theme") || "original", theme);
-    });
-
-    previewDraftBtn?.addEventListener("click", () => {
-        if (!latestDomHtml) {
-            alert("No draft content to preview.");
-            return;
-        }
-        const w = window.open("", "_blank");
-        w.document.open();
-        w.document.write(latestDomHtml);
-        w.document.close();
     });
 }
 
@@ -1146,10 +1086,23 @@ document.addEventListener("keydown", (e) => {
 /* ============================================================
    VISUAL EDITOR BRIDGE — HYBRID SIDE PANEL (ALWAYS VISIBLE)
 ============================================================ */
+function extractUrlFromHtml(html) {
+    if (!html) return "";
+    const match = html.match(/href="([^"]*)"/i);
+    return match ? match[1] : html;
+}
+
+function isSocialLinkEditType(editType) {
+    if (!editType) return false;
+    const lower = editType.toLowerCase();
+    return lower.includes("social") || lower === "link";
+}
+
 function openEditorModalFromPayload(payload) {
     currentEditType = payload.editType || "block";
     currentTargetSelector = payload.targetSelector || null;
     currentEditTarget = payload;
+    currentEditTarget.originalHtml = payload.html || "";
 
     if (!panelRoot) {
         panelRoot = document.getElementById("editor-panel");
@@ -1163,6 +1116,10 @@ function openEditorModalFromPayload(payload) {
     panelRoot?.classList.remove("hidden");
 
     let mainText = payload.html || payload.text || "";
+
+    if (isSocialLinkEditType(currentEditType)) {
+        mainText = extractUrlFromHtml(payload.html || "");
+    }
 
     const contentFields = panelRoot?.querySelector("#editor-content-fields");
     if (contentFields) {
@@ -1206,20 +1163,33 @@ function wirePanelApplyCancel() {
         }
 
         const textarea = panelRoot.querySelector("#editor-content-textarea");
-        const newHtml = textarea ? textarea.value : "";
+        const newValue = textarea ? textarea.value : "";
 
-        const payload = {
-            type: "apply-edit",
-            editType: currentEditType,
-            html: newHtml
-        };
-
+        // File editing (raw content)
         if (currentEditTarget && currentEditTarget.path && currentEditTarget.repoName) {
-            latestDomHtml = newHtml;
+            latestDomHtml = newValue;
             showUnsavedIndicator();
             closeEditorModal();
             return;
         }
+
+        let htmlToSend = newValue;
+
+        // Social links: rebuild original <a> with new href
+        if (isSocialLinkEditType(currentEditType) && currentEditTarget?.originalHtml) {
+            const original = currentEditTarget.originalHtml;
+            if (original.includes('href="')) {
+                htmlToSend = original.replace(/href="[^"]*"/i, `href="${newValue}"`);
+            } else {
+                htmlToSend = original;
+            }
+        }
+
+        const payload = {
+            type: "apply-edit",
+            editType: currentEditType,
+            html: htmlToSend
+        };
 
         editableFrame.contentWindow.postMessage(payload, "*");
         closeEditorModal();
@@ -1229,6 +1199,26 @@ function wirePanelApplyCancel() {
 
     cancelBtn?.addEventListener("click", doCancel);
     closeBtn?.addEventListener("click", doCancel);
+}
+
+/* ============================================================
+   COLLAPSIBLE SECTIONS (DESIGN / SETTINGS)
+============================================================ */
+function wirePanelCollapsibles() {
+    if (!panelRoot) return;
+
+    const headers = panelRoot.querySelectorAll(".collapsible-header");
+    headers.forEach(header => {
+        header.addEventListener("click", () => {
+            const body = header.nextElementSibling;
+            if (!body) return;
+            const isHidden = body.style.display === "none" || !body.style.display;
+            body.style.display = isHidden ? "block" : "none";
+        });
+
+        const body = header.nextElementSibling;
+        if (body) body.style.display = "none";
+    });
 }
 
 /* ============================================================
@@ -1280,9 +1270,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             panelRoot = document.getElementById("editor-panel");
 
-            syncPanelThemeControls();
-            wirePanelThemeControls();
             wirePanelApplyCancel();
+            wirePanelCollapsibles();
         })
         .catch(err => console.error("Failed to load editor panel:", err));
 });
