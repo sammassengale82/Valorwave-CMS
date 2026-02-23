@@ -213,7 +213,7 @@ function openEditorModalFromPayload(payload) {
 
     // LINK
     if (currentEditType === "link" || tagName === "a") {
-        mainText = payload.label || payload.text || "";
+        mainText = payload.label || payload.text || mainText;
         if (editorImageURL) {
             editorImageURL.value = payload.url || "";
             editorImageURL.placeholder = "Link URL";
@@ -222,7 +222,7 @@ function openEditorModalFromPayload(payload) {
 
     // IMAGE
     if (currentEditType === "image" || tagName === "img") {
-        mainText = payload.alt || "";
+        mainText = payload.alt || mainText;
         if (editorImageURL) {
             editorImageURL.value = payload.imageUrl || "";
             editorImageURL.placeholder = "Image URL";
@@ -250,30 +250,51 @@ function closeEditorModal() {
 }
 
 /* ============================================================
-   MESSAGE LISTENER (VE → CMS)
+   MESSAGE LISTENER (VE + DOM SYNC)
+   - Accepts messages from either preview iframe
+   - Handles open-editor and dom-updated
 ============================================================ */
 window.addEventListener("message", (event) => {
-    if (!editableFrame || event.source !== editableFrame.contentWindow) return;
-
     const data = event.data || {};
+    if (!data.type) return;
+
+    const fromEditable = editableFrame && event.source === editableFrame.contentWindow;
+    const fromLive = liveFrame && event.source === liveFrame.contentWindow;
+
+    // Only trust messages from one of our preview iframes
+    if (!fromEditable && !fromLive) return;
+
     if (data.type === "open-editor") {
-        openEditorModalFromPayload(data);
+        // VE payload: { type, editType, blockId, innerHTML }
+        const normalized = {
+            editType: data.editType || "block",
+            // For Phase 14 we use the VE key / blockId as our “selector”
+            targetSelector: data.blockId || null,
+            html: typeof data.innerHTML === "string" ? data.innerHTML : "",
+            raw: data
+        };
+        openEditorModalFromPayload(normalized);
+        return;
+    }
+
+    if (data.type === "dom-updated") {
+        latestDomHtml = data.html;
+        showUnsavedIndicator();
+        return;
     }
 });
-
 /* ============================================================
    APPLY EDIT
 ============================================================ */
 applyChangesBtn?.addEventListener("click", () => {
-    if (!editableFrame || !currentTargetSelector) {
+    if (!editableFrame) {
         closeEditorModal();
         return;
     }
 
     const payload = {
         type: "apply-edit",
-        editType: currentEditType,
-        targetSelector: currentTargetSelector
+        editType: currentEditType
     };
 
     const mainText = editorContent ? editorContent.value : "";
@@ -414,31 +435,6 @@ function loadLivePreview() {
 
     liveFrame.src = "https://valorwaveentertainment.com";
 }
-
-/* ============================================================
-   MESSAGE LISTENER (INITIAL)
-============================================================ */
-/* ============================================================
-   MESSAGE LISTENER (VE + DOM SYNC)
-============================================================ */
-window.addEventListener("message", (event) => {
-    const data = event.data;
-    if (!data) return;
-
-    // Only trust messages from the editable preview frame
-    if (!editableFrame || event.source !== editableFrame.contentWindow) return;
-
-    if (data.type === "open-editor") {
-        openEditorModalFromPayload(data);
-        return;
-    }
-
-    if (data.type === "dom-updated") {
-        latestDomHtml = data.html;
-        showUnsavedIndicator();
-        return;
-    }
-});
 
 /* ============================================================
    UNSAVED INDICATOR
@@ -605,7 +601,6 @@ async function loadSidebarFileListsTree() {
         repoCmsFilesContainer.textContent = "Error loading files.";
     }
 }
-
 /* ============================================================
    OPEN FILE FROM REPO
 ============================================================ */
@@ -958,7 +953,7 @@ saveDraftBtn?.addEventListener("click", async () => {
             path,
             JSON.stringify(draftData, null, 2),
             `Save draft ${timestamp}`,
-            "Valorwave-CMS"
+            "ValorWave-CMS"
         );
 
         alert("Draft saved!");
@@ -972,7 +967,7 @@ draftHistoryBtn?.addEventListener("click", async () => {
     draftList.innerHTML = "Loading...";
 
     try {
-        const drafts = await githubApiRequest("drafts", "GET", null, "Valorwave-CMS");
+        const drafts = await githubApiRequest("drafts", "GET", null, "ValorWave-CMS");
         draftList.innerHTML = "";
 
         drafts.forEach(d => {
@@ -982,7 +977,7 @@ draftHistoryBtn?.addEventListener("click", async () => {
             item.dataset.path = d.path;
 
             item.addEventListener("click", async () => {
-                const file = await githubApiRequest(d.path, "GET", null, "Valorwave-CMS");
+                const file = await githubApiRequest(d.path, "GET", null, "ValorWave-CMS");
                 const data = JSON.parse(atob(file.content));
 
                 const w = window.open("", "_blank");
@@ -1009,7 +1004,6 @@ draftHistoryOverlay?.addEventListener("click", (e) => {
         draftHistoryOverlay.classList.add("hidden");
     }
 });
-
 /* ============================================================
    PUBLISH LOGS
 ============================================================ */
@@ -1043,7 +1037,7 @@ publishBtn?.addEventListener("click", async () => {
             logPath,
             JSON.stringify(logData, null, 2),
             `Publish log ${timestamp}`,
-            "Valorwave-CMS"
+            "ValorWave-CMS"
         );
 
         alert("Site published and publish log saved!");
@@ -1058,7 +1052,7 @@ publishLogsBtn?.addEventListener("click", async () => {
     publishLogList.innerHTML = "Loading...";
 
     try {
-        const logs = await githubApiRequest("publish-logs", "GET", null, "Valorwave-CMS");
+        const logs = await githubApiRequest("publish-logs", "GET", null, "ValorWave-CMS");
         publishLogList.innerHTML = "";
 
         logs.forEach(log => {
@@ -1068,7 +1062,7 @@ publishLogsBtn?.addEventListener("click", async () => {
             item.dataset.path = log.path;
 
             item.addEventListener("click", async () => {
-                const file = await githubApiRequest(log.path, "GET", null, "Valorwave-CMS");
+                const file = await githubApiRequest(log.path, "GET", null, "ValorWave-CMS");
                 const data = JSON.parse(atob(file.content));
 
                 alert(
@@ -1254,7 +1248,7 @@ async function openAddSectionModal() {
     templateListEl.innerHTML = "Loading templates...";
 
     try {
-        const files = await githubApiRequest("templates", "GET", null, "Valorwave-CMS");
+        const files = await githubApiRequest("templates", "GET", null, "ValorWave-CMS");
         templateListEl.innerHTML = "";
 
         files.forEach(file => {
@@ -1264,7 +1258,7 @@ async function openAddSectionModal() {
             btn.textContent = file.name;
 
             btn.addEventListener("click", async () => {
-                const content = await githubApiRequest(file.path, "GET", null, "Valorwave-CMS");
+                const content = await githubApiRequest(file.path, "GET", null, "ValorWave-CMS");
                 const html = atob(content.content);
 
                 const targetBlockId = targetBlockSelect.value || null;
