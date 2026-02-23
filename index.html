@@ -24,9 +24,7 @@
         <div id="cms-header-left">
             <div id="cms-logo">Valor Wave CMS</div>
 
-            <!-- Phase 14: Add Section now opens Hybrid Panel -->
             <button id="add-section" class="btn-pill primary">Add Section</button>
-
             <button id="save-draft" class="btn-pill">Save Draft</button>
             <button id="publish" class="btn-pill primary">Publish</button>
         </div>
@@ -131,9 +129,14 @@
 </div>
 
 <!-- ============================================================
-     HYBRID EDITOR PANEL (Phase 14)
+     EDITOR OVERLAY + MODAL (REQUIRED FOR VE)
 ============================================================ -->
-<div id="editor-panel-container"></div>
+<div id="editor-overlay" class="overlay hidden">
+    <div id="editor-modal" class="modal">
+        <!-- editor-panel.html will be injected here -->
+        <div id="editor-panel-container"></div>
+    </div>
+</div>
 
 <!-- ============================================================
      DRAFT HISTORY OVERLAY
@@ -158,10 +161,9 @@
 </div>
 
 <!-- ============================================================
-     CMS SCRIPT
+     CMS SCRIPT (ONLY ONE)
 ============================================================ -->
 <script src="/cms-admin-v3.js"></script>
-<script src="/editor-panel.js"></script>
 
 </body>
 </html>
