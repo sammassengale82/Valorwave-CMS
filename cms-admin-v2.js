@@ -343,43 +343,6 @@ imageDropZone?.addEventListener("drop", (e) => {
 });
 
 /* ============================================================
-   SPLIT-PANE DRAG LOGIC
-============================================================ */
-let isDraggingPane = false;
-
-if (dragBar && topPane && bottomPane) {
-    dragBar.addEventListener("mousedown", () => {
-        isDraggingPane = true;
-        document.body.style.userSelect = "none";
-    });
-
-    document.addEventListener("mouseup", () => {
-        isDraggingPane = false;
-        document.body.style.userSelect = "";
-    });
-
-    document.addEventListener("mousemove", (e) => {
-        // Ignore mousemove events coming from inside the iframe
-        if (e.target.ownerDocument !== document) return;
-
-        // Correct variable name
-        if (!isDraggingPane) return;
-
-        const containerRect = topPane.parentElement.getBoundingClientRect();
-        const offsetY = e.clientY - containerRect.top;
-        const minHeight = 80;
-
-        const topHeight = Math.max(minHeight, Math.min(offsetY, containerRect.height - minHeight));
-        const bottomHeight = containerRect.height - topHeight;
-
-        topPane.style.flex = "none";
-        bottomPane.style.flex = "none";
-        topPane.style.height = `${topHeight}px`;
-        bottomPane.style.height = `${bottomHeight}px`;
-    });
-}
-
-/* ============================================================
    THEME SYSTEM
 ============================================================ */
 function applyCmsTheme(theme) {
