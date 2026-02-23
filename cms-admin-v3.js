@@ -1,29 +1,18 @@
 /* ============================================================
-   VALOR WAVE CMS ADMIN — PHASE 13
-   FULL VERSION (F1)
-   Includes:
-   - GitHub OAuth via Cloudflare Worker
-   - Full DOM references
-   - Split-pane logic
-   - Theme system
-   - Preview loading + visual-editor injection
-   - Global state
-   ============================================================ */
+   VALOR WAVE CMS ADMIN — PHASE 14
+   FULL VERSION
+============================================================ */
 
 /* -------------------------------
    AUTH / GITHUB SESSION MARKER
 -------------------------------- */
-let githubToken = null; // marker only — real token stays in Worker cookie
+let githubToken = null;
 
 /* -------------------------------
    DOM REFERENCES
 -------------------------------- */
 const editableFrame = document.getElementById("preview-frame-editable");
 const liveFrame = document.getElementById("preview-frame-live");
-
-const topPane = document.getElementById("top-pane");
-const bottomPane = document.getElementById("bottom-pane");
-const dragBar = document.getElementById("drag-bar");
 
 const editorOverlay = document.getElementById("editor-overlay");
 const editorModal = document.getElementById("editor-modal");
@@ -63,18 +52,15 @@ const closePublishLogsBtn = document.getElementById("close-publish-logs");
 
 const wysiwygToolbar = document.getElementById("wysiwyg-toolbar");
 const imageDropZone = document.getElementById("image-drop-zone");
-
 const addSectionBtn = document.getElementById("add-section");
 
 /* ============================================================
    TWO-SUBDOMAIN ARCHITECTURE
-   UI:  https://cms.valorwaveentertainment.com
-   API: https://cms-api.valorwaveentertainment.com
 ============================================================ */
 const API_BASE = "https://cms-api.valorwaveentertainment.com";
 
 /* ============================================================
-   LOGIN / LOGOUT (via Worker)
+   LOGIN / LOGOUT
 ============================================================ */
 githubLoginBtn?.addEventListener("click", () => {
     window.location.href = `${API_BASE}/login`;
@@ -94,7 +80,7 @@ logoutBtn?.addEventListener("click", async () => {
 });
 
 /* ============================================================
-   AUTH STATUS CHECK
+   AUTH STATUS
 ============================================================ */
 async function checkAuthStatus() {
     try {
@@ -118,11 +104,6 @@ async function checkAuthStatus() {
     }
 }
 
-checkAuthStatus();
-
-/* ============================================================
-   ENFORCE LOGIN (GATE CMS)
-============================================================ */
 async function enforceLogin() {
     const loggedIn = await checkAuthStatus();
 
@@ -145,7 +126,7 @@ async function enforceLogin() {
 }
 
 /* ============================================================
-   GITHUB API HELPERS (via Worker)
+   GITHUB API HELPERS
 ============================================================ */
 async function githubApiRequest(path, method = "GET", body = null, repo, owner = "sammassengale82") {
     const res = await fetch(`${API_BASE}/api/github`, {
@@ -186,21 +167,14 @@ let currentEditType = "text";
 let currentTargetSelector = null;
 
 let latestDomHtml = null;
-let draftHistory = [];
-let publishLogs = [];
-
-let folderState = {}; // For file sidebar tree
-let contextTarget = null; // For right-click menu
-let dragItem = null; // For file drag/move
+let folderState = {};
+let contextTarget = null;
+let dragItem = null;
 let dragOverItem = null;
 
 /* ============================================================
-   VISUAL EDITOR MESSAGE BRIDGE
-   - Receives open-editor from preview iframe
-   - Opens modal and populates fields
-   - Sends apply-edit back to iframe
+   VISUAL EDITOR BRIDGE
 ============================================================ */
-
 function openEditorModalFromPayload(payload) {
     currentEditType = payload.editType || "block";
     currentTargetSelector = payload.targetSelector || null;
@@ -208,10 +182,8 @@ function openEditorModalFromPayload(payload) {
 
     const tagName = (payload.tagName || "").toLowerCase();
 
-    // MAIN TEXT AREA CONTENT
     let mainText = payload.html || payload.text || "";
 
-    // LINK
     if (currentEditType === "link" || tagName === "a") {
         mainText = payload.label || payload.text || mainText;
         if (editorImageURL) {
@@ -220,7 +192,6 @@ function openEditorModalFromPayload(payload) {
         }
     }
 
-    // IMAGE
     if (currentEditType === "image" || tagName === "img") {
         mainText = payload.alt || mainText;
         if (editorImageURL) {
@@ -229,13 +200,9 @@ function openEditorModalFromPayload(payload) {
         }
     }
 
-    // TEXTAREA
     if (editorContent) editorContent.value = mainText;
-
-    // CLEAR FILE INPUT
     if (editorImageUpload) editorImageUpload.value = "";
 
-    // SHOW MODAL
     if (editorOverlay) editorOverlay.style.display = "flex";
     if (editorModal) editorModal.style.display = "block";
 }
@@ -250,25 +217,17 @@ function closeEditorModal() {
 }
 
 /* ============================================================
-   MESSAGE LISTENER (VE + DOM SYNC)
-   - Accepts messages from either preview iframe
-   - Handles open-editor and dom-updated
+   MESSAGE LISTENER (NO IFRAME FILTERING)
 ============================================================ */
 window.addEventListener("message", (event) => {
     const data = event.data || {};
     if (!data.type) return;
 
-    const fromEditable = editableFrame && event.source === editableFrame.contentWindow;
-    const fromLive = liveFrame && event.source === liveFrame.contentWindow;
-
-    // Only trust messages from one of our preview iframes
-    if (!fromEditable && !fromLive) return;
+    console.log("[CMS] Received message:", data);
 
     if (data.type === "open-editor") {
-        // VE payload: { type, editType, blockId, innerHTML }
         const normalized = {
             editType: data.editType || "block",
-            // For Phase 14 we use the VE key / blockId as our “selector”
             targetSelector: data.blockId || null,
             html: typeof data.innerHTML === "string" ? data.innerHTML : "",
             raw: data
@@ -299,34 +258,28 @@ applyChangesBtn?.addEventListener("click", () => {
 
     const mainText = editorContent ? editorContent.value : "";
 
-    // TEXT/BLOCK
     if (currentEditType === "text" || currentEditType === "block") {
         payload.html = mainText;
     }
 
-    // LINK
     if (currentEditType === "link") {
         payload.label = mainText;
         payload.url = editorImageURL?.value || "";
     }
 
-    // IMAGE
     if (currentEditType === "image") {
         payload.alt = mainText;
         payload.imageUrl = editorImageURL?.value || "";
     }
 
-    // STYLE / CLASSES passthrough
     if (currentEditTarget?.style) payload.style = currentEditTarget.style;
     if (currentEditTarget?.classes) payload.classes = currentEditTarget.classes;
 
+    console.log("[CMS] Sending apply-edit to VE:", payload);
     editableFrame.contentWindow.postMessage(payload, "*");
     closeEditorModal();
 });
 
-/* ============================================================
-   CANCEL EDIT
-============================================================ */
 cancelEditorBtn?.addEventListener("click", closeEditorModal);
 cancelEditorBtnSecondary?.addEventListener("click", closeEditorModal);
 
@@ -372,16 +325,16 @@ function applyCmsTheme(theme) {
 
 function sendThemeToFrames(theme) {
     const msg = { type: "set-theme", theme };
-    try { editableFrame.contentWindow.postMessage(msg, "*"); } catch {}
-    try { liveFrame.contentWindow.postMessage(msg, "*"); } catch {}
+    try { editableFrame?.contentWindow.postMessage(msg, "*"); } catch {}
+    try { liveFrame?.contentWindow.postMessage(msg, "*"); } catch {}
 }
 
 function loadSavedThemes() {
     const cmsTheme = localStorage.getItem("cms-theme") || "original";
     const siteTheme = localStorage.getItem("site-theme") || "original";
 
-    cmsThemeSelect.value = cmsTheme;
-    siteThemeSelect.value = siteTheme;
+    if (cmsThemeSelect) cmsThemeSelect.value = cmsTheme;
+    if (siteThemeSelect) siteThemeSelect.value = siteTheme;
 
     applyCmsTheme(cmsTheme);
     sendThemeToFrames(siteTheme);
@@ -403,37 +356,27 @@ saveSiteThemeBtn?.addEventListener("click", () => {
 });
 
 /* ============================================================
-   PREVIEW LOADING (LIVE + EDITABLE) — PHASE 14 (CROSS-ORIGIN SAFE)
+   PREVIEW LOADING
 ============================================================ */
-
 function loadEditablePreview() {
-    const editableFrame = document.getElementById("preview-frame-editable");
-    if (!editableFrame) return;
+    const frame = document.getElementById("preview-frame-editable");
+    if (!frame) return;
 
-    // Load GitHub Pages version of the site
-    editableFrame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
+    frame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
 
-    editableFrame.onload = () => {
-        // Tell the Visual Editor inside the iframe to initialize itself
-        editableFrame.contentWindow.postMessage(
-            { type: "ve-init" },
-            "*"
-        );
+    frame.onload = () => {
+        frame.contentWindow.postMessage({ type: "ve-init" }, "*");
 
-        // Apply the site theme
         const siteTheme = localStorage.getItem("site-theme") || "original";
-        editableFrame.contentWindow.postMessage(
-            { type: "set-theme", theme: siteTheme },
-            "*"
-        );
+        frame.contentWindow.postMessage({ type: "set-theme", theme: siteTheme }, "*");
     };
 }
 
 function loadLivePreview() {
-    const liveFrame = document.getElementById("preview-frame-live");
-    if (!liveFrame) return;
+    const frame = document.getElementById("preview-frame-live");
+    if (!frame) return;
 
-    liveFrame.src = "https://valorwaveentertainment.com";
+    frame.src = "https://valorwaveentertainment.com";
 }
 
 /* ============================================================
@@ -462,7 +405,7 @@ function hideUnsavedIndicator() {
 }
 
 /* ============================================================
-   FILE SIDEBAR — TREE VIEW (PHASE 9)
+   FILE SIDEBAR — TREE VIEW
 ============================================================ */
 function isTextFile(name) {
     const lower = name.toLowerCase();
@@ -636,7 +579,7 @@ async function openFileFromRepo(repoName, path) {
 }
 
 /* ============================================================
-   RIGHT-CLICK CONTEXT MENU
+   CONTEXT MENU + FILE OPS
 ============================================================ */
 const contextMenu = document.getElementById("context-menu");
 
@@ -670,7 +613,6 @@ document.addEventListener("contextmenu", (e) => {
     document.querySelector("[data-action='new-file']").style.display = "block";
     document.querySelector("[data-action='new-folder']").style.display = "block";
     document.querySelector("[data-action='upload-file']").style.display = "block";
-
 });
 
 contextMenu.addEventListener("click", async (e) => {
@@ -681,7 +623,6 @@ contextMenu.addEventListener("click", async (e) => {
 
     const { repo, path, type, element, depth } = contextTarget;
 
-    // Compute the folder that should receive new items / uploads
     const parentFolderForNew =
         type === "dir"
             ? path
@@ -693,23 +634,18 @@ contextMenu.addEventListener("click", async (e) => {
                 await openFileFromRepo(repo, path);
             }
             break;
-
         case "new-file":
             await createNewFile(repo, parentFolderForNew);
             break;
-
         case "new-folder":
             await createNewFolder(repo, parentFolderForNew);
             break;
-
         case "upload-file":
             await uploadFileToFolder(repo, parentFolderForNew);
             break;
-
         case "rename":
             await renameItem(repo, path, type);
             break;
-
         case "delete":
             await deleteItem(repo, path, type);
             break;
@@ -720,9 +656,6 @@ contextMenu.addEventListener("click", async (e) => {
     await renderFolder(repo, parentPath, parentContainer, depth - 1);
 });
 
-/* ============================================================
-   FILE OPERATIONS
-============================================================ */
 async function createNewFile(repo, parentPath) {
     const name = prompt("Enter new file name:");
     if (!name) return;
@@ -816,123 +749,7 @@ async function deleteItem(repo, path, type) {
 }
 
 /* ============================================================
-   DRAG & DROP FILE MOVEMENT (PHASE 11)
-============================================================ */
-document.addEventListener("dragstart", (e) => {
-    const item = e.target.closest(".file-item");
-    if (!item) return;
-
-    dragItem = {
-        repo: item.dataset.repo,
-        path: item.dataset.path,
-        type: item.dataset.type,
-        element: item
-    };
-
-    item.classList.add("dragging");
-    e.dataTransfer.effectAllowed = "move";
-});
-
-document.addEventListener("dragend", () => {
-    if (dragItem?.element) {
-        dragItem.element.classList.remove("dragging");
-    }
-    dragItem = null;
-
-    clearDropHighlights();
-});
-
-document.addEventListener("dragover", (e) => {
-    const item = e.target.closest(".file-item");
-    if (!item) return;
-
-    e.preventDefault();
-
-    const repo = item.dataset.repo;
-    const path = item.dataset.path;
-    const type = item.dataset.type;
-
-    if (!dragItem) return;
-
-    if (type !== "dir") {
-        item.classList.add("invalid-drop");
-        dragOverItem = item;
-        return;
-    }
-
-    if (repo !== dragItem.repo) {
-        item.classList.add("invalid-drop");
-        dragOverItem = item;
-        return;
-    }
-
-    if (dragItem.type === "dir" && path.startsWith(dragItem.path)) {
-        item.classList.add("invalid-drop");
-        dragOverItem = item;
-        return;
-    }
-
-    item.classList.add("drop-target");
-    dragOverItem = item;
-});
-
-function clearDropHighlights() {
-    document.querySelectorAll(".drop-target, .invalid-drop").forEach(el => {
-        el.classList.remove("drop-target", "invalid-drop");
-    });
-}
-
-document.addEventListener("drop", async (e) => {
-    const item = e.target.closest(".file-item");
-    if (!item || !dragItem) return;
-
-    const targetRepo = item.dataset.repo;
-    const targetPath = item.dataset.path;
-    const targetType = item.dataset.type;
-
-    clearDropHighlights();
-
-    if (targetType !== "dir") return;
-
-    if (targetRepo !== dragItem.repo) {
-        alert("Cannot move items between repos.");
-        return;
-    }
-
-    if (dragItem.type === "dir" && targetPath.startsWith(dragItem.path)) {
-        alert("Cannot move a folder into itself or its own subfolder.");
-        return;
-    }
-
-    await moveItem(dragItem.repo, dragItem.path, targetPath);
-
-    await renderFolder(targetRepo, targetPath, item, Number(item.dataset.depth));
-
-    dragItem = null;
-});
-
-async function moveItem(repo, oldPath, targetFolder) {
-    const name = oldPath.split("/").pop();
-    const newPath = `${targetFolder}/${name}`;
-
-    const entry = await githubApiRequest(oldPath, "GET", null, repo);
-
-    await githubApiRequest(newPath, "PUT", {
-        message: `Move ${oldPath} → ${newPath}`,
-        content: entry.content,
-        sha: entry.sha
-    }, repo);
-
-    await githubApiRequest(oldPath, "DELETE", {
-        message: `Remove old path ${oldPath}`,
-        sha: entry.sha
-    }, repo);
-
-    alert(`Moved: ${oldPath} → ${newPath}`);
-}
-
-/* ============================================================
-   DRAFT SYSTEM
+   DRAFTS + PUBLISH LOGS
 ============================================================ */
 saveDraftBtn?.addEventListener("click", async () => {
     if (!latestDomHtml) {
@@ -1004,9 +821,7 @@ draftHistoryOverlay?.addEventListener("click", (e) => {
         draftHistoryOverlay.classList.add("hidden");
     }
 });
-/* ============================================================
-   PUBLISH LOGS
-============================================================ */
+
 publishBtn?.addEventListener("click", async () => {
     if (!latestDomHtml) {
         alert("No changes to publish.");
@@ -1093,48 +908,7 @@ publishLogsOverlay?.addEventListener("click", (e) => {
 });
 
 /* ============================================================
-   WYSIWYG TOOLBAR
-============================================================ */
-wysiwygToolbar?.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
-
-    const action = btn.dataset.action;
-    const start = editorContent.selectionStart;
-    const end = editorContent.selectionEnd;
-    const selected = editorContent.value.substring(start, end);
-
-    let replacement = selected;
-
-    switch (action) {
-        case "bold": replacement = `**${selected}**`; break;
-        case "italic": replacement = `*${selected}*`; break;
-        case "underline": replacement = `<u>${selected}</u>`; break;
-        case "h1": replacement = `# ${selected}`; break;
-        case "h2": replacement = `## ${selected}`; break;
-        case "h3": replacement = `### ${selected}`; break;
-        case "ul":
-            replacement = selected.split("\n").map(line => `- ${line}`).join("\n");
-            break;
-        case "ol":
-            replacement = selected.split("\n").map((line, i) => `${i + 1}. ${line}`).join("\n");
-            break;
-        case "left":
-            replacement = `<div style="text-align:left">${selected}</div>`;
-            break;
-        case "center":
-            replacement = `<div style="text-align:center">${selected}</div>`;
-            break;
-        case "right":
-            replacement = `<div style="text-align:right">${selected}</div>`;
-            break;
-    }
-
-    editorContent.setRangeText(replacement, start, end, "end");
-});
-
-/* ============================================================
-   ADD SECTION MODAL (PHASE 12)
+   ADD SECTION MODAL
 ============================================================ */
 let addSectionOverlay = null;
 let addSectionModal = null;
@@ -1290,33 +1064,7 @@ async function openAddSectionModal() {
 addSectionBtn?.addEventListener("click", openAddSectionModal);
 
 /* ============================================================
-   INITIALIZATION
-============================================================ */
-document.addEventListener("DOMContentLoaded", async () => {
-    const allowed = await enforceLogin();
-    if (!allowed) return;
-
-    loadSavedThemes();
-    loadEditablePreview();
-    loadLivePreview();
-    loadSidebarFileListsTree();
-
-    // Load the editor panel HTML into the CMS
-    fetch("/editor-panel.html")
-        .then(res => res.text())
-        .then(html => {
-            document.getElementById("editor-panel-container").innerHTML = html;
-
-            // Initialize the panel AFTER the HTML exists
-            if (typeof initializeEditorPanel === "function") {
-                initializeEditorPanel();
-            }
-        })
-        .catch(err => console.error("Failed to load editor panel:", err));
-});
-
-/* ============================================================
-   FOLDER-STATE PERSISTENCE (localStorage)
+   FOLDER-STATE PERSISTENCE
 ============================================================ */
 function saveFolderState() {
     localStorage.setItem("cms-folder-state", JSON.stringify(folderState));
@@ -1333,7 +1081,7 @@ function loadFolderState() {
 loadFolderState();
 
 /* ============================================================
-   MULTI-SELECT OPERATIONS
+   MULTI-SELECT + SHORTCUTS + DIFF
 ============================================================ */
 let selectedItems = new Set();
 
@@ -1374,117 +1122,6 @@ async function deleteSelectedItems() {
     await loadSidebarFileListsTree();
 }
 
-/* ============================================================
-   DUPLICATE FILE
-============================================================ */
-async function duplicateFile(repo, path) {
-    const file = await githubApiRequest(path, "GET", null, repo);
-    const content = file.content;
-
-    const base = path.split("/").pop();
-    const parent = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
-    const newName = base.replace(/(\.[^.]+)$/, "-copy$1");
-    const newPath = parent ? `${parent}/${newName}` : newName;
-
-    await githubApiRequest(newPath, "PUT", {
-        message: `Duplicate ${path}`,
-        content
-    }, repo);
-
-    alert(`Duplicated: ${newName}`);
-}
-
-/* ============================================================
-   OPEN FILE IN NEW TAB
-============================================================ */
-async function openFileInNewTab(repo, path) {
-    const file = await githubApiRequest(path, "GET", null, repo);
-    const decoded = atob(file.content);
-
-    const w = window.open("", "_blank");
-    w.document.open();
-    w.document.write(`<pre>${decoded.replace(/</g, "&lt;")}</pre>`);
-    w.document.close();
-}
-
-/* ============================================================
-   TEMPLATE CATEGORIES + SEARCH
-============================================================ */
-let templateSearchInput = null;
-
-function createTemplateSearchBar() {
-    if (!templateListEl) return;
-
-    templateSearchInput = document.createElement("input");
-    templateSearchInput.type = "text";
-    templateSearchInput.placeholder = "Search templates...";
-    templateSearchInput.className = "template-search";
-
-    templateListEl.parentNode.insertBefore(templateSearchInput, templateListEl);
-
-    templateSearchInput.addEventListener("input", () => {
-        const query = templateSearchInput.value.toLowerCase();
-        const items = templateListEl.querySelectorAll(".template-item");
-
-        items.forEach(item => {
-            const name = item.textContent.toLowerCase();
-            item.style.display = name.includes(query) ? "block" : "none";
-        });
-    });
-}
-
-/* ============================================================
-   BLOCK-ID VALIDATOR + AUTO-ASSIGNER
-============================================================ */
-function ensureBlockIds() {
-    const doc = editableFrame?.contentDocument;
-    if (!doc) return;
-
-    const blocks = doc.querySelectorAll("[data-ve-block-id]");
-    const used = new Set();
-
-    blocks.forEach(block => {
-        let id = block.getAttribute("data-ve-block-id");
-
-        if (!id || used.has(id)) {
-            id = `block-${Math.random().toString(36).slice(2, 8)}`;
-            block.setAttribute("data-ve-block-id", id);
-        }
-
-        used.add(id);
-    });
-}
-
-/* ============================================================
-   ERROR OVERLAY SYSTEM
-============================================================ */
-function showErrorOverlay(message) {
-    const overlay = document.createElement("div");
-    overlay.className = "error-overlay";
-
-    const modal = document.createElement("div");
-    modal.className = "error-modal";
-
-    const title = document.createElement("h2");
-    title.textContent = "Error";
-
-    const msg = document.createElement("p");
-    msg.textContent = message;
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Close";
-    closeBtn.addEventListener("click", () => overlay.remove());
-
-    modal.appendChild(title);
-    modal.appendChild(msg);
-    modal.appendChild(closeBtn);
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-}
-
-/* ============================================================
-   KEYBOARD SHORTCUTS
-============================================================ */
 document.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.key === "s") {
         e.preventDefault();
@@ -1508,9 +1145,6 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-/* ============================================================
-   UNSAVED DIFF ENGINE
-============================================================ */
 let lastSavedHtml = null;
 
 function updateLastSavedHtml(html) {
@@ -1522,3 +1156,27 @@ function showUnsavedDiff() {
 
     showDiffViewer(lastSavedHtml, latestDomHtml, "index.html");
 }
+
+/* ============================================================
+   INITIALIZATION
+============================================================ */
+document.addEventListener("DOMContentLoaded", async () => {
+    const allowed = await enforceLogin();
+    if (!allowed) return;
+
+    loadSavedThemes();
+    loadEditablePreview();
+    loadLivePreview();
+    loadSidebarFileListsTree();
+
+    fetch("/editor-panel.html")
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("editor-panel-container").innerHTML = html;
+
+            if (typeof initializeEditorPanel === "function") {
+                initializeEditorPanel();
+            }
+        })
+        .catch(err => console.error("Failed to load editor panel:", err));
+});
