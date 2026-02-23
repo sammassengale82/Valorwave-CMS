@@ -1,5 +1,5 @@
 /* ============================================================
-   VALOR WAVE CMS ADMIN — PHASE 14 (Hybrid Side Panel)
+   VALOR WAVE CMS ADMIN — PHASE 14 (Hybrid Panel, Option C1)
    cms-admin-v3.js — COMPLETE
 ============================================================ */
 
@@ -43,7 +43,7 @@ const headerSiteThemeSavedMsg = document.getElementById("site-theme-saved");
 /* -------------------------------
    PANEL DOM REFERENCES
 -------------------------------- */
-let panelRoot = null; // #editor-panel (loaded from editor-panel.html)
+let panelRoot = null; // #editor-panel (from editor-panel.html)
 
 /* ============================================================
    TWO-SUBDOMAIN ARCHITECTURE
@@ -418,15 +418,13 @@ function createFileItem(entry, repoName, depth) {
         label.textContent = entry.name;
         label.classList.add("file-item-file");
 
-        if (isTextFile(entry.name)) {
-            label.addEventListener("click", () => {
+        label.addEventListener("click", () => {
+            if (isTextFile(entry.name)) {
                 openFileFromRepo(repoName, entry.path);
-            });
-        } else {
-            label.addEventListener("click", () => {
-                alert(`File type not editable yet: ${entry.name}`);
-            });
-        }
+            } else {
+                openImageFileInPanel(repoName, entry.path, entry.name);
+            }
+        });
     }
 
     item.appendChild(label);
@@ -497,7 +495,7 @@ async function loadSidebarFileListsTree() {
 }
 
 /* ============================================================
-   OPEN FILE FROM REPO (RAW EDIT)
+   OPEN FILE FROM REPO (RAW TEXT EDIT)
 ============================================================ */
 async function openFileFromRepo(repoName, path) {
     try {
@@ -509,7 +507,6 @@ async function openFileFromRepo(repoName, path) {
 
         const decoded = atob(file.content);
 
-        // Use hybrid panel for raw file editing as well
         const payload = {
             editType: "file",
             targetSelector: null,
@@ -521,6 +518,64 @@ async function openFileFromRepo(repoName, path) {
     } catch (e) {
         console.error("Failed to open file:", e);
         alert("Failed to open file. Check console for details.");
+    }
+}
+
+/* ============================================================
+   IMAGE FILE EDITING (Phase 14 — Option C1)
+============================================================ */
+async function openImageFileInPanel(repoName, path, fileName) {
+    if (!panelRoot) {
+        panelRoot = document.getElementById("editor-panel");
+    }
+
+    const nameEl = panelRoot.querySelector("#editor-block-name");
+    if (nameEl) nameEl.textContent = `Image: ${fileName}`;
+
+    panelRoot.classList.remove("hidden");
+
+    const contentFields = panelRoot.querySelector("#editor-content-fields");
+    const designFields = panelRoot.querySelector("#editor-design-fields");
+    const settingsFields = panelRoot.querySelector("#editor-settings-fields");
+
+    if (designFields) designFields.innerHTML = "";
+    if (settingsFields) settingsFields.innerHTML = "";
+
+    if (contentFields) {
+        contentFields.innerHTML = "";
+
+        const preview = document.createElement("img");
+        preview.src = `https://raw.githubusercontent.com/sammassengale82/${repoName}/main/${path}`;
+        preview.style.maxWidth = "100%";
+        preview.style.border = "1px solid #ccc";
+        preview.style.marginBottom = "12px";
+
+        const uploadLabel = document.createElement("label");
+        uploadLabel.textContent = "Replace Image:";
+
+        const uploadInput = document.createElement("input");
+        uploadInput.type = "file";
+        uploadInput.accept = "image/*";
+
+        contentFields.appendChild(preview);
+        contentFields.appendChild(uploadLabel);
+        contentFields.appendChild(uploadInput);
+
+        uploadInput.addEventListener("change", async () => {
+            const file = uploadInput.files[0];
+            if (!file) return;
+
+            const arrayBuffer = await file.arrayBuffer();
+            const content = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+            await githubApiRequest(path, "PUT", {
+                message: `Replace image ${fileName}`,
+                content
+            }, repoName);
+
+            alert("Image replaced successfully.");
+            preview.src = URL.createObjectURL(file);
+        });
     }
 }
 
@@ -577,7 +632,11 @@ contextMenu?.addEventListener("click", async (e) => {
     switch (action) {
         case "open":
             if (type === "file") {
-                await openFileFromRepo(repo, path);
+                if (isTextFile(path)) {
+                    await openFileFromRepo(repo, path);
+                } else {
+                    await openImageFileInPanel(repo, path, path.split("/").pop());
+                }
             }
             break;
         case "new-file":
@@ -1074,7 +1133,6 @@ document.addEventListener("keydown", (e) => {
     }
 
     if (e.key === "Escape") {
-        closeEditorModal();
         if (addSectionOverlay) addSectionOverlay.classList.add("hidden");
         if (draftHistoryOverlay) draftHistoryOverlay.classList.add("hidden");
         if (publishLogsOverlay) publishLogsOverlay.classList.add("hidden");
@@ -1086,7 +1144,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ============================================================
-   VISUAL EDITOR BRIDGE — HYBRID SIDE PANEL
+   VISUAL EDITOR BRIDGE — HYBRID SIDE PANEL (ALWAYS VISIBLE)
 ============================================================ */
 function openEditorModalFromPayload(payload) {
     currentEditType = payload.editType || "block";
@@ -1102,9 +1160,7 @@ function openEditorModalFromPayload(payload) {
         nameEl.textContent = currentEditType;
     }
 
-    if (panelRoot) {
-        panelRoot.classList.remove("hidden");
-    }
+    panelRoot?.classList.remove("hidden");
 
     let mainText = payload.html || payload.text || "";
 
@@ -1128,13 +1184,6 @@ function openEditorModalFromPayload(payload) {
 }
 
 function closeEditorModal() {
-    if (!panelRoot) {
-        panelRoot = document.getElementById("editor-panel");
-    }
-    if (panelRoot) {
-        panelRoot.classList.add("hidden");
-    }
-
     currentEditTarget = null;
     currentTargetSelector = null;
     currentEditType = "text";
@@ -1166,7 +1215,6 @@ function wirePanelApplyCancel() {
         };
 
         if (currentEditTarget && currentEditTarget.path && currentEditTarget.repoName) {
-            // Raw file editing
             latestDomHtml = newHtml;
             showUnsavedIndicator();
             closeEditorModal();
