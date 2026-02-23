@@ -15,11 +15,6 @@
 -------------------------------- */
 let githubToken = null; // marker only — real token stays in Worker cookie
 
-/* ============================================================
-   GLOBAL STATE
-============================================================ */
-let isDraggingPane = false;
-
 /* -------------------------------
    DOM REFERENCES
 -------------------------------- */
@@ -198,6 +193,7 @@ let folderState = {}; // For file sidebar tree
 let contextTarget = null; // For right-click menu
 let dragItem = null; // For file drag/move
 let dragOverItem = null;
+let isDraggingPane = false;
 
 /* ============================================================
    VISUAL EDITOR MESSAGE BRIDGE
@@ -382,8 +378,6 @@ if (dragBar && topPane && bottomPane) {
         topPane.style.height = `${topHeight}px`;
         bottomPane.style.height = `${bottomHeight}px`;
     });
-}
-
 }
 
 /* ============================================================
