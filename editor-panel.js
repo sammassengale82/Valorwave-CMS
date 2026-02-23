@@ -143,13 +143,26 @@ function setupEditorButtons() {
    OPEN EDITOR PANEL (FROM VE)
 ============================================================ */
 function openEditorPanel(payload) {
+    // Wait until the panel HTML is actually loaded
+    if (
+        !document.getElementById("editor-block-name") ||
+        !editorContentFields ||
+        !editorDesignFields ||
+        !editorSettingsFields
+    ) {
+        // Retry in 50ms until the panel is ready
+        setTimeout(() => openEditorPanel(payload), 50);
+        return;
+    }
+
     currentEditPayload = payload;
 
-    // Set block name
-    document.getElementById("editor-block-name").textContent =
+    // Set block name safely
+    const blockNameEl = document.getElementById("editor-block-name");
+    blockNameEl.textContent =
         payload.editType.charAt(0).toUpperCase() + payload.editType.slice(1);
 
-    // Clear previous fields
+    // Clear previous fields safely
     editorContentFields.innerHTML = "";
     editorDesignFields.innerHTML = "";
     editorSettingsFields.innerHTML = "";
@@ -162,6 +175,7 @@ function openEditorPanel(payload) {
     // Show panel instantly
     editorPanel.classList.remove("hidden");
 }
+
 
 /* ============================================================
    CLOSE PANEL
