@@ -35,6 +35,7 @@ const closePublishLogsBtn = document.getElementById("close-publish-logs");
 
 const addSectionBtn = document.getElementById("add-section");
 
+/* Header theme controls (ONLY place themes live now) */
 const headerCmsThemeSelect = document.getElementById("cms-theme");
 const headerSiteThemeSelect = document.getElementById("site-theme");
 const headerCmsThemeSavedMsg = document.getElementById("cms-theme-saved");
@@ -1084,7 +1085,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ============================================================
-   VISUAL EDITOR BRIDGE — HYBRID SIDE PANEL (ALWAYS VISIBLE)
+   VISUAL EDITOR BRIDGE — HYBRID SIDE PANEL
 ============================================================ */
 function extractUrlFromHtml(html) {
     if (!html) return "";
@@ -1096,6 +1097,30 @@ function isSocialLinkEditType(editType) {
     if (!editType) return false;
     const lower = editType.toLowerCase();
     return lower.includes("social") || lower === "link";
+}
+
+/* Collect Design fields from panel */
+function collectDesignSettings() {
+    const design = {};
+    if (!panelRoot) return design;
+    panelRoot.querySelectorAll("[data-design]").forEach(el => {
+        const key = el.getAttribute("data-design");
+        const val = el.value;
+        if (val !== "") design[key] = val;
+    });
+    return design;
+}
+
+/* Collect Settings fields from panel */
+function collectElementSettings() {
+    const settings = {};
+    if (!panelRoot) return settings;
+    panelRoot.querySelectorAll("[data-setting]").forEach(el => {
+        const key = el.getAttribute("data-setting");
+        const val = el.value;
+        if (val !== "") settings[key] = val;
+    });
+    return settings;
 }
 
 function openEditorModalFromPayload(payload) {
@@ -1134,10 +1159,14 @@ function openEditorModalFromPayload(payload) {
     }
 
     const designFields = panelRoot?.querySelector("#editor-design-fields");
-    if (designFields) designFields.innerHTML = "";
+    if (designFields) {
+        // Leave existing controls; no per-block prefill yet
+    }
 
     const settingsFields = panelRoot?.querySelector("#editor-settings-fields");
-    if (settingsFields) settingsFields.innerHTML = "";
+    if (settingsFields) {
+        // Leave existing controls; no per-block prefill yet
+    }
 }
 
 function closeEditorModal() {
@@ -1185,10 +1214,15 @@ function wirePanelApplyCancel() {
             }
         }
 
+        const design = collectDesignSettings();
+        const settings = collectElementSettings();
+
         const payload = {
             type: "apply-edit",
             editType: currentEditType,
-            html: htmlToSend
+            html: htmlToSend,
+            design,
+            settings
         };
 
         editableFrame.contentWindow.postMessage(payload, "*");
