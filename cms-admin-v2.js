@@ -364,8 +364,11 @@ if (dragBar && topPane && bottomPane) {
     });
 
     document.addEventListener("mousemove", (e) => {
-       if (window.__VE_DISABLE_GLOBAL_MOUSEMOVE__) return;
-       if (!isDragging) return;
+        // Ignore mousemove events coming from inside the iframe
+        if (e.target.ownerDocument !== document) return;
+
+        // Correct variable name
+        if (!isDraggingPane) return;
 
         const containerRect = topPane.parentElement.getBoundingClientRect();
         const offsetY = e.clientY - containerRect.top;
@@ -379,6 +382,8 @@ if (dragBar && topPane && bottomPane) {
         topPane.style.height = `${topHeight}px`;
         bottomPane.style.height = `${bottomHeight}px`;
     });
+}
+
 }
 
 /* ============================================================
