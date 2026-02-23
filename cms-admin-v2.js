@@ -359,7 +359,8 @@ if (dragBar && topPane && bottomPane) {
     });
 
     document.addEventListener("mousemove", (e) => {
-        if (!isDraggingPane) return;
+       if (window.__VE_DISABLE_GLOBAL_MOUSEMOVE__) return;
+       if (!isDragging) return;
 
         const containerRect = topPane.parentElement.getBoundingClientRect();
         const offsetY = e.clientY - containerRect.top;
