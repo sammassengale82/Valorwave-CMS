@@ -1,11 +1,7 @@
 <!-- ============================================================
-     EDITOR SIDE PANEL (Resizable, Hybrid: Content / Design / Settings)
-     Squarespace + Wix + Webflow Style
+     EDITOR SIDE PANEL (Fixed Right Panel — Phase 14)
 ============================================================ -->
-<aside id="editor-panel" class="hidden">
-    
-    <!-- Drag Handle (Resizable Left Edge) -->
-    <div id="editor-panel-resize-handle"></div>
+<aside id="editor-panel">
 
     <!-- Panel Header -->
     <div id="editor-panel-header">
@@ -20,32 +16,62 @@
     <div id="editor-panel-scroll">
 
         <!-- ============================================================
-             CONTENT SECTION (Dynamic per block type)
+             CONTENT SECTION
         ============================================================= -->
         <section id="editor-content-section" class="editor-section">
             <h3>Content</h3>
-            <div id="editor-content-fields">
-                <!-- Populated dynamically by editor-panel.js -->
-            </div>
+            <div id="editor-content-fields"></div>
         </section>
 
         <!-- ============================================================
-             DESIGN SECTION (Collapsible)
+             DESIGN SECTION
         ============================================================= -->
         <section id="editor-design-section" class="editor-section collapsible">
             <h3 class="collapsible-header">Design</h3>
             <div class="collapsible-body" id="editor-design-fields">
-                <!-- Populated dynamically by editor-panel.js -->
+
+                <label>Text Align</label>
+                <select data-design="text-align">
+                    <option value="">Default</option>
+                    <option value="left">Left</option>
+                    <option value="center">Center</option>
+                    <option value="right">Right</option>
+                </select>
+
+                <label>Font Weight</label>
+                <select data-design="font-weight">
+                    <option value="">Default</option>
+                    <option value="400">Normal</option>
+                    <option value="600">Semi-Bold</option>
+                    <option value="700">Bold</option>
+                </select>
+
+                <label>Padding (px)</label>
+                <input type="number" data-design="padding" placeholder="e.g. 20">
+
             </div>
         </section>
 
         <!-- ============================================================
-             SETTINGS SECTION (Collapsible)
+             SETTINGS SECTION
         ============================================================= -->
         <section id="editor-settings-section" class="editor-section collapsible">
             <h3 class="collapsible-header">Settings</h3>
             <div class="collapsible-body" id="editor-settings-fields">
-                <!-- Populated dynamically by editor-panel.js -->
+
+                <label>Custom ID</label>
+                <input type="text" data-setting="id" placeholder="section-id">
+
+                <label>Custom Class</label>
+                <input type="text" data-setting="class" placeholder="my-class another-class">
+
+                <label>Visibility</label>
+                <select data-setting="visibility">
+                    <option value="">Default</option>
+                    <option value="visible">Visible</option>
+                    <option value="hidden">Hidden</option>
+                </select>
+
             </div>
         </section>
 
