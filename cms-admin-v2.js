@@ -1336,6 +1336,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadEditablePreview();
     loadLivePreview();
     loadSidebarFileListsTree();
+
+    // Load the editor panel HTML into the CMS
+    fetch("/editor-panel.html")
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("editor-panel-container").innerHTML = html;
+
+            // Initialize the panel AFTER the HTML exists
+            if (typeof initializeEditorPanel === "function") {
+                initializeEditorPanel();
+            }
+        })
+        .catch(err => console.error("Failed to load editor panel:", err));
 });
 
 /* ============================================================
