@@ -193,7 +193,6 @@ let folderState = {}; // For file sidebar tree
 let contextTarget = null; // For right-click menu
 let dragItem = null; // For file drag/move
 let dragOverItem = null;
-let isDraggingPane = false;
 
 /* ============================================================
    VISUAL EDITOR MESSAGE BRIDGE
