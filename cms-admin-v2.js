@@ -18,7 +18,7 @@ let githubToken = null; // marker only — real token stays in Worker cookie
 /* ============================================================
    GLOBAL STATE
 ============================================================ */
-let isDragging = false;
+let isDraggingPane = false;
 
 /* -------------------------------
    DOM REFERENCES
