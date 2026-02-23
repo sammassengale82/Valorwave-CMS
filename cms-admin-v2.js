@@ -382,7 +382,7 @@ saveSiteThemeBtn?.addEventListener("click", () => {
 });
 
 /* ============================================================
-   PREVIEW LOADING (LIVE + EDITABLE) — PHASE 14
+   PREVIEW LOADING (LIVE + EDITABLE) — PHASE 14 (CROSS-ORIGIN SAFE)
 ============================================================ */
 
 function loadEditablePreview() {
@@ -393,41 +393,18 @@ function loadEditablePreview() {
     editableFrame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
 
     editableFrame.onload = () => {
-        const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
-        if (!doc) {
-            console.warn("Editable preview: iframe document not accessible.");
-            return;
-        }
+        // Tell the Visual Editor inside the iframe to initialize itself
+        editableFrame.contentWindow.postMessage(
+            { type: "ve-init" },
+            "*"
+        );
 
-        /* ---------------------------------------------
-           Inject VE CSS
-        --------------------------------------------- */
-        const veCSS = doc.createElement("link");
-        veCSS.rel = "stylesheet";
-        veCSS.href = "/visual-editor/visual-editor.css";
-        doc.head.appendChild(veCSS);
-
-        /* ---------------------------------------------
-           Inject VE JS
-        --------------------------------------------- */
-        const veJS = doc.createElement("script");
-        veJS.src = "/visual-editor/visual-editor.js";
-        veJS.onload = () => {
-            console.log("VE successfully injected into editable preview.");
-
-            // Apply site theme AFTER VE loads
-            const siteTheme = localStorage.getItem("site-theme") || "original";
-            try {
-                editableFrame.contentWindow.postMessage(
-                    { type: "set-theme", theme: siteTheme },
-                    "*"
-                );
-            } catch (e) {
-                console.warn("Failed to send theme to VE:", e);
-            }
-        };
-
-        doc.body.appendChild(veJS);
+        // Apply the site theme
+        const siteTheme = localStorage.getItem("site-theme") || "original";
+        editableFrame.contentWindow.postMessage(
+            { type: "set-theme", theme: siteTheme },
+            "*"
+        );
     };
 }
 
