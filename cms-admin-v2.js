@@ -382,32 +382,59 @@ saveSiteThemeBtn?.addEventListener("click", () => {
 });
 
 /* ============================================================
-   PREVIEW LOADING (LIVE + EDITABLE)
+   PREVIEW LOADING (LIVE + EDITABLE) — PHASE 14
 ============================================================ */
 
-async function loadEditablePreview() {
+function loadEditablePreview() {
     const editableFrame = document.getElementById("preview-frame-editable");
+    if (!editableFrame) return;
 
-    // Load the GitHub Pages version of the site
+    // Load GitHub Pages version of the site
     editableFrame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
 
     editableFrame.onload = () => {
-        // Apply site theme (VE handles the rest internally)
-        const siteTheme = localStorage.getItem("site-theme") || "original";
-
-        try {
-            editableFrame.contentWindow.postMessage(
-                { type: "set-theme", theme: siteTheme },
-                "*"
-            );
-        } catch (e) {
-            console.warn("Failed to send theme to VE:", e);
+        const doc = editableFrame.contentDocument || editableFrame.contentWindow.document;
+        if (!doc) {
+            console.warn("Editable preview: iframe document not accessible.");
+            return;
         }
+
+        /* ---------------------------------------------
+           Inject VE CSS
+        --------------------------------------------- */
+        const veCSS = doc.createElement("link");
+        veCSS.rel = "stylesheet";
+        veCSS.href = "/visual-editor/visual-editor.css";
+        doc.head.appendChild(veCSS);
+
+        /* ---------------------------------------------
+           Inject VE JS
+        --------------------------------------------- */
+        const veJS = doc.createElement("script");
+        veJS.src = "/visual-editor/visual-editor.js";
+        veJS.onload = () => {
+            console.log("VE successfully injected into editable preview.");
+
+            // Apply site theme AFTER VE loads
+            const siteTheme = localStorage.getItem("site-theme") || "original";
+            try {
+                editableFrame.contentWindow.postMessage(
+                    { type: "set-theme", theme: siteTheme },
+                    "*"
+                );
+            } catch (e) {
+                console.warn("Failed to send theme to VE:", e);
+            }
+        };
+
+        doc.body.appendChild(veJS);
     };
 }
 
 function loadLivePreview() {
     const liveFrame = document.getElementById("preview-frame-live");
+    if (!liveFrame) return;
+
     liveFrame.src = "https://valorwaveentertainment.com";
 }
 
