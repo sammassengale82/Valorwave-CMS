@@ -175,75 +175,57 @@ let lastSavedHtml = null;
 let selectedItems = new Set();
 
 /* ============================================================
-   POPUP EDITOR MODAL
+   POPUP EDITOR — HYBRID SYSTEM (CONTENT + DESIGN + SETTINGS)
 ============================================================ */
 let editorModal = null;
-let editorModalInput = null;
 let editorModalTitle = null;
-let editorModalCloseBtn = null;
-let editorModalCancelBtn = null;
 let editorModalSaveBtn = null;
+let editorModalCancelBtn = null;
+let editorModalCloseBtn = null;
 
-let currentEditPayload = null; // { editType, blockId, html, path, repoName, targetSelector }
+let currentEditPayload = null;
 
 function initEditorModal() {
     editorModal = document.getElementById("editor-modal");
-    if (!editorModal) return;
-
-    editorModalInput = document.getElementById("editor-modal-input");
     editorModalTitle = document.getElementById("editor-modal-title");
-    editorModalCloseBtn = document.getElementById("editor-modal-close");
-    editorModalCancelBtn = document.getElementById("editor-modal-cancel");
     editorModalSaveBtn = document.getElementById("editor-modal-save");
+    editorModalCancelBtn = document.getElementById("editor-modal-cancel");
+    editorModalCloseBtn = document.getElementById("editor-modal-close");
 
     const close = () => {
-        if (!editorModal) return;
         editorModal.classList.remove("open");
         editorModal.setAttribute("aria-hidden", "true");
         currentEditPayload = null;
     };
 
-    editorModalCloseBtn?.addEventListener("click", close);
-    editorModalCancelBtn?.addEventListener("click", close);
+    editorModalCloseBtn.addEventListener("click", close);
+    editorModalCancelBtn.addEventListener("click", close);
 
-    editorModalSaveBtn?.addEventListener("click", async () => {
-        if (!currentEditPayload || !editorModalInput) {
-            close();
-            return;
-        }
+    editorModalSaveBtn.addEventListener("click", () => {
+        if (!currentEditPayload) return;
 
-        const newHtml = editorModalInput.value;
+        const html = document.getElementById("editor-modal-input").value;
 
-        if (currentEditPayload.editType === "block") {
-            try {
-                editableFrame?.contentWindow.postMessage(
-                    {
-                        type: "ve-apply-edit",
-                        blockId: currentEditPayload.blockId,
-                        html: newHtml
-                    },
-                    "*"
-                );
-                showUnsavedIndicator();
-            } catch (e) {
-                console.error("[CMS] Failed to send ve-apply-edit:", e);
-            }
-        } else if (currentEditPayload.editType === "file") {
-            try {
-                await commitFile(
-                    currentEditPayload.path,
-                    newHtml,
-                    `Update ${currentEditPayload.path}`,
-                    currentEditPayload.repoName
-                );
-                updateLastSavedHtml(newHtml);
-                hideUnsavedIndicator();
-                alert("File saved.");
-            } catch (e) {
-                console.error("Failed to save file:", e);
-                alert("Failed to save file. Check console for details.");
-            }
-        }
+        const design = {};
+        document.querySelectorAll("[data-design]").forEach(el => {
+            if (el.value !== "") design[el.dataset.design] = el.value;
+        });
+
+        const settings = {};
+        document.querySelectorAll("[data-setting]").forEach(el => {
+            if (el.value !== "") settings[el.dataset.setting] = el.value;
+        });
+
+        editableFrame.contentWindow.postMessage(
+            {
+                type: "ve-apply-edit",
+                blockId: currentEditPayload.blockId,
+                html,
+                design,
+                settings
+            },
+            "*"
+        );
 
         close();
     });
@@ -251,24 +233,77 @@ function initEditorModal() {
 
 function openEditorModalFromPayload(payload) {
     if (!editorModal) initEditorModal();
-    if (!editorModal || !editorModalInput) return;
 
     currentEditPayload = payload;
 
-    if (editorModalTitle) {
-        if (payload.editType === "block" && payload.blockId) {
-            editorModalTitle.textContent = `Edit: ${payload.blockId}`;
-        } else if (payload.editType === "file" && payload.path) {
-            editorModalTitle.textContent = `Edit file: ${payload.path}`;
-        } else {
-            editorModalTitle.textContent = "Edit content";
-        }
-    }
+    editorModalTitle.textContent = `Edit: ${payload.blockId}`;
 
-    editorModalInput.value = payload.html || "";
+    /* CONTENT */
+    const contentFields = document.getElementById("editor-content-fields");
+    contentFields.innerHTML = `
+        <label>Inner HTML</label>
+        <textarea id="editor-modal-input" class="editor-input">${payload.html || ""}</textarea>
+
+        <label>Link URL</label>
+        <input id="editor-link-url" class="editor-input" type="text">
+    `;
+
+    /* DESIGN */
+    const designFields = document.getElementById("editor-design-fields");
+    designFields.innerHTML = `
+        <label>Font Size (px)</label>
+        <input data-design="fontSize" class="editor-input" type="number">
+
+        <label>Text Color</label>
+        <input data-design="color" class="editor-input" type="color">
+
+        <label>Background</label>
+        <input data-design="backgroundColor" class="editor-input" type="color">
+
+        <label>Padding (px)</label>
+        <input data-design="padding" class="editor-input" type="number">
+    `;
+
+    /* SETTINGS */
+    const settingsFields = document.getElementById("editor-settings-fields");
+    settingsFields.innerHTML = `
+        <label>Element ID</label>
+        <input data-setting="id" class="editor-input" type="text">
+
+        <label>CSS Classes</label>
+        <input data-setting="class" class="editor-input" type="text">
+
+        <label>Visibility</label>
+        <select data-setting="visibility" class="editor-select">
+            <option value="">Default</option>
+            <option value="visible">Visible</option>
+            <option value="hidden">Hidden</option>
+        </select>
+    `;
+
     editorModal.classList.add("open");
     editorModal.setAttribute("aria-hidden", "false");
 }
+
+/* ============================================================
+   MESSAGE LISTENER — OPEN POPUP
+============================================================ */
+window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+
+    if (msg.type === "open-editor") {
+        openEditorModalFromPayload({
+            blockId: msg.blockId,
+            html: msg.html
+        });
+    }
+
+    if (msg.type === "dom-updated") {
+        latestDomHtml = msg.html;
+        showUnsavedIndicator();
+    }
+});
 
 /* ============================================================
    THEME SYSTEM (HEADER ONLY)
