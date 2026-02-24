@@ -243,7 +243,7 @@ function loadEditablePreview() {
     const frame = document.getElementById("preview-frame-editable");
     if (!frame) return;
 
-    frame.src = "https://sammassengale82.github.io/valorwaveentertainment/";
+    frame.src = "/editable/index.html";
 
     frame.onload = () => {
         frame.contentWindow.postMessage({ type: "ve-init" }, "*");
