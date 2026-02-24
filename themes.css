@@ -4,47 +4,38 @@
 ============================================================ */
 
 
-/* ------------------------------------------------------------
+/* ============================================================
    CMS THEMES (ADMIN INTERFACE)
------------------------------------------------------------- */
+============================================================ */
 
-/* ORIGINAL (matches your website’s dark UI) */
+/* ORIGINAL */
 body.theme-original {
-  --bg: #0f172a;
-  --panel: #1e293b;
-  --border: #334155;
-  --text: #f1f5f9;
-  --accent: #38bdf8;
+  --bg: #0F172A;
+  --panel: rgba(2, 6, 23, 0.78);
+  --border: #1E293B;
+  --text: #F8FAFC;
+  --accent: #D4AF37;
 }
 
-/* ARMY MULTICAM */
-body.theme-multicam {
-  --bg: #2b2a27;
-  --panel: #3a392f;
-  --border: #4a493f;
-  --text: #e8e3d3;
-  --accent: #b5a76a;
+/* ACU */
+body.theme-acu {
+  --bg: #4B5563;
+  --panel: rgba(31, 41, 55, 0.70);
+  --border: #374151;
+  --text: #F5F5F4;
+  --accent: #A89B78;
 }
 
 /* PATRIOTIC */
 body.theme-patriotic {
-  --bg: #0b1a33;
-  --panel: #11284d;
-  --border: #1c3a66;
-  --text: #e6e9f2;
-  --accent: #d62828;
+  --bg: #4169E1;
+  --panel: rgba(11, 18, 32, 0.78);
+  --border: #1F2937;
+  --text: #FFFFFF;
+  --accent: #B22234;
 }
 
-/* DARK MODE (optional) */
-body.dark {
-  --bg: #000;
-  --panel: #111;
-  --border: #222;
-  --text: #ddd;
-  --accent: #4da3ff;
-}
-
-/* CMS GLOBAL APPLICATION */
+/* CMS GLOBAL */
 body {
   background: var(--bg);
   color: var(--text);
@@ -76,41 +67,60 @@ a {
 }
 
 
-/* ------------------------------------------------------------
-   SITE THEMES (INSIDE VISUAL EDITOR IFRAME)
-   Applied via <body class="theme-xxx">
------------------------------------------------------------- */
 
-/* ORIGINAL (matches your live site) */
+/* ============================================================
+   SITE THEMES (INSIDE EDITABLE PREVIEW)
+   Applied via <body class="theme-xxx">
+============================================================ */
+
+/* ORIGINAL */
 body.theme-original {
-  --site-bg: #0f172a;
-  --site-text: #f1f5f9;
-  --site-accent: #38bdf8;
-  background: var(--site-bg);
-  color: var(--site-text);
+  --header: #071940;
+  --accent: #CEA25D;
+  --bg: #0E1F45;
+  --card: rgba(255,255,255,.06);
+  --text: #E9DCC2;
+  --muted: rgba(233,220,194,.80);
+  --border: rgba(255,255,255,.18);
+  --on-accent: #071940;
+
+  background: var(--bg);
+  color: var(--text);
 }
 
-/* ARMY MULTICAM */
-body.theme-multicam {
-  --site-bg: #2b2a27;
-  --site-text: #e8e3d3;
-  --site-accent: #b5a76a;
-  background: var(--site-bg);
-  color: var(--site-text);
+/* ACU */
+body.theme-acu {
+  --header: #4B5320;
+  --accent: #C2B280;
+  --bg: #1F2A16;
+  --card: rgba(255,255,255,.06);
+  --text: #F7F4EE;
+  --muted: rgba(247,244,238,.82);
+  --border: rgba(194,178,128,.30);
+  --on-accent: #111827;
+
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* PATRIOTIC */
 body.theme-patriotic {
-  --site-bg: #0b1a33;
-  --site-text: #e6e9f2;
-  --site-accent: #d62828;
-  background: var(--site-bg);
-  color: var(--site-text);
+  --header: #0B3D91;
+  --accent: #B22234;
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --text: #0B1220;
+  --muted: #475569;
+  --border: #E2E8F0;
+  --on-accent: #FFFFFF;
+
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* Link colors */
 body.theme-original a,
-body.theme-multicam a,
+body.theme-acu a,
 body.theme-patriotic a {
-  color: var(--site-accent);
+  color: var(--accent);
 }
