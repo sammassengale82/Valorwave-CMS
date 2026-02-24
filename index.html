@@ -157,21 +157,41 @@
         <div id="publish-log-list"></div>
     </div>
 </div>
-<!-- Popup Editor Modal -->
+
+<!-- ===========================
+     POPUP EDITOR (PHASE 14)
+=========================== -->
 <div id="editor-modal" class="editor-modal" aria-hidden="true">
   <div class="editor-modal-backdrop"></div>
+
   <div class="editor-modal-panel">
+
     <div class="editor-modal-header">
-      <h3 id="editor-modal-title">Edit content</h3>
+      <h3 id="editor-modal-title">Edit Content</h3>
       <button id="editor-modal-close" class="editor-modal-close" type="button">×</button>
     </div>
+
     <div class="editor-modal-body">
-      <textarea id="editor-modal-input"></textarea>
+
+      <!-- CONTENT -->
+      <h4 class="editor-section-title">Content</h4>
+      <div id="editor-content-fields"></div>
+
+      <!-- DESIGN -->
+      <h4 class="editor-section-title">Design</h4>
+      <div id="editor-design-fields"></div>
+
+      <!-- SETTINGS -->
+      <h4 class="editor-section-title">Settings</h4>
+      <div id="editor-settings-fields"></div>
+
     </div>
+
     <div class="editor-modal-footer">
       <button id="editor-modal-cancel" type="button">Cancel</button>
       <button id="editor-modal-save" type="button" class="primary">Save</button>
     </div>
+
   </div>
 </div>
 
