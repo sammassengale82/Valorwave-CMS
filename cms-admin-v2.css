@@ -28,7 +28,7 @@ html, body {
     grid-template-columns: 280px 1fr;
     grid-template-rows: auto 1fr;
     height: 100vh;
-    margin-right: 275px; /* reserved for popup panel if needed */
+    margin-right: 0; /* reserved for popup panel if needed */
 }
 
 /* ============================================================
@@ -63,7 +63,7 @@ html, body {
 #cms-main,
 #cms-sidebar,
 #preview-container {
-    margin-top: 70px;
+    margin-top: 100px;
 }
 
 #cms-logo {
