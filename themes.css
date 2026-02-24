@@ -83,8 +83,8 @@ a {
 
 /* ORIGINAL (matches your live site) */
 body.theme-original {
-  --site-bg: #ffffff;
-  --site-text: #111111;
+  --site-bg: #0f172a;
+  --site-text: #f1f5f9;
   --site-accent: #38bdf8;
   background: var(--site-bg);
   color: var(--site-text);
@@ -92,8 +92,8 @@ body.theme-original {
 
 /* ARMY MULTICAM */
 body.theme-multicam {
-  --site-bg: #f4f1e5;
-  --site-text: #2b2a27;
+  --site-bg: #2b2a27;
+  --site-text: #e8e3d3;
   --site-accent: #b5a76a;
   background: var(--site-bg);
   color: var(--site-text);
@@ -101,8 +101,8 @@ body.theme-multicam {
 
 /* PATRIOTIC */
 body.theme-patriotic {
-  --site-bg: #f5f7fb;
-  --site-text: #0b1a33;
+  --site-bg: #0b1a33;
+  --site-text: #e6e9f2;
   --site-accent: #d62828;
   background: var(--site-bg);
   color: var(--site-text);
