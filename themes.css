@@ -76,13 +76,13 @@ a {
 /* ORIGINAL */
 body.theme-original {
   --header: #071940;
-  --accent: #020617;
+  --accent: #F8FAFC;
   --bg: #0F172A;
   --card: rgba(255,255,255,.06);
   --text: #F8FAFC;
   --muted: rgba(233,220,194,.80);
   --border: rgba(255,255,255,.18);
-  --on-accent: #071940;
+  --on-accent: #D4AF37;
 
   background: var(--bg);
   color: var(--text);
