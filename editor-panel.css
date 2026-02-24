@@ -199,53 +199,122 @@
 }
 
 /* ============================================================
-   CMS THEMES (FULL PAGE)
+   CMS THEMES (ADMIN INTERFACE)
 ============================================================ */
 
-body.cms-theme-original {
-    --cms-bg: #1a1a1a;
-    --cms-panel-bg: #222;
-    --cms-border: #333;
-    --cms-text: #eee;
-    --cms-accent: #4da3ff;
+/* ORIGINAL */
+body.theme-original {
+  --bg: #0F172A;
+  --panel: rgba(2, 6, 23, 0.78);
+  --border: #1E293B;
+  --text: #F8FAFC;
+  --accent: #D4AF37;
 }
 
-body.cms-theme-army {
-    --cms-bg: #2b2a27;
-    --cms-panel-bg: #3a392f;
-    --cms-border: #4a493f;
-    --cms-text: #e8e3d3;
-    --cms-accent: #b5a76a;
+/* ACU */
+body.theme-acu {
+  --bg: #4B5563;
+  --panel: rgba(31, 41, 55, 0.70);
+  --border: #374151;
+  --text: #F5F5F4;
+  --accent: #A89B78;
 }
 
-body.cms-theme-patriotic {
-    --cms-bg: #0b1a33;
-    --cms-panel-bg: #11284d;
-    --cms-border: #1c3a66;
-    --cms-text: #e6e9f2;
-    --cms-accent: #d62828;
+/* PATRIOTIC */
+body.theme-patriotic {
+  --bg: #4169E1;
+  --panel: rgba(11, 18, 32, 0.78);
+  --border: #1F2937;
+  --text: #FFFFFF;
+  --accent: #B22234;
+}
+
+/* CMS GLOBAL */
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+#cms-header,
+#sidebar,
+#editor-panel,
+#toolbar,
+#status-bar {
+  background: var(--panel);
+  border-color: var(--border);
+}
+
+button,
+select,
+input {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+button:hover {
+  background: var(--border);
+}
+
+a {
+  color: var(--accent);
 }
 
 /* ============================================================
-   SITE THEMES (APPLIED INSIDE IFRAME)
+   SITE THEMES (INSIDE EDITABLE PREVIEW)
+   Applied via <body class="theme-xxx">
 ============================================================ */
 
-[site-theme="original"] {
-    --site-bg: #ffffff;
-    --site-text: #111;
-    --site-accent: #4da3ff;
+/* ORIGINAL */
+body.theme-original {
+  --header: #071940;
+  --accent: #CEA25D;
+  --bg: #0E1F45;
+  --card: rgba(255,255,255,.06);
+  --text: #E9DCC2;
+  --muted: rgba(233,220,194,.80);
+  --border: rgba(255,255,255,.18);
+  --on-accent: #071940;
+
+  background: var(--bg);
+  color: var(--text);
 }
 
-[site-theme="army"] {
-    --site-bg: #2b2a27;
-    --site-text: #e8e3d3;
-    --site-accent: #b5a76a;
+/* ACU */
+body.theme-acu {
+  --header: #4B5320;
+  --accent: #C2B280;
+  --bg: #1F2A16;
+  --card: rgba(255,255,255,.06);
+  --text: #F7F4EE;
+  --muted: rgba(247,244,238,.82);
+  --border: rgba(194,178,128,.30);
+  --on-accent: #111827;
+
+  background: var(--bg);
+  color: var(--text);
 }
 
-[site-theme="patriotic"] {
-    --site-bg: #0b1a33;
-    --site-text: #e6e9f2;
-    --site-accent: #d62828;
+/* PATRIOTIC */
+body.theme-patriotic {
+  --header: #0B3D91;
+  --accent: #B22234;
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --text: #0B1220;
+  --muted: #475569;
+  --border: #E2E8F0;
+  --on-accent: #FFFFFF;
+
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Link colors */
+body.theme-original a,
+body.theme-acu a,
+body.theme-patriotic a {
+  color: var(--accent);
 }
 
 /* ============================================================
