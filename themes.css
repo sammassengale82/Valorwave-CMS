@@ -76,10 +76,10 @@ a {
 /* ORIGINAL */
 body.theme-original {
   --header: #071940;
-  --accent: #CEA25D;
-  --bg: #0E1F45;
+  --accent: #020617;
+  --bg: #0F172A;
   --card: rgba(255,255,255,.06);
-  --text: #E9DCC2;
+  --text: #F8FAFC;
   --muted: rgba(233,220,194,.80);
   --border: rgba(255,255,255,.18);
   --on-accent: #071940;
