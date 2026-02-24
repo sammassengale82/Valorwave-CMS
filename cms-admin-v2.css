@@ -37,23 +37,43 @@ html, body {
     height: 100vh;
 }
 
-/* Header */
+/* ============================================================
+   CMS HEADER — FULL WIDTH, FIXED TOP, CLEAN LAYOUT
+============================================================ */
 #cms-header {
-    grid-column: 1 / -1;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     padding: 0.75rem 1rem;
-    background: #020617;
-    border-bottom: 1px solid #1f2937;
+
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+
+    z-index: 9999;
 }
 
+/* Header groups */
 #cms-header-left,
 #cms-header-right {
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
+
+/* Push the editor panel and preview down below the header */
+#main-layout,
+#editor-panel,
+#preview-frame-editable,
+#preview-frame-live {
+    margin-top: 70px; /* adjust if header height changes */
+}
+
 
 #cms-logo {
     font-weight: 700;
@@ -505,9 +525,9 @@ body.theme-patriotic #cms-logo {
 ============================================================ */
 #editor-panel {
     position: fixed;
-    top: 0;
+    top: 70px;
     right: 0;
-    width: 420px;
+    width: 275px;
     height: 100vh;
     background: #ffffff;
     border-left: 1px solid #ddd;
