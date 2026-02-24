@@ -230,19 +230,19 @@ body.cms-theme-patriotic {
    SITE THEMES (APPLIED INSIDE IFRAME)
 ============================================================ */
 
-[data-theme="original"] {
+[site-theme="original"] {
     --site-bg: #ffffff;
     --site-text: #111;
     --site-accent: #4da3ff;
 }
 
-[data-theme="army"] {
+[site-theme="army"] {
     --site-bg: #2b2a27;
     --site-text: #e8e3d3;
     --site-accent: #b5a76a;
 }
 
-[data-theme="patriotic"] {
+[site-theme="patriotic"] {
     --site-bg: #0b1a33;
     --site-text: #e6e9f2;
     --site-accent: #d62828;
