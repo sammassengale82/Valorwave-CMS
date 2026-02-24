@@ -1,6 +1,6 @@
 /* ============================================================
-   VALOR WAVE CMS ADMIN — PHASE 14 (Hybrid Panel, Option C1)
-   cms-admin-v3.js — COMPLETE
+   VALOR WAVE CMS ADMIN — PHASE 14 (Popup Editor)
+   cms-admin-v3.js — UPDATED
 ============================================================ */
 
 /* -------------------------------
@@ -35,16 +35,16 @@ const closePublishLogsBtn = document.getElementById("close-publish-logs");
 
 const addSectionBtn = document.getElementById("add-section");
 
-/* Header theme controls (ONLY place themes live now) */
+/* Header theme controls */
 const headerCmsThemeSelect = document.getElementById("cms-theme");
 const headerSiteThemeSelect = document.getElementById("site-theme");
 const headerCmsThemeSavedMsg = document.getElementById("cms-theme-saved");
 const headerSiteThemeSavedMsg = document.getElementById("site-theme-saved");
 
 /* -------------------------------
-   PANEL DOM REFERENCES
+   PANEL DOM REFERENCES (legacy image panel only)
 -------------------------------- */
-let panelRoot = null; // #editor-panel (from editor-panel.html)
+let panelRoot = null; // used only for image file editing
 
 /* ============================================================
    TWO-SUBDOMAIN ARCHITECTURE
@@ -173,6 +173,102 @@ let positionSelectAfter = null;
 
 let lastSavedHtml = null;
 let selectedItems = new Set();
+
+/* ============================================================
+   POPUP EDITOR MODAL
+============================================================ */
+let editorModal = null;
+let editorModalInput = null;
+let editorModalTitle = null;
+let editorModalCloseBtn = null;
+let editorModalCancelBtn = null;
+let editorModalSaveBtn = null;
+
+let currentEditPayload = null; // { editType, blockId, html, path, repoName, targetSelector }
+
+function initEditorModal() {
+    editorModal = document.getElementById("editor-modal");
+    if (!editorModal) return;
+
+    editorModalInput = document.getElementById("editor-modal-input");
+    editorModalTitle = document.getElementById("editor-modal-title");
+    editorModalCloseBtn = document.getElementById("editor-modal-close");
+    editorModalCancelBtn = document.getElementById("editor-modal-cancel");
+    editorModalSaveBtn = document.getElementById("editor-modal-save");
+
+    const close = () => {
+        if (!editorModal) return;
+        editorModal.classList.remove("open");
+        editorModal.setAttribute("aria-hidden", "true");
+        currentEditPayload = null;
+    };
+
+    editorModalCloseBtn?.addEventListener("click", close);
+    editorModalCancelBtn?.addEventListener("click", close);
+
+    editorModalSaveBtn?.addEventListener("click", async () => {
+        if (!currentEditPayload || !editorModalInput) {
+            close();
+            return;
+        }
+
+        const newHtml = editorModalInput.value;
+
+        if (currentEditPayload.editType === "block") {
+            try {
+                editableFrame?.contentWindow.postMessage(
+                    {
+                        type: "ve-apply-edit",
+                        blockId: currentEditPayload.blockId,
+                        html: newHtml
+                    },
+                    "*"
+                );
+                showUnsavedIndicator();
+            } catch (e) {
+                console.error("[CMS] Failed to send ve-apply-edit:", e);
+            }
+        } else if (currentEditPayload.editType === "file") {
+            try {
+                await commitFile(
+                    currentEditPayload.path,
+                    newHtml,
+                    `Update ${currentEditPayload.path}`,
+                    currentEditPayload.repoName
+                );
+                updateLastSavedHtml(newHtml);
+                hideUnsavedIndicator();
+                alert("File saved.");
+            } catch (e) {
+                console.error("Failed to save file:", e);
+                alert("Failed to save file. Check console for details.");
+            }
+        }
+
+        close();
+    });
+}
+
+function openEditorModalFromPayload(payload) {
+    if (!editorModal) initEditorModal();
+    if (!editorModal || !editorModalInput) return;
+
+    currentEditPayload = payload;
+
+    if (editorModalTitle) {
+        if (payload.editType === "block" && payload.blockId) {
+            editorModalTitle.textContent = `Edit: ${payload.blockId}`;
+        } else if (payload.editType === "file" && payload.path) {
+            editorModalTitle.textContent = `Edit file: ${payload.path}`;
+        } else {
+            editorModalTitle.textContent = "Edit content";
+        }
+    }
+
+    editorModalInput.value = payload.html || "";
+    editorModal.classList.add("open");
+    editorModal.setAttribute("aria-hidden", "false");
+}
 
 /* ============================================================
    THEME SYSTEM (HEADER ONLY)
@@ -470,14 +566,14 @@ async function openImageFileInPanel(repoName, path, fileName) {
         panelRoot = document.getElementById("editor-panel");
     }
 
-    const nameEl = panelRoot.querySelector("#editor-block-name");
+    const nameEl = panelRoot?.querySelector("#editor-block-name");
     if (nameEl) nameEl.textContent = `Image: ${fileName}`;
 
-    panelRoot.classList.remove("hidden");
+    panelRoot?.classList.remove("hidden");
 
-    const contentFields = panelRoot.querySelector("#editor-content-fields");
-    const designFields = panelRoot.querySelector("#editor-design-fields");
-    const settingsFields = panelRoot.querySelector("#editor-settings-fields");
+    const contentFields = panelRoot?.querySelector("#editor-content-fields");
+    const designFields = panelRoot?.querySelector("#editor-design-fields");
+    const settingsFields = panelRoot?.querySelector("#editor-settings-fields");
 
     if (designFields) designFields.innerHTML = "";
     if (settingsFields) settingsFields.innerHTML = "";
@@ -1085,200 +1181,26 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ============================================================
-   VISUAL EDITOR BRIDGE — HYBRID SIDE PANEL
-============================================================ */
-function extractUrlFromHtml(html) {
-    if (!html) return "";
-    const match = html.match(/href="([^"]*)"/i);
-    return match ? match[1] : html;
-}
-
-function isSocialLinkEditType(editType) {
-    if (!editType) return false;
-    const lower = editType.toLowerCase();
-    return lower.includes("social") || lower === "link";
-}
-
-/* Collect Design fields from panel */
-function collectDesignSettings() {
-    const design = {};
-    if (!panelRoot) return design;
-    panelRoot.querySelectorAll("[data-design]").forEach(el => {
-        const key = el.getAttribute("data-design");
-        const val = el.value;
-        if (val !== "") design[key] = val;
-    });
-    return design;
-}
-
-/* Collect Settings fields from panel */
-function collectElementSettings() {
-    const settings = {};
-    if (!panelRoot) return settings;
-    panelRoot.querySelectorAll("[data-setting]").forEach(el => {
-        const key = el.getAttribute("data-setting");
-        const val = el.value;
-        if (val !== "") settings[key] = val;
-    });
-    return settings;
-}
-
-function openEditorModalFromPayload(payload) {
-    currentEditType = payload.editType || "block";
-    currentTargetSelector = payload.targetSelector || null;
-    currentEditTarget = payload;
-    currentEditTarget.originalHtml = payload.html || "";
-
-    if (!panelRoot) {
-        panelRoot = document.getElementById("editor-panel");
-    }
-
-    const nameEl = panelRoot?.querySelector("#editor-block-name");
-    if (nameEl) {
-        nameEl.textContent = currentEditType;
-    }
-
-    panelRoot?.classList.remove("hidden");
-
-    let mainText = payload.html || payload.text || "";
-
-    if (isSocialLinkEditType(currentEditType)) {
-        mainText = extractUrlFromHtml(payload.html || "");
-    }
-
-    const contentFields = panelRoot?.querySelector("#editor-content-fields");
-    if (contentFields) {
-        contentFields.innerHTML = "";
-
-        const textarea = document.createElement("textarea");
-        textarea.id = "editor-content-textarea";
-        textarea.value = mainText;
-        textarea.className = "editor-textarea";
-
-        contentFields.appendChild(textarea);
-    }
-
-    const designFields = panelRoot?.querySelector("#editor-design-fields");
-    if (designFields) {
-        // Leave existing controls; no per-block prefill yet
-    }
-
-    const settingsFields = panelRoot?.querySelector("#editor-settings-fields");
-    if (settingsFields) {
-        // Leave existing controls; no per-block prefill yet
-    }
-}
-
-function closeEditorModal() {
-    currentEditTarget = null;
-    currentTargetSelector = null;
-    currentEditType = "text";
-}
-
-/* ============================================================
-   APPLY / CANCEL HANDLERS (PANEL)
-============================================================ */
-function wirePanelApplyCancel() {
-    if (!panelRoot) return;
-
-    const applyBtn = panelRoot.querySelector("#editor-apply-btn");
-    const cancelBtn = panelRoot.querySelector("#editor-cancel-btn");
-    const closeBtn = panelRoot.querySelector("#editor-panel-close");
-
-    applyBtn?.addEventListener("click", () => {
-        if (!editableFrame) {
-            closeEditorModal();
-            return;
-        }
-
-        const textarea = panelRoot.querySelector("#editor-content-textarea");
-        const newValue = textarea ? textarea.value : "";
-
-        // File editing (raw content)
-        if (currentEditTarget && currentEditTarget.path && currentEditTarget.repoName) {
-            latestDomHtml = newValue;
-            showUnsavedIndicator();
-            closeEditorModal();
-            return;
-        }
-
-        let htmlToSend = newValue;
-
-        // Social links: rebuild original <a> with new href
-        if (isSocialLinkEditType(currentEditType) && currentEditTarget?.originalHtml) {
-            const original = currentEditTarget.originalHtml;
-            if (original.includes('href="')) {
-                htmlToSend = original.replace(/href="[^"]*"/i, `href="${newValue}"`);
-            } else {
-                htmlToSend = original;
-            }
-        }
-
-        const design = collectDesignSettings();
-        const settings = collectElementSettings();
-
-        const payload = {
-            type: "apply-edit",
-            editType: currentEditType,
-            html: htmlToSend,
-            design,
-            settings
-        };
-
-        editableFrame.contentWindow.postMessage(payload, "*");
-        closeEditorModal();
-    });
-
-    const doCancel = () => closeEditorModal();
-
-    cancelBtn?.addEventListener("click", doCancel);
-    closeBtn?.addEventListener("click", doCancel);
-}
-
-/* ============================================================
-   COLLAPSIBLE SECTIONS (DESIGN / SETTINGS)
-============================================================ */
-function wirePanelCollapsibles() {
-    if (!panelRoot) return;
-
-    const headers = panelRoot.querySelectorAll(".collapsible-header");
-    headers.forEach(header => {
-        header.addEventListener("click", () => {
-            const body = header.nextElementSibling;
-            if (!body) return;
-            const isHidden = body.style.display === "none" || !body.style.display;
-            body.style.display = isHidden ? "block" : "none";
-        });
-
-        const body = header.nextElementSibling;
-        if (body) body.style.display = "none";
-    });
-}
-
-/* ============================================================
-   MESSAGE LISTENER (CMS <-> VE)
+   MESSAGE LISTENER (CMS <-> VE) — POPUP EDITOR
 ============================================================ */
 window.addEventListener("message", (event) => {
-    const data = event.data || {};
-    if (!data.type) return;
+    const msg = event.data;
+    if (!msg || typeof msg !== "object" || !msg.type) return;
 
-    console.log("[CMS] Received message:", data);
+    console.log("[CMS] Received message:", msg);
 
-    if (data.type === "open-editor") {
-        const normalized = {
-            editType: data.editType || "block",
-            targetSelector: data.blockId || null,
-            html: typeof data.innerHTML === "string" ? data.innerHTML : "",
-            raw: data
-        };
-        openEditorModalFromPayload(normalized);
-        return;
+    if (msg.type === "open-editor") {
+        openEditorModalFromPayload({
+            editType: "block",
+            blockId: msg.blockId,
+            html: msg.html || "",
+            targetSelector: `[data-ve-edit="${msg.blockId}"]`
+        });
     }
 
-    if (data.type === "dom-updated") {
-        latestDomHtml = data.html;
+    if (msg.type === "dom-updated") {
+        latestDomHtml = msg.html;
         showUnsavedIndicator();
-        return;
     }
 });
 
@@ -1294,18 +1216,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadEditablePreview();
     loadLivePreview();
     loadSidebarFileListsTree();
-
-    fetch("/editor-panel.html")
-        .then(res => res.text())
-        .then(html => {
-            const container = document.getElementById("editor-panel-container");
-            if (!container) return;
-            container.innerHTML = html;
-
-            panelRoot = document.getElementById("editor-panel");
-
-            wirePanelApplyCancel();
-            wirePanelCollapsibles();
-        })
-        .catch(err => console.error("Failed to load editor panel:", err));
 });
