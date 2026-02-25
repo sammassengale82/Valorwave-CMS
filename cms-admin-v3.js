@@ -301,7 +301,7 @@ function openEditorModalFromPayload(payload) {
     <div id="editor-modal-content" contenteditable="true">${html}</div>
 
     <label>Button URL</label>
-    <input id="editor-button-url" class="editor-input" type="text">
+    <input id="editor-button-url" class="editor-input" type="text" value="${payload.url || ""}">
 
     <label>Image Source</label>
     <input id="editor-image-src" class="editor-input" type="text">
