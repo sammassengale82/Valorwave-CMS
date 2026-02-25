@@ -63,7 +63,7 @@ html, body {
 #cms-main,
 #cms-sidebar,
 #preview-container {
-    margin-top: 100px;
+    margin-top: 75px;
 }
 
 #cms-logo {
@@ -529,4 +529,61 @@ body.theme-patriotic {
   color: var(--text);
   font-size: 20px;
   cursor: pointer;
+}
+.editor-section-title { display: none; } /* replaced by accordion headers */
+
+.editor-accordion {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.editor-accordion-header {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--panel);
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.editor-accordion-body {
+  padding: 8px 10px;
+  display: none;
+  background: var(--dark);
+}
+
+.editor-accordion-body.open {
+  display: block;
+}
+
+/* Rich text toolbar */
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.editor-toolbar button {
+  padding: 4px 6px;
+  font-size: 0.75rem;
+}
+
+/* Contenteditable area */
+#editor-modal-content {
+  width: 100%;
+  min-height: 180px;
+  max-height: 50vh;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--dark);
+  color: var(--text);
+  overflow-y: auto;
 }
