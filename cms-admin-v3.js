@@ -275,6 +275,107 @@ function openEditorModalFromPayload(payload) {
 
         <label>Visibility</label>
         <select data-setting="visibility" class="editor-select">
+/* ============================================================
+   POPUP EDITOR — HYBRID SYSTEM (CONTENT + DESIGN + SETTINGS)
+============================================================ */
+let editorModal = null;
+let editorModalTitle = null;
+let editorModalSaveBtn = null;
+let editorModalCancelBtn = null;
+let editorModalCloseBtn = null;
+
+let currentEditPayload = null;
+
+function initEditorModal() {
+    editorModal = document.getElementById("editor-modal");
+    editorModalTitle = document.getElementById("editor-modal-title");
+    editorModalSaveBtn = document.getElementById("editor-modal-save");
+    editorModalCancelBtn = document.getElementById("editor-modal-cancel");
+    editorModalCloseBtn = document.getElementById("editor-modal-close");
+
+    const close = () => {
+        editorModal.classList.remove("open");
+        editorModal.setAttribute("aria-hidden", "true");
+        currentEditPayload = null;
+    };
+
+    editorModalCloseBtn.addEventListener("click", close);
+    editorModalCancelBtn.addEventListener("click", close);
+
+    editorModalSaveBtn.addEventListener("click", () => {
+        if (!currentEditPayload) return;
+
+        const html = document.getElementById("editor-modal-input").value;
+
+        const design = {};
+        document.querySelectorAll("[data-design]").forEach(el => {
+            if (el.value !== "") design[el.dataset.design] = el.value;
+        });
+
+        const settings = {};
+        document.querySelectorAll("[data-setting]").forEach(el => {
+            if (el.value !== "") settings[el.dataset.setting] = el.value;
+        });
+
+        editableFrame.contentWindow.postMessage(
+            {
+                type: "ve-apply-edit",
+                blockId: currentEditPayload.blockId,
+                html,
+                design,
+                settings
+            },
+            "*"
+        );
+
+        close();
+    });
+}
+
+function openEditorModalFromPayload(payload) {
+    if (!editorModal) initEditorModal();
+
+    currentEditPayload = payload;
+
+    editorModalTitle.textContent = `Edit: ${payload.blockId}`;
+
+    /* CONTENT */
+    const contentFields = document.getElementById("editor-content-fields");
+    contentFields.innerHTML = `
+        <label>Inner HTML</label>
+        <textarea id="editor-modal-input" class="editor-input">${payload.html || ""}</textarea>
+
+        <label>Link URL</label>
+        <input id="editor-link-url" class="editor-input" type="text">
+    `;
+
+    /* DESIGN */
+    const designFields = document.getElementById("editor-design-fields");
+    designFields.innerHTML = `
+        <label>Font Size (px)</label>
+        <input data-design="fontSize" class="editor-input" type="number">
+
+        <label>Text Color</label>
+        <input data-design="color" class="editor-input" type="color">
+
+        <label>Background</label>
+        <input data-design="backgroundColor" class="editor-input" type="color">
+
+        <label>Padding (px)</label>
+        <input data-design="padding" class="editor-input" type="number">
+    `;
+
+    /* SETTINGS */
+    const settingsFields = document.getElementById("editor-settings-fields");
+    settingsFields.innerHTML = `
+        <label>Element ID</label>
+        <input data-setting="id" class="editor-input" type="text">
+
+        <label>CSS Classes</label>
+        <input data-setting="class" class="editor-input" type="text">
+
+        <label>Visibility</label>
+        <select data-setting="visibility" class="editor-select">
             <option value="">Default</option>
             <option value="visible">Visible</option>
             <option value="hidden">Hidden</option>
@@ -284,6 +385,26 @@ function openEditorModalFromPayload(payload) {
     editorModal.classList.add("open");
     editorModal.setAttribute("aria-hidden", "false");
 }
+
+/* ============================================================
+   MESSAGE LISTENER — OPEN POPUP
+============================================================ */
+window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+
+    if (msg.type === "open-editor") {
+        openEditorModalFromPayload({
+            blockId: msg.blockId,
+            html: msg.html
+        });
+    }
+
+    if (msg.type === "dom-updated") {
+        latestDomHtml = msg.html;
+        showUnsavedIndicator();
+    }
+});
 
 /* ============================================================
    MESSAGE LISTENER — OPEN POPUP
